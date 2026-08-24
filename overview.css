@@ -135,7 +135,7 @@ body.custom-bg{align-items:center}
 .bg90-apply{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
 .bg90-screen{background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important}
 .bg90-body{display:flex;flex-direction:column;gap:12px;padding-bottom:24px!important}
-.bg90-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.bg90-toolbar{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 0 10px;background:linear-gradient(180deg,#f6fbff 0%,rgba(246,251,255,.96) 72%,rgba(246,251,255,0) 100%)}
 .bg90-add,.bg90-default{height:48px;border:0;border-radius:15px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:760;cursor:pointer}
 .bg90-add{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 10px 20px rgba(37,99,235,.16)}
 .bg90-default{background:#eef5ff;color:#2563eb}

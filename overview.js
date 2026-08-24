@@ -443,13 +443,13 @@ function ensureBackgroundPicker(){
   phone.insertAdjacentHTML('beforeend',`
     <section class="slide-screen bg90-screen" id="screenBackgrounds" aria-hidden="true">
       <div class="slide-head">
-        <button class="slide-back" data-bg90-back type="button" aria-label="Quay lai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button>
-        <div class="slide-title">Hinh nen</div>
+        <button class="slide-back" data-bg90-back type="button" aria-label="Quay lại"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button>
+        <div class="slide-title">Chọn Hình Nền</div>
       </div>
       <div class="slide-body bg90-body">
         <div class="bg90-toolbar">
-          <button class="bg90-add" id="bg90Choose" type="button"><span>+</span><b>Them anh</b></button>
-          <button class="bg90-default" id="bg90Default" type="button"><span>&#8634;</span><b>Background mac dinh</b></button>
+          <button class="bg90-add" id="bg90Choose" type="button"><span>+</span><b>Thêm ảnh</b></button>
+          <button class="bg90-default" id="bg90Default" type="button"><span>&#8634;</span><b>Hình Mặc định</b></button>
         </div>
         <div class="bg90-grid" id="bg90Grid"></div>
       </div>
@@ -457,10 +457,10 @@ function ensureBackgroundPicker(){
     <input id="bg90File" type="file" accept="image/*" hidden>
     <div class="bg90-crop" id="bg90Crop">
       <div class="bg90-crop-card">
-        <div class="bg90-crop-head"><b>Can chinh hinh nen</b><button type="button" id="bg90Close">x</button></div>
+        <div class="bg90-crop-head"><b>Căn chỉnh hình nền</b><button type="button" id="bg90Close">x</button></div>
         <div class="bg90-canvas-wrap" id="bg90CanvasWrap"><canvas id="bg90Canvas"></canvas></div>
         <label class="bg90-zoom"><span>Zoom</span><input id="bg90Zoom" type="range" min="1" max="3.5" step="0.01" value="1"></label>
-        <div class="bg90-actions"><button class="bg90-cancel" id="bg90Cancel" type="button">Huy</button><button class="bg90-apply" id="bg90Apply" type="button">Ap dung</button></div>
+        <div class="bg90-actions"><button class="bg90-cancel" id="bg90Cancel" type="button">Hủy</button><button class="bg90-apply" id="bg90Apply" type="button">Áp dụng</button></div>
       </div>
     </div>`);
 
@@ -586,17 +586,36 @@ function ensureBackgroundPicker(){
   screen.querySelector('[data-bg90-back]')?.addEventListener('click',()=>closeScreen('screenBackgrounds'));
   document.getElementById('bg90Choose').addEventListener('click',()=>file.click());
   document.getElementById('bg90Default').addEventListener('click',()=>{clearBackground();renderGrid();});
-  grid.addEventListener('click',e=>{
+  grid.addEventListener('click',async e=>{
     const items=allBackgrounds();
     const use=e.target.closest('[data-bg90-use]');
     const del=e.target.closest('[data-bg90-delete]');
-    if(use){
-      const item=items[Number(use.dataset.bg90Use)];
-      if(item?.src){applyBackground(item.src);renderGrid();}
-    }
     if(del){
       const item=items[Number(del.dataset.bg90Delete)];
-      if(item)removeItem(item);
+      if(!item)return;
+      const confirmed=await showAppDialog({
+        title:'Xóa hình ảnh',
+        message:`Bạn có muốn xóa "${item.name||'ảnh này'}" khỏi danh sách hình nền không?`,
+        actions:[
+          {label:'Xóa',value:true,kind:'danger'},
+          {label:'Hủy',value:false,kind:'ghost'}
+        ]
+      });
+      if(confirmed)removeItem(item);
+      return;
+    }
+    if(use){
+      const item=items[Number(use.dataset.bg90Use)];
+      if(!item?.src)return;
+      const confirmed=await showAppDialog({
+        title:'Chọn hình nền',
+        message:`Bạn có muốn chọn "${item.name||'ảnh này'}" làm background không?`,
+        actions:[
+          {label:'Chọn',value:true,kind:'primary'},
+          {label:'Hủy',value:false,kind:'ghost'}
+        ]
+      });
+      if(confirmed)applyBackground(item.src);
     }
   });
   file.addEventListener('change',e=>{
@@ -645,10 +664,6 @@ function ensureBackgroundPicker(){
     const list=userBackgrounds();
     list.unshift({id:'bg'+Date.now(),name:cropState.fileName.replace(/\.[^.]+$/,''),src});
     saveJson(bgUserKey,list.slice(0,12));
-    localStorage.setItem('qlctCustomBackground',src);
-    localStorage.setItem('qlctCustomBackgroundTone',canvasTone(out));
-    localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
-    applyStoredBackground();
     closeCrop();
     renderGrid();
   });
