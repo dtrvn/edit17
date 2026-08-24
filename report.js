@@ -60,8 +60,11 @@
   function yearValue(offset){return addMonths(new Date(),offset*12).getFullYear();}
   function transactions(){return typeof window.TXN_getTransactions==='function'?window.TXN_getTransactions():[];}
   function assets(){return typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets().assets:[];}
+  function localDateValue(date){
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+  }
   function normalizedDateValue(value){
-    if(value&&typeof value.toDate==='function')return value.toDate().toISOString().slice(0,10);
+    if(value&&typeof value.toDate==='function')return localDateValue(value.toDate());
     const text=String(value||'').trim();
     let match=text.match(/^(\d{4})[-/](\d{1,2})(?:[-/](\d{1,2}))?/);
     if(match)return `${match[1]}-${pad(match[2])}-${pad(match[3]||1)}`;
