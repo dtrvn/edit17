@@ -382,7 +382,7 @@
     saving=true;
     const request=window.FDB
       .set(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)
-      .then(()=>window.ASSET52_syncTransactionAsset?.(txForAsset,businessId,{mode:'create'}));
+      .then(()=>isAssetState()?window.ASSET52_syncTransactionAsset?.(txForAsset,businessId,{mode:'create'}):null);
     window.QLCT_setBusy?.(true,'Đang lưu giao dịch');
     Promise.resolve(request).then(()=>{
       closeScreen('screenTxnForm');

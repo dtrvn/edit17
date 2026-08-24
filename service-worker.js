@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-direct-giaodich-save-b';
+const CACHE_NAME = 'qlct-pwa-v20260825-skip-non-asset-sync-c';
 const APP_SHELL = [
   './',
   './index.html',
