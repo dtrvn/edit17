@@ -1081,7 +1081,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(3px + var(--safe-bottom))!important;}
   #phone::after{display:none!important;}
   #phone .dock-shell{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:drop-shadow(0 15px 26px rgba(38,55,88,.16))!important;}
-  #phone .dock-svg path{fill:url(#dockMirror)!important;stroke:rgba(255,255,255,.78)!important;stroke-width:1!important;}
+  #phone .dock-svg path{fill:rgba(255,255,255,.34)!important;stroke:rgba(255,255,255,.38)!important;stroke-width:1!important;}
   #phone .tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;}
   #phone .tools-grid{padding-bottom:0!important;}
   #phone .tool{height:58px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
@@ -1248,15 +1248,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   <nav class="dock-wrap">
     <div class="dock-shell">
       <svg class="dock-svg" viewBox="0 0 412 74" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="dockMirror" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stop-color="#ffffff" stop-opacity=".92"/>
-            <stop offset=".45" stop-color="#ffffff" stop-opacity=".38"/>
-            <stop offset=".5" stop-color="#ffffff" stop-opacity=".66"/>
-            <stop offset="1" stop-color="#ffffff" stop-opacity=".34"/>
-          </linearGradient>
-        </defs>
-        <path d="M25 0H151C169 0 172 46 206 46C240 46 243 0 261 0H387C400.8 0 412 11.2 412 25V49C412 62.8 400.8 74 387 74H25C11.2 74 0 62.8 0 49V25C0 11.2 11.2 0 25 0Z" fill="url(#dockMirror)"/>
+        <path d="M25 0H151C169 0 172 46 206 46C240 46 243 0 261 0H387C400.8 0 412 11.2 412 25V49C412 62.8 400.8 74 387 74H25C11.2 74 0 62.8 0 49V25C0 11.2 11.2 0 25 0Z" fill="rgba(255,255,255,.34)"/>
       </svg>
       <button class="add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
       <div class="add-label" aria-hidden="true"></div>
