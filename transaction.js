@@ -48,7 +48,15 @@
   const pad=n=>String(n).padStart(2,'0'); const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const toDMY=v=>{const [y,m,d]=String(v).split('-');return `${d}/${m}/${y}`};
   const dayLabel=v=>{const d=new Date(String(v).replace(/-/g,'/'));return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} - ${['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()]}`};
-  const dateValue=v=>v&&typeof v.toDate==='function'?v.toDate().toISOString().slice(0,10):String(v||'').slice(0,10);
+  function dateValue(v){
+    if(v&&typeof v.toDate==='function')return v.toDate().toISOString().slice(0,10);
+    const text=String(v||'').trim();
+    let match=text.match(/^(\d{4})[-/](\d{1,2})(?:[-/](\d{1,2}))?/);
+    if(match)return `${match[1]}-${pad(match[2])}-${pad(match[3]||1)}`;
+    match=text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if(match)return `${match[3]}-${pad(match[2])}-${pad(match[1])}`;
+    return text.slice(0,10);
+  }
   const stampValue=v=>v&&typeof v.toDate==='function'?v.toDate().toISOString():String(v||'');
   function firstValue(row,keys){
     for(const key of keys){

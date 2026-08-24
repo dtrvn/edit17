@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260824-monthly-asset-flow-a';
+const CACHE_NAME = 'qlct-pwa-v20260825-normalized-date-a';
 const APP_SHELL = [
   './',
   './index.html',

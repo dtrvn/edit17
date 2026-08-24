@@ -60,6 +60,21 @@
   function yearValue(offset){return addMonths(new Date(),offset*12).getFullYear();}
   function transactions(){return typeof window.TXN_getTransactions==='function'?window.TXN_getTransactions():[];}
   function assets(){return typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets().assets:[];}
+  function normalizedDateValue(value){
+    if(value&&typeof value.toDate==='function')return value.toDate().toISOString().slice(0,10);
+    const text=String(value||'').trim();
+    let match=text.match(/^(\d{4})[-/](\d{1,2})(?:[-/](\d{1,2}))?/);
+    if(match)return `${match[1]}-${pad(match[2])}-${pad(match[3]||1)}`;
+    match=text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if(match)return `${match[3]}-${pad(match[2])}-${pad(match[1])}`;
+    return text.slice(0,10);
+  }
+  function transactionDate(tx){
+    return normalizedDateValue(firstValue(tx,['date','ngay','ngay_giao_dich','ngayGiaoDich','created_at','createdAt']));
+  }
+  function transactionPeriodKey(tx,mode){
+    return transactionDate(tx).slice(0,mode==='year'?4:7);
+  }
   function incomeLargeNames(){return ['Thu nhập','Thu hồi tài sản','Thu hồi'];}
   function expenseLargeNames(){return ['Chi tiêu','Đầu tư'];}
   function tabLargeNames(tab){return tab==='Chi tiêu'?expenseLargeNames():incomeLargeNames();}
@@ -92,7 +107,7 @@
   }
   function monthlySummary(){
     const key=monthKey(monthOffset);
-    const rows=transactions().filter(x=>String(x.date||'').slice(0,7)===key);
+    const rows=transactions().filter(x=>transactionPeriodKey(x,'month')===key);
     return {
       income:byGroup(rows,incomeLargeNames()),
       expense:byGroup(rows,expenseLargeNames())
@@ -102,7 +117,7 @@
     const year=yearValue(yearOffset);
     return Array.from({length:12},(_,i)=>{
       const m=String(i+1).padStart(2,'0');
-      const rows=transactions().filter(x=>String(x.date||'').slice(0,7)===`${year}-${m}`);
+      const rows=transactions().filter(x=>transactionPeriodKey(x,'month')===`${year}-${m}`);
       const income=rows.filter(x=>matchesLargeNames(x,incomeLargeNames())).reduce((s,x)=>s+Number(x.amount||0),0);
       const expense=rows.filter(x=>matchesLargeNames(x,expenseLargeNames())).reduce((s,x)=>s+Number(x.amount||0),0);
       return {m:'T'+(i+1),income,expense};
@@ -165,7 +180,7 @@
     const isYear=detailState.mode==='year';
     const key=isYear?String(detailState.year||yearValue(yearOffset)):detailState.monthKey||monthKey(monthOffset);
     const rows=transactions().filter(x=>{
-      const dateKey=String(x.date||'').slice(0,isYear?4:7);
+      const dateKey=transactionPeriodKey(x,isYear?'year':'month');
       return dateKey===key&&matchesLargeNames(x,largeNames);
     });
     const totals={};
@@ -265,10 +280,10 @@
     const large=childDetailState.large;
     const largeNames=tabLargeNames(large);
     const child=childDetailState.child;
-    const rows=transactions().filter(x=>String(x.date||'').slice(0,mode==='month'?7:4)===periodKey&&matchesLargeNames(x,largeNames)&&(x.child||x.group||largeOf(x))===child);
+    const rows=transactions().filter(x=>transactionPeriodKey(x,mode)===periodKey&&matchesLargeNames(x,largeNames)&&(x.child||x.group||largeOf(x))===child);
     const months=Array.from({length:12},(_,i)=>{
       const key=`${year}-${pad(i+1)}`;
-      const value=rows.filter(x=>String(x.date||'').slice(0,7)===key).reduce((sum,x)=>sum+Number(x.amount||0),0);
+      const value=rows.filter(x=>transactionPeriodKey(x,'month')===key).reduce((sum,x)=>sum+Number(x.amount||0),0);
       return {name:'T'+(i+1),value};
     });
     const sorted=rows.slice().sort((a,b)=>{
@@ -278,7 +293,7 @@
     });
     const groups={};
     sorted.forEach(tx=>{
-      const day=tx.date||'';
+      const day=transactionDate(tx)||tx.date||'';
       (groups[day]||(groups[day]=[])).push(tx);
     });
     const groupedRows=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(day=>`<section class="report72-child-day-group">
