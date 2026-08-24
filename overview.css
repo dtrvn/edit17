@@ -228,9 +228,9 @@ body.custom-bg{align-items:center}
 .expense-percent{text-align:right;color:#1f293b;font-weight:600;font-size:9.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .dock-wrap{position:absolute;left:18px;right:18px;bottom:14px;pointer-events:none;padding:0;z-index:20}
-.dock-shell{position:relative;width:100%;margin:0 auto;height:58px;pointer-events:auto;filter:drop-shadow(0 15px 26px rgba(38,55,88,.16));backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25)}
+.dock-shell{position:relative;width:100%;margin:0 auto;height:58px;pointer-events:auto;filter:drop-shadow(0 15px 26px rgba(38,55,88,.16))}
 .dock-svg{position:absolute;inset:0;width:100%;height:58px}
-.dock-svg path{fill:rgba(255,255,255,.46)!important;stroke:rgba(255,255,255,.72);stroke-width:1}
+.dock-svg path{fill:url(#dockMirror)!important;stroke:rgba(255,255,255,.78);stroke-width:1}
 .dock-content{position:relative;z-index:2;height:58px;display:grid;grid-template-columns:1fr 1fr 72px 1fr 1fr;align-items:center;text-align:center;padding:8px 6px 5px}
 .nav-item{height:38px;color:#7a8799;font-size:9px;font-weight:720;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.05}
 .nav-item svg{width:17px;height:17px;stroke-width:2}
