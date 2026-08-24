@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-iphone-shell-frame-k';
+const CACHE_NAME = 'qlct-pwa-v20260824-background-gallery-a';
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,6 +17,9 @@ const APP_SHELL = [
   './gold.css',
   './gold.js',
   './firebase.js',
+  './images/image1.jpg',
+  './images/image2.jpg',
+  './images/image3.jpg',
   './icons/favicon.ico',
   './icons/icon-180.png',
   './icons/icon-192.png',

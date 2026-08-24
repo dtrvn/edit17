@@ -133,6 +133,22 @@ body.custom-bg{align-items:center}
 .bg90-actions button{height:38px;border:0;border-radius:14px;font-size:12px;font-weight:760}
 .bg90-cancel{background:#eef5ff;color:#2563eb}
 .bg90-apply{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+.bg90-screen{background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important}
+.bg90-body{display:flex;flex-direction:column;gap:12px;padding-bottom:24px!important}
+.bg90-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.bg90-add,.bg90-default{height:48px;border:0;border-radius:15px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:760;cursor:pointer}
+.bg90-add{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 10px 20px rgba(37,99,235,.16)}
+.bg90-default{background:#eef5ff;color:#2563eb}
+.bg90-add span,.bg90-default span{width:22px;height:22px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.22);font-size:16px;line-height:1}
+.bg90-default span{background:#fff}
+.bg90-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bg90-card{min-width:0;border-radius:8px;background:rgba(255,255,255,.96);border:1px solid rgba(226,232,240,.92);box-shadow:0 10px 22px rgba(15,23,42,.055);overflow:hidden}
+.bg90-card.active{border-color:#60a5fa;box-shadow:0 0 0 2px rgba(37,99,235,.12),0 10px 22px rgba(15,23,42,.055)}
+.bg90-thumb{width:100%;aspect-ratio:3/4;border:0;background:center/cover no-repeat #e8eef5;display:block;cursor:pointer}
+.bg90-card-foot{height:38px;display:grid;grid-template-columns:minmax(0,1fr) 30px;align-items:center;gap:6px;padding:0 6px 0 9px}
+.bg90-card-foot span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f172a;font-size:11.5px;font-weight:720}
+.bg90-delete{width:28px;height:28px;border:0;border-radius:10px;background:#fff1f2;color:#ef4444;font-size:14px;font-weight:760;line-height:1;cursor:pointer}
+.bg90-empty{grid-column:1/-1;border-radius:8px;background:#fff;color:#64748b;font-size:12px;font-weight:680;line-height:1.35;padding:16px;text-align:center}
 
 .numkey-backdrop{position:absolute;inset:0;z-index:330;background:rgba(15,23,42,.18);opacity:0;pointer-events:none;transition:opacity .18s ease;touch-action:none}
 .numkey-backdrop.show{opacity:1;pointer-events:auto}

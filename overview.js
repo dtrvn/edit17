@@ -7,10 +7,17 @@ const appLoaderTitle=document.getElementById('appLoaderTitle');
 const appLoaderText=document.getElementById('appLoaderText');
 const appLoaderLogin=document.getElementById('appLoaderLogin');
 const themes=['','theme-violet','theme-emerald','theme-rose','theme-cyan','theme-amber','theme-indigo','theme-teal','theme-slate','theme-pink'];
+const bgUserKey='qlctUserBackgrounds';
+const bgHiddenPresetKey='qlctHiddenPresetBackgrounds';
 const presetBackgrounds=[
   // Đặt ảnh có sẵn vào thư mục images rồi thêm tên file vào danh sách này.
   // Ví dụ: {name:'Xanh dịu',src:'images/xanh-diu.jpg'}
 ];
+presetBackgrounds.push(
+  {name:'Image 1',src:'images/image1.jpg'},
+  {name:'Image 2',src:'images/image2.jpg'},
+  {name:'Image 3',src:'images/image3.jpg'}
+);
 const faceIdKey='qlctFaceIdCredentialId';
 let appDataReady=false;
 let appUnlocked=false;
@@ -429,6 +436,224 @@ function ensureBackgroundPicker(){
     closeCrop();
   });
   window.addEventListener('resize',()=>{if(crop.classList.contains('show'))drawCrop();});
+}
+
+function ensureBackgroundPicker(){
+  if(document.getElementById('screenBackgrounds'))return;
+  phone.insertAdjacentHTML('beforeend',`
+    <section class="slide-screen bg90-screen" id="screenBackgrounds" aria-hidden="true">
+      <div class="slide-head">
+        <button class="slide-back" data-bg90-back type="button" aria-label="Quay lai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button>
+        <div class="slide-title">Hinh nen</div>
+      </div>
+      <div class="slide-body bg90-body">
+        <div class="bg90-toolbar">
+          <button class="bg90-add" id="bg90Choose" type="button"><span>+</span><b>Them anh</b></button>
+          <button class="bg90-default" id="bg90Default" type="button"><span>&#8634;</span><b>Background mac dinh</b></button>
+        </div>
+        <div class="bg90-grid" id="bg90Grid"></div>
+      </div>
+    </section>
+    <input id="bg90File" type="file" accept="image/*" hidden>
+    <div class="bg90-crop" id="bg90Crop">
+      <div class="bg90-crop-card">
+        <div class="bg90-crop-head"><b>Can chinh hinh nen</b><button type="button" id="bg90Close">x</button></div>
+        <div class="bg90-canvas-wrap" id="bg90CanvasWrap"><canvas id="bg90Canvas"></canvas></div>
+        <label class="bg90-zoom"><span>Zoom</span><input id="bg90Zoom" type="range" min="1" max="3.5" step="0.01" value="1"></label>
+        <div class="bg90-actions"><button class="bg90-cancel" id="bg90Cancel" type="button">Huy</button><button class="bg90-apply" id="bg90Apply" type="button">Ap dung</button></div>
+      </div>
+    </div>`);
+
+  const screen=document.getElementById('screenBackgrounds');
+  const grid=document.getElementById('bg90Grid');
+  const file=document.getElementById('bg90File');
+  const crop=document.getElementById('bg90Crop');
+  const canvas=document.getElementById('bg90Canvas');
+  const wrap=document.getElementById('bg90CanvasWrap');
+  const zoom=document.getElementById('bg90Zoom');
+  const ctx=canvas.getContext('2d');
+  const cropState={img:null,scale:1,x:0,y:0,drag:false,lastX:0,lastY:0,fileName:''};
+
+  function readJson(key,fallback){
+    try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}
+    catch(_err){return fallback;}
+  }
+  function saveJson(key,value){
+    localStorage.setItem(key,JSON.stringify(value));
+  }
+  function esc(value){
+    return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function visiblePresets(){
+    const hidden=new Set(readJson(bgHiddenPresetKey,[]));
+    return presetBackgrounds.filter(item=>item?.src&&!hidden.has(item.src)).map(item=>({...item,kind:'preset'}));
+  }
+  function userBackgrounds(){
+    return readJson(bgUserKey,[]);
+  }
+  function allBackgrounds(){
+    return visiblePresets().concat(userBackgrounds().map(item=>({...item,kind:'user'})));
+  }
+  function clearBackground(){
+    localStorage.removeItem('qlctCustomBackground');
+    localStorage.removeItem('qlctCustomBackgroundTone');
+    localStorage.removeItem('qlctCustomBackgroundEdge');
+    applyStoredBackground();
+  }
+  function drawImageCoverTo(canvasTarget,img){
+    const outCtx=canvasTarget.getContext('2d');
+    const scale=Math.max(canvasTarget.width/img.width,canvasTarget.height/img.height);
+    const w=img.width*scale,h=img.height*scale;
+    outCtx.clearRect(0,0,canvasTarget.width,canvasTarget.height);
+    outCtx.drawImage(img,(canvasTarget.width-w)/2,(canvasTarget.height-h)/2,w,h);
+  }
+  function applyBackground(src){
+    const img=new Image();
+    img.onload=()=>{
+      const out=document.createElement('canvas');
+      out.width=phone.clientWidth||390;
+      out.height=phone.clientHeight||844;
+      drawImageCoverTo(out,img);
+      localStorage.setItem('qlctCustomBackground',src);
+      localStorage.setItem('qlctCustomBackgroundTone',canvasTone(out));
+      localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
+      applyStoredBackground();
+      renderGrid();
+    };
+    img.src=src;
+  }
+  function renderGrid(){
+    const items=allBackgrounds();
+    grid.innerHTML=items.length
+      ? items.map((item,index)=>`
+          <article class="bg90-card ${localStorage.getItem('qlctCustomBackground')===item.src?'active':''}">
+            <button class="bg90-thumb" type="button" data-bg90-use="${index}" style="background-image:url('${esc(item.src)}')" aria-label="Chon ${esc(item.name)}"></button>
+            <div class="bg90-card-foot">
+              <span>${esc(item.name||'Anh nen')}</span>
+              <button class="bg90-delete" type="button" data-bg90-delete="${index}" aria-label="Xoa ${esc(item.name)}">x</button>
+            </div>
+          </article>`).join('')
+      : '<div class="bg90-empty">Chua co anh nao. Hay them anh moi de hien thi tai day.</div>';
+  }
+  function removeItem(item){
+    if(item.kind==='preset'){
+      const hidden=readJson(bgHiddenPresetKey,[]);
+      if(!hidden.includes(item.src))hidden.push(item.src);
+      saveJson(bgHiddenPresetKey,hidden);
+    }else{
+      saveJson(bgUserKey,userBackgrounds().filter(x=>x.id!==item.id));
+    }
+    if(localStorage.getItem('qlctCustomBackground')===item.src)clearBackground();
+    renderGrid();
+  }
+  function canvasSize(){
+    const ratio=phone.clientWidth/Math.max(phone.clientHeight,1);
+    const w=Math.min(340,wrap.clientWidth||340);
+    const h=Math.round(w/ratio);
+    canvas.width=w;
+    canvas.height=h;
+  }
+  function baseScale(){
+    if(!cropState.img)return 1;
+    return Math.max(canvas.width/cropState.img.width,canvas.height/cropState.img.height);
+  }
+  function drawCrop(){
+    if(!cropState.img)return;
+    canvasSize();
+    const coverScale=baseScale();
+    const scale=coverScale*Math.max(1,Number(zoom.value||1));
+    cropState.scale=scale;
+    const w=cropState.img.width*scale,h=cropState.img.height*scale;
+    if(!cropState.x&&!cropState.y){
+      cropState.x=(canvas.width-w)/2;
+      cropState.y=(canvas.height-h)/2;
+    }
+    cropState.x=w<=canvas.width?(canvas.width-w)/2:Math.min(0,Math.max(canvas.width-w,cropState.x));
+    cropState.y=h<=canvas.height?(canvas.height-h)/2:Math.min(0,Math.max(canvas.height-h,cropState.y));
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(cropState.img,cropState.x,cropState.y,w,h);
+  }
+  function closeCrop(){
+    crop.classList.remove('show');
+    cropState.img=null;
+  }
+  function pointerPoint(e){
+    const p=e.touches?.[0]||e;
+    return {x:p.clientX,y:p.clientY};
+  }
+
+  bgBtn?.addEventListener('click',()=>{renderGrid();openScreen('screenBackgrounds');});
+  screen.querySelector('[data-bg90-back]')?.addEventListener('click',()=>closeScreen('screenBackgrounds'));
+  document.getElementById('bg90Choose').addEventListener('click',()=>file.click());
+  document.getElementById('bg90Default').addEventListener('click',()=>{clearBackground();renderGrid();});
+  grid.addEventListener('click',e=>{
+    const items=allBackgrounds();
+    const use=e.target.closest('[data-bg90-use]');
+    const del=e.target.closest('[data-bg90-delete]');
+    if(use){
+      const item=items[Number(use.dataset.bg90Use)];
+      if(item?.src){applyBackground(item.src);renderGrid();}
+    }
+    if(del){
+      const item=items[Number(del.dataset.bg90Delete)];
+      if(item)removeItem(item);
+    }
+  });
+  file.addEventListener('change',e=>{
+    const selected=e.target.files?.[0];
+    if(!selected)return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        cropState.img=img;
+        cropState.fileName=selected.name||'Anh moi';
+        cropState.x=0;
+        cropState.y=0;
+        zoom.value='1';
+        crop.classList.add('show');
+        drawCrop();
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(selected);
+    file.value='';
+  });
+  zoom.addEventListener('input',drawCrop);
+  wrap.addEventListener('pointerdown',e=>{cropState.drag=true;const p=pointerPoint(e);cropState.lastX=p.x;cropState.lastY=p.y;wrap.setPointerCapture?.(e.pointerId);});
+  wrap.addEventListener('pointermove',e=>{
+    if(!cropState.drag)return;
+    const p=pointerPoint(e);
+    cropState.x+=p.x-cropState.lastX;
+    cropState.y+=p.y-cropState.lastY;
+    cropState.lastX=p.x;
+    cropState.lastY=p.y;
+    drawCrop();
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(type=>wrap.addEventListener(type,()=>{cropState.drag=false;}));
+  document.getElementById('bg90Close').addEventListener('click',closeCrop);
+  document.getElementById('bg90Cancel').addEventListener('click',closeCrop);
+  document.getElementById('bg90Apply').addEventListener('click',()=>{
+    if(!cropState.img)return;
+    const out=document.createElement('canvas');
+    out.width=phone.clientWidth||390;
+    out.height=phone.clientHeight||844;
+    const outCtx=out.getContext('2d');
+    const sx=out.width/canvas.width,sy=out.height/canvas.height;
+    outCtx.drawImage(cropState.img,cropState.x*sx,cropState.y*sy,cropState.img.width*cropState.scale*sx,cropState.img.height*cropState.scale*sy);
+    const src=out.toDataURL('image/jpeg',0.9);
+    const list=userBackgrounds();
+    list.unshift({id:'bg'+Date.now(),name:cropState.fileName.replace(/\.[^.]+$/,''),src});
+    saveJson(bgUserKey,list.slice(0,12));
+    localStorage.setItem('qlctCustomBackground',src);
+    localStorage.setItem('qlctCustomBackgroundTone',canvasTone(out));
+    localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
+    applyStoredBackground();
+    closeCrop();
+    renderGrid();
+  });
+  window.addEventListener('resize',()=>{if(crop.classList.contains('show'))drawCrop();});
+  renderGrid();
 }
 
 function ensureBusyOverlay(){
