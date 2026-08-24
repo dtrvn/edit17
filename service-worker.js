@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260824-list-bottom-edit-b';
+const CACHE_NAME = 'qlct-pwa-v20260824-monthly-asset-flow-a';
 const APP_SHELL = [
   './',
   './index.html',
