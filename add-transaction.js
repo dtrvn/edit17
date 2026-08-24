@@ -377,19 +377,24 @@
       lai_suat_nam:annualInterest,
       lai_suat_theo_ky_han:maturityInterest
     };
-    const txForAsset={...txData,date:state.date,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
+    const savedDate=state.date;
+    const txForAsset={...txData,date:savedDate,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
     saving=true;
-    const request=window.ASSET52_saveTransactionAtomic
-      ? window.ASSET52_saveTransactionAtomic(txForAsset,businessId,txData,{mode:'create'})
-      : window.FDB.add(FIREBASE_COLLECTIONS.giaoDich,txData).then(ref=>window.ASSET52_syncTransactionAsset?.(txForAsset,ref.id,{mode:'create'}));
+    const request=window.FDB
+      .set(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)
+      .then(()=>window.ASSET52_syncTransactionAsset?.(txForAsset,businessId,{mode:'create'}));
     window.QLCT_setBusy?.(true,'Đang lưu giao dịch');
     Promise.resolve(request).then(()=>{
-      const savedDate=state.date;
       closeScreen('screenTxnForm');
       openScreen('screenTransactions');
       window.TXN_showDate?.(savedDate);
       resetForm();
-    }).catch(console.error).finally(()=>{saving=false;window.QLCT_setBusy?.(false);});
+    }).catch(error=>{
+      console.error('Save transaction failed',error);
+      const message=error?.message||'Vui lòng thử lại.';
+      if(window.showAppMessage)window.showAppMessage('Không lưu được giao dịch',message);
+      else window.alert?.(`Không lưu được giao dịch: ${message}`);
+    }).finally(()=>{saving=false;window.QLCT_setBusy?.(false);});
   }
 
   document.addEventListener('click',e=>{
