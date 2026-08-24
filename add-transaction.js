@@ -384,8 +384,10 @@
       : window.FDB.add(FIREBASE_COLLECTIONS.giaoDich,txData).then(ref=>window.ASSET52_syncTransactionAsset?.(txForAsset,ref.id,{mode:'create'}));
     window.QLCT_setBusy?.(true,'Đang lưu giao dịch');
     Promise.resolve(request).then(()=>{
+      const savedDate=state.date;
       closeScreen('screenTxnForm');
       openScreen('screenTransactions');
+      window.TXN_showDate?.(savedDate);
       resetForm();
     }).catch(console.error).finally(()=>{saving=false;window.QLCT_setBusy?.(false);});
   }

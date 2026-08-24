@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-direct-giaodich-report-d';
+const CACHE_NAME = 'qlct-pwa-v20260825-show-saved-date-a';
 const APP_SHELL = [
   './',
   './index.html',

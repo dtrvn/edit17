@@ -256,6 +256,17 @@
       .catch(console.error);
   };
   window.TXN_renderList=function(){renderList();};
+  window.TXN_showDate=function(date){
+    const iso=dateValue(date);
+    if(!iso)return;
+    state.search='';
+    state.type='ALL';
+    state.range='CUSTOM';
+    state.from=iso;
+    state.to=iso;
+    sync();
+    renderList();
+  };
   window.TXN_getTransactions=function(){return transactions.slice();};
 
   function onClick(e){if(e.target.closest('[data-txn16-back]')){closeScreen('screenTransactions');return}if(e.target.closest('[data-type-sheet]'))return openOptions('Loại lớn',Object.entries(typeLabels).map(([value,label])=>({value,label})),state.type,v=>{state.type=v;sync();renderList()});if(e.target.closest('[data-range-sheet]'))return openOptions('Khoảng thời gian',Object.entries(rangeLabels).map(([value,label])=>({value,label})),state.range,v=>{state.range=v;sync();renderList()});const date=e.target.closest('[data-date-field]');if(date)return openCalendar(state[date.dataset.dateField],v=>{state[date.dataset.dateField]=v;sync();renderList()});const edit=e.target.closest('[data-edit]');if(edit)return openEdit(edit.dataset.edit)}
