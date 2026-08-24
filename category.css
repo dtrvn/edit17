@@ -501,7 +501,7 @@
 
 /* Full category layout refresh */
 #screenCategories.cat90-screen{
-  padding:14px 16px 24px!important;
+  padding:14px 16px 0!important;
   background:#f5f8fc!important;
 }
 #screenCategories.cat90-screen .slide-head{height:42px!important;margin-bottom:8px!important;}
@@ -553,7 +553,8 @@
   min-height:0;
   overflow-y:auto;
   overflow-x:hidden;
-  padding-bottom:20px;
+  margin-bottom:-6px;
+  padding-bottom:14px;
   scrollbar-width:none;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;

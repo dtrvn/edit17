@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260824-txn-list-bottom-a';
+const CACHE_NAME = 'qlct-pwa-v20260824-list-bottom-edit-b';
 const APP_SHELL = [
   './',
   './index.html',

@@ -11,8 +11,8 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=background-gallery-20260824c" />
-<link rel="stylesheet" href="transaction.css?v=txn-list-bottom-20260824a" />
-<link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
+<link rel="stylesheet" href="transaction.css?v=txn-edit-bottom-20260824b" />
+<link rel="stylesheet" href="category.css?v=cat-list-bottom-20260824a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
 .slide-screen{
@@ -459,7 +459,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=gold-asset-note-full-20260818a">
+<link rel="stylesheet" href="report.css?v=report-detail-bottom-20260824a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -1185,10 +1185,20 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .report72-child-money{font-size:8.8px!important;}
 .report72-child-month-label{font-size:9.8px!important;}
 </style>
-<style id="txn-list-bottom-extension">
+<style id="screen-list-bottom-extension">
 #screenTransactions.slide-screen,
 #phone #screenTransactions.slide-screen{
-  padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
+  padding-bottom:env(safe-area-inset-bottom,0px)!important;
+}
+#screenCategories.cat90-screen,
+#phone #screenCategories.cat90-screen,
+#phone .report72-detail-screen.slide-screen,
+#phone .report72-child-screen.slide-screen{
+  padding-bottom:env(safe-area-inset-bottom,0px)!important;
+}
+#screenCategories.cat90-screen .cat90-root>.cat90-tree{
+  margin-bottom:-6px!important;
+  padding-bottom:14px!important;
 }
 </style>
 </head>
