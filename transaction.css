@@ -9,7 +9,8 @@
 .txn16-edit textarea{
   font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif!important;
 }
-#screenTransactions{padding:18px 18px 30px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
+#screenTransactions{padding:18px 18px 10px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
+#phone #screenTransactions.slide-screen{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;}
 #screenTransactions .slide-head{height:38px!important;margin-bottom:6px!important;}
 #screenTransactions .slide-title,.txn16-edit .slide-title{font-size:14px!important;font-weight:730!important;letter-spacing:-.02em!important;color:#0f172a!important;}
 #screenTransactions .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
