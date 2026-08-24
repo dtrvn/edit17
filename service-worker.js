@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-large-month-map-c';
+const CACHE_NAME = 'qlct-pwa-v20260825-direct-giaodich-report-d';
 const APP_SHELL = [
   './',
   './index.html',
