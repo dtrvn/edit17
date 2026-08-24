@@ -234,6 +234,11 @@ window.FDB=(function(){
       if(error)return Promise.reject(error);
       return collection(name).doc(id).delete().then(result=>loadCollection(name).then(()=>result));
     },
+    removeNoRefresh(name,id){
+      const error=requireAuth();
+      if(error)return Promise.reject(error);
+      return collection(name).doc(id).delete();
+    },
     runTransaction(handler){
       const error=requireAuth();
       if(error)return Promise.reject(error);

@@ -1312,9 +1312,9 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase.js?v=set-no-refresh-20260825a"></script>
+<script src="firebase.js?v=remove-no-refresh-20260825b"></script>
 <script src="overview.js?v=background-gallery-20260824c"></script>
-<script src="transaction.js?v=local-upsert-20260825b"></script>
+<script src="transaction.js?v=fast-delete-20260825c"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
 <script src="add-transaction.js?v=fast-save-20260825d"></script>
@@ -1325,7 +1325,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=fast-save-20260825d').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=fast-delete-20260825e').catch(console.error);
   });
 }
 </script>

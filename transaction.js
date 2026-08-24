@@ -265,6 +265,13 @@
     document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));
     renderList();
   };
+  window.TXN_removeTransaction=function(id){
+    const key=String(id||'');
+    if(!key)return;
+    transactions=transactions.filter(item=>item.id!==key);
+    document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));
+    renderList();
+  };
   window.TXN_showDate=function(date){
     const iso=dateValue(date);
     if(!iso)return;
@@ -312,11 +319,19 @@
     window.QLCT_setBusy?.(true,'Đang xóa giao dịch');
     const tx=state.editOriginal||state.editing;
     const id=state.editing.id;
-    const request=window.ASSET52_deleteTransactionAtomic
+    const request=isAssetTx(tx)&&window.ASSET52_deleteTransactionAtomic
       ? window.ASSET52_deleteTransactionAtomic(tx,id)
-      : window.FDB?.remove(FIREBASE_COLLECTIONS.giaoDich,id);
-    return Promise.resolve(request).then(closeEditScreen).catch(error=>{
+      : (window.FDB?.removeNoRefresh
+        ? window.FDB.removeNoRefresh(FIREBASE_COLLECTIONS.giaoDich,id)
+        : window.FDB?.remove(FIREBASE_COLLECTIONS.giaoDich,id));
+    return Promise.resolve(request).then(()=>{
+      window.TXN_removeTransaction?.(id);
+      closeEditScreen();
+    }).catch(error=>{
       console.error('Delete transaction failed',error);
+      const message=error?.message||'Vui lòng thử lại.';
+      if(window.showAppMessage)window.showAppMessage('Không xóa được giao dịch',message);
+      else window.alert?.(`Không xóa được giao dịch: ${message}`);
       throw error;
     }).finally(()=>{state.saving=false;window.QLCT_setBusy?.(false);});
   }
@@ -324,11 +339,19 @@
     if(!state.editing||state.saving)return Promise.resolve();
     state.saving=true;
     window.QLCT_setBusy?.(true,'Đang lưu thay đổi');
-    const request=window.ASSET52_saveTransactionAtomic
+    const request=isAssetTx(state.editing)&&window.ASSET52_saveTransactionAtomic
       ? window.ASSET52_saveTransactionAtomic(state.editing,state.editing.id,txToFirestore(state.editing),{mode:'edit'})
-      : window.FDB?.set(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing));
-    return Promise.resolve(request).then(closeEditScreen).catch(error=>{
+      : (window.FDB?.setNoRefresh
+        ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing))
+        : window.FDB?.set(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing)));
+    return Promise.resolve(request).then(()=>{
+      window.TXN_upsertTransaction?.({...txToFirestore(state.editing),_docId:state.editing.id,id:state.editing.id});
+      closeEditScreen();
+    }).catch(error=>{
       console.error('Save transaction failed',error);
+      const message=error?.message||'Vui lòng thử lại.';
+      if(window.showAppMessage)window.showAppMessage('Không lưu được thay đổi',message);
+      else window.alert?.(`Không lưu được thay đổi: ${message}`);
       throw error;
     }).finally(()=>{state.saving=false;window.QLCT_setBusy?.(false);});
   }
