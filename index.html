@@ -1078,10 +1078,10 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone.phone{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center/cover no-repeat!important;}
   #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
   #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
-  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(3px + var(--safe-bottom))!important;}
+  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(-1px + var(--safe-bottom))!important;}
   #phone::after{display:none!important;}
   #phone .dock-shell{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:drop-shadow(0 14px 24px rgba(38,55,88,.16))!important;}
-  #phone .dock-svg path{fill:rgba(255,255,255,.30)!important;stroke:rgba(255,255,255,.24)!important;stroke-width:.45!important;}
+  #phone .dock-svg path{fill:rgba(255,255,255,.30)!important;stroke:rgba(255,255,255,.82)!important;stroke-width:1.05!important;filter:drop-shadow(0 1px 2px rgba(15,23,42,.18)) drop-shadow(0 -1px 1px rgba(255,255,255,.42))!important;}
   #phone .tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;}
   #phone .tools-grid{padding-bottom:0!important;}
   #phone .tool{height:62px!important;min-height:62px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
