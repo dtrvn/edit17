@@ -9,6 +9,7 @@ const appLoaderLogin=document.getElementById('appLoaderLogin');
 const themes=['','theme-violet','theme-emerald','theme-rose','theme-cyan','theme-amber','theme-indigo','theme-teal','theme-slate','theme-pink'];
 const bgUserKey='qlctUserBackgrounds';
 const bgHiddenPresetKey='qlctHiddenPresetBackgrounds';
+let bgImagesDirectoryHandle=null;
 const presetBackgrounds=[
   // Đặt ảnh có sẵn vào thư mục images rồi thêm tên file vào danh sách này.
   // Ví dụ: {name:'Xanh dịu',src:'images/xanh-diu.jpg'}
@@ -421,7 +422,7 @@ function ensureBackgroundPicker(){
   ['pointerup','pointercancel','pointerleave'].forEach(type=>wrap.addEventListener(type,()=>{cropState.drag=false;}));
   document.getElementById('bg90Close').addEventListener('click',closeCrop);
   document.getElementById('bg90Cancel').addEventListener('click',closeCrop);
-  document.getElementById('bg90Apply').addEventListener('click',()=>{
+  document.getElementById('bg90Apply').addEventListener('click',async ()=>{
     if(!cropState.img)return;
     const out=document.createElement('canvas');
     out.width=phone.clientWidth||390;
@@ -494,6 +495,42 @@ function ensureBackgroundPicker(){
   function allBackgrounds(){
     return visiblePresets().concat(userBackgrounds().map(item=>({...item,kind:'user'})));
   }
+  async function nextImageFileName(dir=null){
+    const all=presetBackgrounds.concat(userBackgrounds());
+    let max=all.reduce((highest,item)=>{
+      const match=String(item?.src||item?.name||'').match(/(?:^|\/)image(\d+)\.(?:jpe?g|png|webp)$/i);
+      return match?Math.max(highest,Number(match[1])||0):highest;
+    },0);
+    if(dir?.entries){
+      for await(const [name] of dir.entries()){
+        const match=String(name||'').match(/^image(\d+)\.(?:jpe?g|png|webp)$/i);
+        if(match)max=Math.max(max,Number(match[1])||0);
+      }
+    }
+    return `image${max+1}.jpg`;
+  }
+  async function imagesDirectory(){
+    if(bgImagesDirectoryHandle)return bgImagesDirectoryHandle;
+    if(!window.showDirectoryPicker)return null;
+    const handle=await window.showDirectoryPicker({mode:'readwrite'});
+    if(handle.name&&handle.name.toLowerCase()!=='images')throw new Error('Chọn sai thư mục images');
+    bgImagesDirectoryHandle=handle;
+    return handle;
+  }
+  async function saveCanvasToImages(canvasTarget){
+    const blob=await new Promise(resolve=>canvasTarget.toBlob(resolve,'image/jpeg',0.9));
+    if(!blob)throw new Error('Không tạo được file ảnh');
+    const dir=await imagesDirectory();
+    const fileName=await nextImageFileName(dir);
+    if(!dir){
+      return {name:fileName.replace(/\.[^.]+$/,''),src:canvasTarget.toDataURL('image/jpeg',0.9),stored:'local'};
+    }
+    const fileHandle=await dir.getFileHandle(fileName,{create:true});
+    const writable=await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return {name:fileName.replace(/\.[^.]+$/,''),src:`images/${fileName}`,fileName,stored:'images'};
+  }
   function clearBackground(){
     localStorage.removeItem('qlctCustomBackground');
     localStorage.removeItem('qlctCustomBackgroundTone');
@@ -519,6 +556,7 @@ function ensureBackgroundPicker(){
       localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
       applyStoredBackground();
       renderGrid();
+      closeScreen('screenBackgrounds');
     };
     img.src=src;
   }
@@ -535,13 +573,16 @@ function ensureBackgroundPicker(){
           </article>`).join('')
       : '<div class="bg90-empty">Chua co anh nao. Hay them anh moi de hien thi tai day.</div>';
   }
-  function removeItem(item){
+  async function removeItem(item){
     if(item.kind==='preset'){
       const hidden=readJson(bgHiddenPresetKey,[]);
       if(!hidden.includes(item.src))hidden.push(item.src);
       saveJson(bgHiddenPresetKey,hidden);
     }else{
       saveJson(bgUserKey,userBackgrounds().filter(x=>x.id!==item.id));
+      if(item.stored==='images'&&item.fileName&&bgImagesDirectoryHandle){
+        try{await bgImagesDirectoryHandle.removeEntry(item.fileName);}catch(_err){}
+      }
     }
     if(localStorage.getItem('qlctCustomBackground')===item.src)clearBackground();
     renderGrid();
@@ -585,7 +626,7 @@ function ensureBackgroundPicker(){
   bgBtn?.addEventListener('click',()=>{renderGrid();openScreen('screenBackgrounds');});
   screen.querySelector('[data-bg90-back]')?.addEventListener('click',()=>closeScreen('screenBackgrounds'));
   document.getElementById('bg90Choose').addEventListener('click',()=>file.click());
-  document.getElementById('bg90Default').addEventListener('click',()=>{clearBackground();renderGrid();});
+  document.getElementById('bg90Default').addEventListener('click',()=>{clearBackground();renderGrid();closeScreen('screenBackgrounds');});
   grid.addEventListener('click',async e=>{
     const items=allBackgrounds();
     const use=e.target.closest('[data-bg90-use]');
@@ -596,12 +637,13 @@ function ensureBackgroundPicker(){
       const confirmed=await showAppDialog({
         title:'Xóa hình ảnh',
         message:`Bạn có muốn xóa "${item.name||'ảnh này'}" khỏi danh sách hình nền không?`,
+        cancelValue:false,
         actions:[
           {label:'Xóa',value:true,kind:'danger'},
           {label:'Hủy',value:false,kind:'ghost'}
         ]
       });
-      if(confirmed)removeItem(item);
+      if(confirmed)await removeItem(item);
       return;
     }
     if(use){
@@ -610,6 +652,7 @@ function ensureBackgroundPicker(){
       const confirmed=await showAppDialog({
         title:'Chọn hình nền',
         message:`Bạn có muốn chọn "${item.name||'ảnh này'}" làm background không?`,
+        cancelValue:false,
         actions:[
           {label:'Chọn',value:true,kind:'primary'},
           {label:'Hủy',value:false,kind:'ghost'}
@@ -652,7 +695,7 @@ function ensureBackgroundPicker(){
   ['pointerup','pointercancel','pointerleave'].forEach(type=>wrap.addEventListener(type,()=>{cropState.drag=false;}));
   document.getElementById('bg90Close').addEventListener('click',closeCrop);
   document.getElementById('bg90Cancel').addEventListener('click',closeCrop);
-  document.getElementById('bg90Apply').addEventListener('click',()=>{
+  document.getElementById('bg90Apply').addEventListener('click',async ()=>{
     if(!cropState.img)return;
     const out=document.createElement('canvas');
     out.width=phone.clientWidth||390;
@@ -660,12 +703,16 @@ function ensureBackgroundPicker(){
     const outCtx=out.getContext('2d');
     const sx=out.width/canvas.width,sy=out.height/canvas.height;
     outCtx.drawImage(cropState.img,cropState.x*sx,cropState.y*sy,cropState.img.width*cropState.scale*sx,cropState.img.height*cropState.scale*sy);
-    const src=out.toDataURL('image/jpeg',0.9);
-    const list=userBackgrounds();
-    list.unshift({id:'bg'+Date.now(),name:cropState.fileName.replace(/\.[^.]+$/,''),src});
-    saveJson(bgUserKey,list.slice(0,12));
-    closeCrop();
-    renderGrid();
+    try{
+      const saved=await saveCanvasToImages(out);
+      const list=userBackgrounds();
+      list.unshift({id:'bg'+Date.now(),...saved});
+      saveJson(bgUserKey,list.slice(0,12));
+      closeCrop();
+      renderGrid();
+    }catch(_err){
+      await showAppMessage('Chưa lưu được ảnh','Vui lòng chọn đúng thư mục images và cấp quyền ghi để lưu ảnh mới.');
+    }
   });
   window.addEventListener('resize',()=>{if(crop.classList.contains('show'))drawCrop();});
   renderGrid();
@@ -693,7 +740,7 @@ function closeAppDialog(){
   document.getElementById('qlctDialog')?.remove();
 }
 
-function showAppDialog({title='',message='',actions=[]}={}){
+function showAppDialog({title='',message='',actions=[],cancelValue=undefined}={}){
   closeAppDialog();
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
@@ -706,6 +753,11 @@ function showAppDialog({title='',message='',actions=[]}={}){
       <div class="qlct-dialog-actions">${actionHtml}</div>
     </div>`;
     overlay.addEventListener('click',e=>{
+      if(e.target===overlay){
+        overlay.remove();
+        resolve(cancelValue);
+        return;
+      }
       const actionBtn=e.target.closest('[data-dialog-action]');
       if(!actionBtn)return;
       const action=actions[Number(actionBtn.dataset.dialogAction)];

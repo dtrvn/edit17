@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260824-background-gallery-b';
+const CACHE_NAME = 'qlct-pwa-v20260824-background-gallery-c';
 const APP_SHELL = [
   './',
   './index.html',
