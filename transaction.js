@@ -256,6 +256,15 @@
       .catch(console.error);
   };
   window.TXN_renderList=function(){renderList();};
+  window.TXN_upsertTransaction=function(raw){
+    const tx=normalizeTx(raw);
+    if(!tx.id||!tx.large||!tx.group||!tx.child)return;
+    const index=transactions.findIndex(item=>item.id===tx.id);
+    if(index>=0)transactions[index]=tx;
+    else transactions.unshift(tx);
+    document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));
+    renderList();
+  };
   window.TXN_showDate=function(date){
     const iso=dateValue(date);
     if(!iso)return;

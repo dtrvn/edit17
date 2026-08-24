@@ -1,7 +1,6 @@
 (function(){
   let monthOffset=0;
   let yearOffset=0;
-  let reportTransactions=[];
   const detailState={tab:'Thu nhập',mode:'month',monthKey:'',year:0};
   const childDetailState={large:'',child:'',mode:'year',monthKey:'',year:0,color:'#2563eb'};
   const pad=n=>String(n).padStart(2,'0');
@@ -59,25 +58,7 @@
     return Number(value||new Date().getFullYear())+delta;
   }
   function yearValue(offset){return addMonths(new Date(),offset*12).getFullYear();}
-  function amountOf(tx){
-    if(typeof tx?.amount==='number')return tx.amount;
-    return Number(String(firstValue(tx,['amount','so_tien','soTien','money','value','gia_tri','giaTri','SoTien','GiaTri'])||0).replace(/[^\d.-]/g,''))||0;
-  }
-  function normalizedReportTx(row){
-    return {
-      id:String(firstValue(row,['id','_docId','external_id'])||''),
-      date:normalizedDateValue(firstValue(row,['date','ngay','ngay_giao_dich','ngayGiaoDich','created_at','createdAt','Ngay','NgayGiaoDich'])),
-      large:String(firstValue(row,['loai_lon','large','loaiLon','loai','LoaiLon','Loai','typeName'])||'').trim(),
-      group:String(firstValue(row,['nhom_danh_muc','group','nhom','nhomDanhMuc','category','Nhom','NhomDanhMuc'])||'').trim(),
-      child:String(firstValue(row,['hang_muc_con','child','hangMuc','hangMucCon','ten','name','title','HangMuc','HangMucCon'])||'').trim(),
-      type:String(firstValue(row,['loai_giao_dich','type','kieu','loaiGiaoDich'])||'').trim(),
-      amount:amountOf(row),
-      note:String(firstValue(row,['ghi_chu','note','ghiChu','description','moTa','GhiChu'])||'').trim(),
-      createdAt:String(firstValue(row,['created_at','createdAt'])||'')
-    };
-  }
   function transactions(){
-    if(reportTransactions.length)return reportTransactions.slice();
     return typeof window.TXN_getTransactions==='function'?window.TXN_getTransactions():[];
   }
   function assets(){return typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets().assets:[];}
@@ -432,19 +413,10 @@
     if(detail?.classList.contains('active'))renderDetailScreen();
     if(child?.classList.contains('active'))renderChildDetailScreen();
   }
-  function subscribeReportTransactions(){
-    if(!window.FDB||!window.FIREBASE_COLLECTIONS?.giaoDich)return;
-    window.FDB.subscribe(window.FIREBASE_COLLECTIONS.giaoDich,data=>{
-      reportTransactions=(Array.isArray(data)?data:[]).map(normalizedReportTx).filter(x=>x.id&&x.large);
-      renderReport();
-      rerenderOpenDetails();
-    },console.error);
-  }
   window.REPORT72_render=renderReport;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderReport);else renderReport();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',subscribeReportTransactions);else subscribeReportTransactions();
   document.addEventListener('cat90:changed',renderReport);
-  document.addEventListener('txn16:changed',renderReport);
+  document.addEventListener('txn16:changed',()=>{renderReport();rerenderOpenDetails();});
   document.addEventListener('asset52:changed',renderReport);
   document.addEventListener('click',e=>{
     const nav=e.target.closest('[data-report-nav]');

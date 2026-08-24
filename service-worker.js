@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-skip-non-asset-sync-c';
+const CACHE_NAME = 'qlct-pwa-v20260825-fast-save-d';
 const APP_SHELL = [
   './',
   './index.html',

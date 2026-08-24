@@ -222,6 +222,13 @@ window.FDB=(function(){
         .set({...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
         .then(result=>loadCollection(name).then(()=>result));
     },
+    setNoRefresh(name,id,data){
+      const error=requireAuth();
+      if(error)return Promise.reject(error);
+      return collection(name)
+        .doc(id)
+        .set({...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    },
     remove(name,id){
       const error=requireAuth();
       if(error)return Promise.reject(error);
