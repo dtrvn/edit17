@@ -1,0 +1,836 @@
+/* demo29: clear hides dates, middle-align compact items, calendar icon polish */
+#screenTransactions,
+#screenTransactions input,
+#screenTransactions button,
+#screenTransactions textarea,
+.txn16-edit,
+.txn16-edit input,
+.txn16-edit button,
+.txn16-edit textarea{
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif!important;
+}
+#screenTransactions{padding:18px 18px 30px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
+#screenTransactions .slide-head{height:38px!important;margin-bottom:6px!important;}
+#screenTransactions .slide-title,.txn16-edit .slide-title{font-size:14px!important;font-weight:730!important;letter-spacing:-.02em!important;color:#0f172a!important;}
+#screenTransactions .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
+#screenTransactions .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.2!important;}
+#screenTransactions .slide-body{height:calc(100% - 44px)!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;padding:0!important;}
+#screenTransactions .txn16-filter{flex:0 0 auto!important;position:relative!important;z-index:9!important;background:linear-gradient(180deg,#f6fbff 0%,#f3f8fd 100%)!important;padding:6px 0 9px!important;margin:0!important;border-bottom:1px solid #e5edf6!important;}
+#screenTransactions .txn16-row{display:grid!important;gap:7px!important;margin-bottom:7px!important;}
+#screenTransactions .txn16-row.top{grid-template-columns:1fr 126px!important;}
+#screenTransactions .txn16-row.range{grid-template-columns:1fr 68px!important;}
+#screenTransactions .txn16-row.dates{grid-template-columns:1fr 1fr!important;}
+#screenTransactions .txn16-input,#screenTransactions .txn16-select,#screenTransactions .txn16-date{height:34px!important;border:1px solid #dce6f1!important;background:rgba(255,255,255,.94)!important;border-radius:13px!important;padding:0 10px!important;font-size:12px!important;font-weight:400!important;line-height:normal!important;color:#111827!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.75)!important;display:flex!important;align-items:center!important;outline:none!important;}
+#screenTransactions .txn16-input::placeholder{font-size:12px!important;font-weight:400!important;color:#8fa0ba!important;line-height:normal!important;}
+#screenTransactions .txn16-select,#screenTransactions .txn16-date{justify-content:space-between!important;text-align:left!important;cursor:pointer!important;}
+#screenTransactions .txn16-select span,#screenTransactions .txn16-date span{display:block!important;min-width:0!important;height:auto!important;line-height:1.25!important;margin:0!important;padding:1px 0 0 0!important;font-size:12px!important;font-weight:400!important;letter-spacing:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+#screenTransactions #txn16RangeText{line-height:1.25!important;padding-top:1px!important;}
+#screenTransactions .txn16-select svg{width:15px!important;height:15px!important;color:#64748b!important;flex:0 0 auto!important;align-self:center!important;transform:none!important;stroke-width:2!important;}
+#screenTransactions .txn16-clear{height:34px!important;border:0!important;border-radius:13px!important;background:#e5eeff!important;color:var(--primary)!important;font-size:11px!important;font-weight:760!important;cursor:pointer!important;}
+#screenTransactions .txn16-date.invalid{border-color:#ff5c78!important;background:#fff7f8!important;}
+/* Calendar icon: closer to sample, compact blue outline centered in soft square */
+#screenTransactions .txn16-cal-ico,.txn16-edit .txn16-cal-ico{width:28px!important;height:28px!important;border-radius:11px!important;background:#edf3ff!important;color:var(--primary)!important;display:grid!important;place-items:center!important;flex:0 0 auto!important;}
+#screenTransactions .txn16-cal-ico svg,.txn16-edit .txn16-cal-ico svg{width:15px!important;height:15px!important;stroke-width:2.4!important;display:block!important;overflow:visible!important;}
+#screenTransactions .txn16-error{display:none!important;margin:0 3px 1px!important;border:1px solid #f9a8b5!important;background:#fff1f2!important;color:#f43f5e!important;border-radius:12px!important;padding:7px 9px!important;font-size:10.8px!important;font-weight:760!important;}
+#screenTransactions .txn16-error.show{display:block!important;}
+#screenTransactions .txn16-total{
+  flex:0 0 auto!important;
+  min-height:22px!important;
+  margin:2px 0 0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  padding:0 2px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+}
+#screenTransactions .txn16-total b{
+  font-size:15px!important;
+  font-weight:500!important;
+  color:#020617!important;
+  white-space:nowrap!important;
+}
+#screenTransactions .txn16-total.positive b{color:#009446!important;}
+#screenTransactions .txn16-total.negative b{color:#ff2f37!important;}
+#screenTransactions .txn16-total.neutral b{color:#64748b!important;}
+#screenTransactions .txn16-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;padding:0 0 30px!important;}
+#screenTransactions .txn16-list section:first-child .txn16-day-label{margin-top:2px!important;}
+#screenTransactions .txn16-list::-webkit-scrollbar{display:none!important;}
+#screenTransactions .txn16-list section:last-child{margin-bottom:30px!important;}
+#screenTransactions .txn16-day-label{font-size:10.8px!important;font-weight:600!important;line-height:1.25!important;color:#5f7086!important;margin:10px 2px 7px!important;}
+#screenTransactions .txn16-group{border-radius:18px!important;background:rgba(255,255,255,.94)!important;border:1px solid #dfe9f3!important;box-shadow:0 9px 20px rgba(15,23,42,.05)!important;overflow:hidden!important;}
+/* Compact item with vertical middle aligned content */
+#screenTransactions .txn16-item{display:grid!important;grid-template-columns:33px minmax(0,1fr) auto!important;grid-template-rows:16px 16px!important;column-gap:8px!important;row-gap:1px!important;min-height:49px!important;width:100%!important;padding:6px 9px!important;border:0!important;border-bottom:1px solid #e7edf5!important;background:transparent!important;text-align:left!important;cursor:pointer!important;align-items:center!important;align-content:center!important;}
+#screenTransactions .txn16-item:last-child{border-bottom:0!important;}
+#screenTransactions .txn16-icon{grid-column:1!important;grid-row:1/3!important;align-self:center!important;width:27px!important;height:27px!important;border-radius:12px!important;display:grid!important;place-items:center!important;font-size:13px!important;font-weight:900!important;}
+#screenTransactions .txn16-item > span:nth-child(2){display:contents!important;}
+#screenTransactions .txn16-title{grid-column:2 / 4!important;grid-row:1!important;min-width:0!important;font-size:12.5px!important;font-weight:700!important;line-height:16px!important;height:16px!important;margin:0!important;letter-spacing:-.01em!important;color:#020617!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;align-self:end!important;}
+#screenTransactions .txn16-note{grid-column:2!important;grid-row:2!important;min-width:0!important;font-size:10.7px!important;font-weight:400!important;line-height:16px!important;height:16px!important;margin:0!important;letter-spacing:0!important;color:#5f6f8a!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;align-self:start!important;}
+#screenTransactions .txn16-amount{grid-column:3!important;grid-row:2!important;align-self:start!important;justify-self:end!important;margin:0!important;padding:0!important;font-size:10.8px!important;font-weight:700!important;line-height:16px!important;height:16px!important;letter-spacing:0!important;white-space:nowrap!important;}
+#screenTransactions .txn16-in .txn16-icon{background:#e8fbf1!important;color:#00a84f!important;}
+#screenTransactions .txn16-out .txn16-icon{background:#fff1f2!important;color:#ff3b45!important;}
+#screenTransactions .txn16-invest .txn16-icon{background:#f3edff!important;color:#7c4dff!important;}
+#screenTransactions .txn16-in .txn16-amount{color:#009446!important;}
+#screenTransactions .txn16-out .txn16-amount{color:#ff2f37!important;}
+#screenTransactions .txn16-invest .txn16-amount{color:#7c4dff!important;}
+.txn16-edit{position:absolute!important;inset:0!important;z-index:70!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;transform:translateX(100%)!important;transition:transform .32s cubic-bezier(.22,.61,.36,1), visibility .32s ease!important;visibility:hidden!important;pointer-events:none!important;overflow:hidden!important;padding:18px 18px 30px!important;}
+.txn16-edit.active{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;}
+.txn16-edit.closing-left-to-right{transform:translateX(100%)!important;visibility:visible!important;pointer-events:none!important;}
+.txn16-edit .slide-head{height:38px!important;margin-bottom:6px!important;}
+.txn16-edit .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
+.txn16-edit .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.2!important;}
+.txn16-edit-body{height:calc(100% - 44px)!important;overflow:auto!important;padding-bottom:30px!important;scrollbar-width:none!important;}
+.txn16-edit-body::-webkit-scrollbar{display:none!important;}
+.txn16-edit-card{border-radius:20px!important;background:rgba(255,255,255,.86)!important;border:1px solid #dfe9f3!important;box-shadow:0 14px 28px rgba(15,23,42,.055)!important;padding:13px 12px!important;}
+.txn16-edit-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
+.txn16-field{display:grid!important;gap:5px!important;}
+.txn16-field.full{grid-column:1/-1!important;}
+.txn16-edit .txn16-asset-block{
+  grid-column:1/-1!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  border:1px solid #dbe8f5!important;
+  background:#f8fbff!important;
+  border-radius:16px!important;
+  padding:10px!important;
+}
+.txn16-edit .txn16-asset-title{
+  grid-column:1/-1!important;
+  font-size:11px!important;
+  font-weight:760!important;
+  color:#2457ff!important;
+}
+.txn16-edit .txn16-asset-block .full{grid-column:1/-1!important;}
+.txn16-label-row{display:flex!important;align-items:center!important;justify-content:space-between!important;}
+.txn16-label{font-size:10.5px!important;font-weight:720!important;color:#53657a!important;}
+.txn16-preview{font-size:10.8px!important;font-weight:760!important;color:#53657a!important;}
+.txn16-control,.txn16-money-input,.txn16-note-input{border:1px solid #dce6f1!important;border-radius:14px!important;background:#fff!important;padding:0 10px!important;font-size:12.5px!important;font-weight:500!important;color:#0f172a!important;outline:none!important;}
+.txn16-control{height:39px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;overflow:hidden!important;}
+.txn16-control > svg{width:15px!important;height:15px!important;min-width:15px!important;stroke-width:2!important;color:#64748b!important;flex:0 0 auto!important;display:block!important;}
+.txn16-money-input{height:39px!important;}
+.txn16-note-input{height:68px!important;padding:10px!important;resize:none!important;}
+.txn16-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:12px!important;}
+.txn16-delete,.txn16-save{height:39px!important;border-radius:14px!important;font-size:12px!important;font-weight:800!important;}
+.txn16-delete{border:1px solid #ffb8c5!important;background:#fff1f2!important;color:#e11d48!important;}
+.txn16-save{border:0!important;background:linear-gradient(135deg,var(--primary),var(--primary2))!important;color:#fff!important;}
+.txn16-backdrop{position:absolute!important;inset:0!important;z-index:190!important;background:rgba(15,23,42,.32)!important;opacity:0!important;pointer-events:none!important;transition:opacity .22s ease!important;}
+.txn16-backdrop.show{opacity:1!important;pointer-events:auto!important;}
+.txn16-sheet{position:absolute!important;left:18px!important;right:18px!important;bottom:0!important;z-index:200!important;width:auto!important;max-width:none!important;max-height:78%!important;overflow:auto!important;background:rgba(255,255,255,.98)!important;border-radius:22px 22px 0 0!important;box-shadow:0 -18px 44px rgba(15,23,42,.18)!important;padding:8px 28px calc(18px + env(safe-area-inset-bottom))!important;transform:translateY(110%)!important;transition:transform .28s cubic-bezier(.22,.61,.36,1)!important;pointer-events:none!important;}
+.txn16-sheet.show{transform:translateY(0)!important;pointer-events:auto!important;}
+.txn16-handle{width:38px!important;height:4px!important;border-radius:999px!important;background:#b8c3d2!important;margin:5px auto 13px!important;}
+.txn16-sheet-title{text-align:center!important;font-size:13px!important;font-weight:760!important;color:#0f172a!important;margin-bottom:9px!important;}
+.txn16-option{height:48px!important;width:100%!important;border:0!important;background:transparent!important;display:grid!important;grid-template-columns:1fr 28px!important;align-items:center!important;text-align:left!important;padding:0 8px!important;font-size:13px!important;font-weight:650!important;color:#0f172a!important;cursor:pointer!important;}
+.txn16-option.active{color:var(--primary)!important;}
+.txn16-check{font-size:19px!important;text-align:center!important;color:var(--primary)!important;}
+.txn16-cal-head{display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;margin-bottom:6px!important;}
+.txn16-cal-head button{width:34px!important;height:34px!important;border:0!important;border-radius:14px!important;background:#eef5ff!important;color:var(--primary)!important;font-size:20px!important;font-weight:800!important;}
+.txn16-cal-title{text-align:center!important;font-size:13px!important;font-weight:760!important;}
+.txn16-week{display:grid!important;grid-template-columns:repeat(7,1fr)!important;text-align:center!important;font-size:10px!important;font-weight:760!important;color:#8a97aa!important;margin-bottom:5px!important;}
+.txn16-cal-grid{display:grid!important;grid-template-columns:repeat(7,1fr)!important;gap:5px!important;}
+.txn16-day{height:34px!important;border:0!important;border-radius:11px!important;background:#f7fbff!important;color:#111827!important;font-size:12px!important;font-weight:760!important;}
+.txn16-day.muted{color:#bdc7d4!important;}
+.txn16-day.selected{background:linear-gradient(135deg,var(--primary),var(--primary2))!important;color:#fff!important;}
+.txn16-month-grid,
+.txn16-year-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,1fr)!important;
+  gap:7px!important;
+  padding:4px 0 2px!important;
+}
+.txn16-month-pick,
+.txn16-year-pick{
+  height:42px!important;
+  border:0!important;
+  border-radius:13px!important;
+  background:#f7fbff!important;
+  color:#0f172a!important;
+  font-size:12px!important;
+  font-weight:680!important;
+  cursor:pointer!important;
+}
+.txn16-month-pick.selected,
+.txn16-year-pick.selected{
+  background:linear-gradient(135deg,var(--primary),var(--primary2))!important;
+  color:#fff!important;
+}
+#screenTransactions .txn16-date span,
+.txn16-edit .txn16-control[data-edit-date]{
+  font-weight:400!important;
+}
+@media(max-width:430px){#screenTransactions,.txn16-edit{padding-left:17px!important;padding-right:17px!important;}.txn16-sheet{left:17px!important;right:17px!important;width:auto!important;padding-left:28px!important;padding-right:28px!important;}}
+
+/* demo32: targeted fixes only */
+#screenTransactions:not(.is-custom-range) #txn16Dates{display:none!important;}
+#screenTransactions.is-custom-range #txn16Dates{display:grid!important;}
+#screenTransactions .txn16-item{min-height:48px!important;padding-top:5px!important;padding-bottom:5px!important;grid-template-rows:16px 16px!important;row-gap:1px!important;align-content:center!important;}
+#screenTransactions .txn16-title{line-height:16px!important;height:16px!important;}
+#screenTransactions .txn16-note{line-height:16px!important;height:16px!important;}
+#screenTransactions .txn16-amount{line-height:16px!important;height:16px!important;}
+/* Calendar icon made with CSS to match sample: blue rounded calendar inside pale rounded square */
+#screenTransactions .txn16-cal-ico,.txn16-edit .txn16-cal-ico{position:relative!important;width:28px!important;height:28px!important;border-radius:11px!important;background:#edf3ff!important;color:var(--primary)!important;display:grid!important;place-items:center!important;flex:0 0 auto!important;}
+#screenTransactions .txn16-cal-ico svg,.txn16-edit .txn16-cal-ico svg{display:none!important;}
+#screenTransactions .txn16-cal-ico::before,.txn16-edit .txn16-cal-ico::before{content:"";position:absolute;left:7px;top:7px;width:14px;height:14px;border:2px solid currentColor;border-radius:2.5px;box-sizing:border-box;}
+#screenTransactions .txn16-cal-ico::after,.txn16-edit .txn16-cal-ico::after{content:"";position:absolute;left:9px;top:11px;width:10px;height:2px;background:currentColor;border-radius:2px;box-shadow:-1px -4px 0 -0.4px currentColor,8px -4px 0 -0.4px currentColor;}
+
+/* demo33: calendar icons restored using SVG, no pseudo icon */
+#screenTransactions .txn16-cal-ico,
+.txn16-edit .txn16-cal-ico{
+  position:static!important;
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  border-radius:11px!important;
+  background:#edf3ff!important;
+  color:#2563eb!important;
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 auto!important;
+}
+#screenTransactions .txn16-cal-ico::before,
+#screenTransactions .txn16-cal-ico::after,
+.txn16-edit .txn16-cal-ico::before,
+.txn16-edit .txn16-cal-ico::after{
+  content:none!important;
+  display:none!important;
+}
+#screenTransactions .txn16-cal-ico svg,
+.txn16-edit .txn16-cal-ico svg{
+  display:block!important;
+  width:15px!important;
+  height:15px!important;
+  stroke:#2563eb!important;
+  stroke-width:2.2!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  fill:none!important;
+  overflow:visible!important;
+}
+
+/* demo35: force calendar icon style on transaction date fields to match edit-screen sample */
+#screenTransactions .txn16-date .txn16-cal-ico,
+.txn16-edit .txn16-control .txn16-cal-ico{
+  position:relative!important;
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  border-radius:11px!important;
+  background:#edf3ff!important;
+  color:#2563eb!important;
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 auto!important;
+  margin-left:8px!important;
+}
+#screenTransactions .txn16-date .txn16-cal-ico::before,
+#screenTransactions .txn16-date .txn16-cal-ico::after,
+.txn16-edit .txn16-control .txn16-cal-ico::before,
+.txn16-edit .txn16-control .txn16-cal-ico::after{
+  content:none!important;
+  display:none!important;
+}
+#screenTransactions .txn16-date .txn16-cal-ico svg,
+.txn16-edit .txn16-control .txn16-cal-ico svg{
+  display:block!important;
+  width:17px!important;
+  height:17px!important;
+  stroke:#2563eb!important;
+  stroke-width:2.35!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  fill:none!important;
+  overflow:visible!important;
+}
+
+/* demo43: transaction screen font correction only */
+#screenTransactions,
+#screenTransactions input,
+#screenTransactions button{
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:auto!important;
+}
+#screenTransactions .slide-title{
+  font-size:14px!important;
+  font-weight:700!important;
+  letter-spacing:-.018em!important;
+  color:#0f172a!important;
+}
+#screenTransactions .txn16-input,
+#screenTransactions .txn16-select,
+#screenTransactions .txn16-date,
+#screenTransactions .txn16-select span,
+#screenTransactions .txn16-date span{
+  font-size:12px!important;
+  font-weight:560!important;
+  letter-spacing:-.004em!important;
+  color:#0f172a!important;
+}
+#screenTransactions .txn16-input::placeholder{
+  font-size:12px!important;
+  font-weight:420!important;
+  color:#8fa0ba!important;
+}
+#screenTransactions .txn16-day-label{
+  font-size:10.8px!important;
+  font-weight:640!important;
+  color:#5f7086!important;
+  letter-spacing:-.004em!important;
+}
+#screenTransactions .txn16-title{
+  font-size:12.4px!important;
+  font-weight:720!important;
+  letter-spacing:-.012em!important;
+  color:#020617!important;
+}
+#screenTransactions .txn16-note{
+  font-size:10.7px!important;
+  font-weight:450!important;
+  letter-spacing:-.003em!important;
+  color:#5f6f8a!important;
+}
+#screenTransactions .txn16-amount{
+  font-size:10.8px!important;
+  font-weight:720!important;
+  letter-spacing:-.006em!important;
+}
+#screenTransactions .txn16-clear{
+  font-size:11px!important;
+  font-weight:720!important;
+  letter-spacing:-.006em!important;
+}
+.txn16-sheet .txn16-sheet-title{
+  font-size:13px!important;
+  font-weight:740!important;
+  letter-spacing:-.01em!important;
+}
+.txn16-sheet .txn16-option{
+  font-size:13px!important;
+  font-weight:620!important;
+  letter-spacing:-.008em!important;
+}
+.txn16-sheet .txn16-option.active{
+  font-weight:720!important;
+}
+
+/* demo44: fix actual note text rendering, not combobox weight */
+#screenTransactions .txn16-note,
+#screenTransactions .txn16-title,
+#screenTransactions .txn16-amount,
+#screenTransactions .txn16-input,
+#screenTransactions .txn16-select,
+#screenTransactions .txn16-date,
+#screenTransactions .txn16-select span,
+#screenTransactions .txn16-date span,
+.txn16-edit .txn16-note-input,
+.txn16-edit .txn16-money-input,
+.txn16-edit .txn16-control,
+#screenTxnForm textarea,
+#screenTxnForm input,
+#screenTxnForm button,
+#screenTxnForm .add39-note,
+#screenTxnForm .add39-input,
+#screenTxnForm .add39-control,
+#screenTxnForm .add39-control span{
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Arial,sans-serif!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:auto!important;
+}
+/* The visible issue is the ghi chú text looking like monospace. Force it back to the app font. */
+.txn16-edit .txn16-note-input,
+#screenTxnForm .add39-note,
+#screenTxnForm textarea{
+  font-size:13px!important;
+  font-weight:440!important;
+  line-height:1.28!important;
+  letter-spacing:-.006em!important;
+  color:#0f172a!important;
+}
+#screenTransactions .txn16-note{
+  font-size:10.7px!important;
+  font-weight:450!important;
+  line-height:16px!important;
+  letter-spacing:-.004em!important;
+  color:#5f6f8a!important;
+}
+#screenTransactions .txn16-title{
+  font-weight:710!important;
+  letter-spacing:-.012em!important;
+}
+#screenTransactions .txn16-amount{
+  font-weight:710!important;
+  letter-spacing:-.006em!important;
+}
+
+/* demo45: fix text color and combobox list font; prevent child field clipping */
+:root{--ux-text-main:#020617;--ux-text-control:#071225;--ux-text-muted:#53657a;--ux-sheet-text:#030712;--ux-option-blue:#2457ff;}
+/* Add transaction controls */
+#screenTxnForm .add39-label{color:var(--ux-text-muted)!important;font-weight:650!important;}
+#screenTxnForm .add39-control,
+#screenTxnForm .add39-input,
+#screenTxnForm .add39-note{color:var(--ux-text-control)!important;font-weight:500!important;}
+#screenTxnForm .add39-control{height:40px!important;line-height:40px!important;overflow:hidden!important;}
+#screenTxnForm .add39-control span{color:var(--ux-text-control)!important;font-size:13px!important;font-weight:500!important;line-height:1.25!important;padding-top:1px!important;letter-spacing:-.006em!important;}
+#screenTxnForm .add39-field.cat-row .add39-control{height:42px!important;line-height:42px!important;}
+#screenTxnForm .add39-field.cat-row .add39-control span{line-height:1.25!important;padding-top:0!important;}
+#screenTxnForm .add39-note{font-size:13px!important;line-height:1.32!important;color:var(--ux-text-control)!important;}
+#screenTxnForm .add39-money-preview{color:var(--ux-text-muted)!important;font-weight:660!important;}
+#screenTxnForm .add39-asset-block{
+  grid-column:1/-1!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  border:1px solid #dbe8f5!important;
+  background:#f8fbff!important;
+  border-radius:16px!important;
+  padding:10px!important;
+}
+#screenTxnForm .add39-asset-title{
+  grid-column:1/-1!important;
+  font-size:11px!important;
+  font-weight:760!important;
+  color:#2457ff!important;
+}
+#screenTxnForm .add39-asset-block .full{grid-column:1/-1!important;}
+/* Bottom sheet combobox list for add screen */
+.add39-sheet .add39-sheet-title{color:#020617!important;font-size:13.4px!important;font-weight:760!important;letter-spacing:-.012em!important;}
+.add39-sheet .add39-option{color:var(--ux-sheet-text)!important;font-size:13.4px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
+.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.2!important;}
+.add39-sheet .add39-option.active{color:var(--ux-option-blue)!important;font-weight:760!important;}
+.add39-sheet .add39-check{color:var(--ux-option-blue)!important;font-size:19px!important;font-weight:650!important;}
+/* Transaction screen + transaction bottom sheet text colors */
+#screenTransactions .txn16-title{color:#020617!important;}
+#screenTransactions .txn16-note{color:#64748b!important;}
+#screenTransactions .txn16-input,
+#screenTransactions .txn16-select span,
+#screenTransactions .txn16-date span{color:var(--ux-text-control)!important;}
+.txn16-sheet .txn16-sheet-title{color:#020617!important;font-weight:760!important;}
+.txn16-sheet .txn16-option{color:var(--ux-sheet-text)!important;font-weight:620!important;}
+.txn16-sheet .txn16-option.active{color:var(--ux-option-blue)!important;font-weight:760!important;}
+.txn16-sheet .txn16-check{color:var(--ux-option-blue)!important;font-weight:650!important;}
+
+/* demo46: fix Hạng mục con clipped text */
+#screenTxnForm .add39-field.cat-row .add39-control{
+  height:44px!important;
+  line-height:44px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  align-items:center!important;
+}
+#screenTxnForm .add39-field.cat-row .add39-control span{
+  display:block!important;
+  height:auto!important;
+  line-height:1.28!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#screenTxnForm .add39-field.cat-row{
+  gap:6px!important;
+}
+
+/* demo47: final fixes for child field clipping */
+#screenTxnForm .add39-field.cat-row .add39-control{
+  height:46px!important;
+  min-height:46px!important;
+  line-height:46px!important;
+  padding:0 10px!important;
+  display:flex!important;
+  align-items:center!important;
+  overflow:visible!important;
+}
+#screenTxnForm .add39-field.cat-row .add39-control span{
+  display:block!important;
+  height:auto!important;
+  max-height:none!important;
+  line-height:1.35!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#071225!important;
+}
+#screenTxnForm .add39-field.cat-row{gap:6px!important;}
+
+/* 20260820: transaction item balance and fixed add form */
+#screenTxnForm{
+  inset:0!important;
+  height:var(--app-vh,100dvh)!important;
+  max-height:var(--app-vh,100dvh)!important;
+  overflow:hidden!important;
+  padding-bottom:10px!important;
+}
+#screenTxnForm .slide-body{
+  height:calc(var(--app-vh,100dvh) - 52px)!important;
+  max-height:calc(var(--app-vh,100dvh) - 52px)!important;
+  overflow:auto!important;
+  padding-bottom:calc(132px + env(safe-area-inset-bottom))!important;
+}
+#screenTxnForm .demo-card{
+  min-height:calc(100% - 132px)!important;
+  overflow:visible!important;
+  margin-bottom:calc(112px + env(safe-area-inset-bottom))!important;
+}
+#screenTxnForm .add39-form{
+  align-content:start!important;
+}
+#screenTransactions .txn16-title{
+  grid-column:2 / 4!important;
+  grid-row:1!important;
+}
+#screenTransactions .txn16-amount{
+  grid-column:3!important;
+  grid-row:2!important;
+  align-self:start!important;
+  justify-self:end!important;
+}
+#screenTransactions .txn16-balance{
+  display:none!important;
+}
+
+/* Keep add transaction as a fixed full-screen overlay above the dock */
+#phone #screenTxnForm.slide-screen{
+  position:absolute!important;
+  inset:0!important;
+  z-index:120!important;
+  height:100%!important;
+  min-height:100%!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+}
+#phone #screenTxnForm.slide-screen.active{
+  pointer-events:auto!important;
+}
+#phone #screenTxnForm .slide-body{
+  height:calc(100% - 44px)!important;
+  max-height:calc(100% - 44px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-bottom:calc(154px + env(safe-area-inset-bottom))!important;
+}
+#phone #screenTxnForm .demo-card{
+  margin-bottom:calc(134px + env(safe-area-inset-bottom))!important;
+}
+#phone #screenTxnForm .add39-actions{
+  position:relative!important;
+  z-index:2!important;
+}
+
+/* Align add transaction sizing with edit transaction screen */
+#screenTxnForm{
+  padding:18px 18px 30px!important;
+  background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;
+}
+#screenTxnForm .slide-head{
+  height:38px!important;
+  margin-bottom:6px!important;
+}
+#screenTxnForm .slide-title{
+  font-size:14px!important;
+  font-weight:730!important;
+  letter-spacing:-.02em!important;
+  color:#0f172a!important;
+}
+#screenTxnForm .slide-back{
+  width:31px!important;
+  height:31px!important;
+  border-radius:13px!important;
+}
+#screenTxnForm .slide-back svg{
+  width:16px!important;
+  height:16px!important;
+  stroke-width:2.2!important;
+}
+#screenTxnForm .slide-body{
+  height:calc(100% - 44px)!important;
+  overflow:auto!important;
+  padding:0 0 calc(132px + env(safe-area-inset-bottom))!important;
+  scrollbar-width:none!important;
+}
+#screenTxnForm .slide-body::-webkit-scrollbar{display:none!important;}
+#screenTxnForm .demo-card{
+  border-radius:20px!important;
+  background:rgba(255,255,255,.86)!important;
+  border:1px solid #dfe9f3!important;
+  box-shadow:0 14px 28px rgba(15,23,42,.055)!important;
+  padding:13px 12px!important;
+  margin:0 0 calc(112px + env(safe-area-inset-bottom))!important;
+}
+#screenTxnForm .add39-form{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+}
+#screenTxnForm .add39-field{
+  display:grid!important;
+  gap:5px!important;
+}
+#screenTxnForm .add39-label{
+  font-size:10.5px!important;
+  font-weight:720!important;
+}
+#screenTxnForm .add39-control,
+#screenTxnForm .add39-input,
+#screenTxnForm .add39-note{
+  border-radius:14px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  font-size:12.5px!important;
+}
+#screenTxnForm .add39-control,
+#screenTxnForm .add39-input{
+  height:39px!important;
+  min-height:39px!important;
+  line-height:39px!important;
+}
+#screenTxnForm .add39-field.cat-row .add39-control{
+  height:39px!important;
+  min-height:39px!important;
+  line-height:39px!important;
+  overflow:hidden!important;
+}
+#screenTxnForm .add39-control span,
+#screenTxnForm .add39-field.cat-row .add39-control span{
+  font-size:12.5px!important;
+  line-height:1.25!important;
+  padding-top:1px!important;
+}
+#screenTxnForm .add39-note{
+  height:68px!important;
+  padding:10px!important;
+}
+#screenTxnForm .add39-actions{
+  gap:8px!important;
+  margin-top:10px!important;
+}
+#screenTxnForm .add39-cancel,
+#screenTxnForm .add39-save{
+  height:36px!important;
+  min-height:36px!important;
+  border-radius:13px!important;
+  font-size:11.8px!important;
+  font-weight:760!important;
+  line-height:36px!important;
+  padding:0 10px!important;
+}
+
+/* demo49: edit transaction buttons height adjusted */
+.txn16-edit .txn16-actions{
+  gap:8px!important;
+  margin-top:10px!important;
+}
+.txn16-edit .txn16-delete,
+.txn16-edit .txn16-save{
+  height:36px!important;
+  min-height:36px!important;
+  border-radius:13px!important;
+  font-size:11.8px!important;
+  font-weight:760!important;
+  line-height:36px!important;
+  padding:0 10px!important;
+}
+
+/* demo50: remove bold style from transaction header filter values */
+#screenTransactions #txn16TypeText,
+#screenTransactions #txn16RangeText{
+  font-weight:400!important;
+  color:#0f172a!important;
+  letter-spacing:-.004em!important;
+}
+#screenTransactions .txn16-select[data-type-sheet],
+#screenTransactions .txn16-select[data-range-sheet]{
+  font-weight:400!important;
+}
+
+/* demo51: edit screen category fields as separate full rows */
+.txn16-edit .txn16-field.edit-row{
+  grid-column:1/-1!important;
+}
+.txn16-edit .txn16-field.edit-row .txn16-control{
+  width:100%!important;
+}
+
+/* calendar picker final overrides */
+#screenTransactions .txn16-date span,
+.txn16-edit .txn16-control[data-edit-date]{
+  font-weight:400!important;
+}
+.txn16-cal-title{
+  width:auto!important;
+  min-width:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#0f172a!important;
+  cursor:pointer!important;
+}
+.txn16-cal-head .txn16-cal-title{
+  width:100%!important;
+  height:34px!important;
+  min-width:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#0f172a!important;
+  cursor:pointer!important;
+  display:block!important;
+  padding:0!important;
+  font-size:13px!important;
+  font-weight:740!important;
+  line-height:34px!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* final: keep add transaction locked inside the app frame without breaking pickers */
+#phone #screenTxnForm.slide-screen{
+  position:absolute!important;
+  top:0!important;
+  bottom:0!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+  max-height:100%!important;
+  z-index:120!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+}
+#phone #screenTxnForm.slide-screen:not(.active){
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#phone #screenTxnForm.slide-screen.active{
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+#phone #screenTxnForm .slide-body{
+  height:calc(100% - 44px)!important;
+  max-height:calc(100% - 44px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-bottom:calc(132px + env(safe-area-inset-bottom))!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+#phone #screenTxnForm .demo-card{
+  margin-bottom:calc(112px + env(safe-area-inset-bottom))!important;
+}
+#phone #screenTxnForm .add39-actions{
+  position:relative!important;
+  bottom:auto!important;
+  z-index:2!important;
+  padding:0!important;
+  background:transparent!important;
+}
+#screenTxnForm .add39-backdrop{
+  z-index:360!important;
+}
+#screenTxnForm .add39-sheet{
+  z-index:370!important;
+}
+#screenTxnForm .add39-sheet.show{
+  pointer-events:auto!important;
+}
+
+/* final: no vertical dragging on add transaction screen */
+#phone #screenTxnForm.slide-screen{
+  touch-action:none!important;
+}
+#phone #screenTxnForm.slide-screen.active{
+  touch-action:none!important;
+}
+#phone #screenTxnForm .slide-body{
+  overflow:hidden!important;
+  padding-bottom:0!important;
+  touch-action:none!important;
+}
+#phone #screenTxnForm .demo-card{
+  height:calc(100% - 2px)!important;
+  min-height:0!important;
+  margin-bottom:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+#phone #screenTxnForm .add39-form{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:100%!important;
+  align-content:start!important;
+  gap:7px!important;
+}
+#phone #screenTxnForm .add39-asset-block{
+  gap:7px!important;
+}
+#phone #screenTxnForm .add39-note{
+  height:54px!important;
+  min-height:54px!important;
+}
+#phone #screenTxnForm .add39-actions{
+  grid-column:1/-1!important;
+  align-self:end!important;
+  margin-top:auto!important;
+}
+#screenTxnForm .add39-sheet,
+#screenTxnForm .add39-sheet *{
+  touch-action:manipulation!important;
+}
+
+/* final: lock edit transaction screen vertically */
+#phone .txn16-edit{
+  touch-action:none!important;
+  overscroll-behavior:none!important;
+}
+#phone .txn16-edit.active{
+  touch-action:none!important;
+}
+#phone .txn16-edit-body{
+  overflow:hidden!important;
+  padding-bottom:0!important;
+  touch-action:none!important;
+}
+#phone .txn16-edit-card{
+  height:calc(100% - 2px)!important;
+  min-height:0!important;
+  margin-bottom:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+#phone .txn16-edit-grid{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:100%!important;
+  align-content:start!important;
+  gap:7px!important;
+}
+#phone .txn16-edit .txn16-asset-block{
+  gap:7px!important;
+}
+#phone .txn16-edit .txn16-note-input{
+  height:54px!important;
+  min-height:54px!important;
+}
+#phone .txn16-edit .txn16-actions{
+  margin-top:auto!important;
+}
+#phone .txn16-sheet,
+#phone .txn16-sheet *{
+  touch-action:manipulation!important;
+}
