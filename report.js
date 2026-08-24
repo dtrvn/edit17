@@ -81,31 +81,24 @@
   function incomeLargeNames(){return ['Thu nhập','Thu hồi tài sản','Thu hồi'];}
   function expenseLargeNames(){return ['Chi tiêu','Đầu tư'];}
   function tabLargeNames(tab){return tab==='Chi tiêu'?expenseLargeNames():incomeLargeNames();}
-  function transactionKind(tx){
-    const typeValue=firstValue(tx,['type','loai_giao_dich']);
-    const type=String(typeValue||'').toUpperCase();
-    const typeText=plainText(typeValue);
-    const large=plainText(largeOf(tx));
-    if(type==='INCOME'||typeText.includes('thu nhap')||large.includes('thu nhap'))return 'income';
-    if(type==='DIVEST'||type==='SELL'||typeText.includes('thu hoi')||large.includes('thu hoi'))return 'income';
-    if(type==='INVEST'||type==='BUY'||typeText.includes('dau tu')||large.includes('dau tu'))return 'expense';
-    if(type==='EXPENSE'||typeText.includes('chi tieu')||large.includes('chi tieu'))return 'expense';
-    return '';
+  function normalizedLargeOf(tx){
+    return plainText(firstValue(tx,['loai_lon','large'])||largeOf(tx));
   }
-  function largeNamesKind(largeNames){
-    return (largeNames||[]).some(name=>{
-      const text=plainText(name);
-      return text.includes('chi tieu')||text.includes('dau tu');
-    })?'expense':'income';
+  function isIncomeLarge(tx){
+    const large=normalizedLargeOf(tx);
+    return large.includes('thu nhap')||large.includes('thu hoi');
   }
-  function matchesLargeNames(tx,largeNames){
-    largeNames=Array.isArray(largeNames)?largeNames:[largeNames];
-    if(largeNames.includes(largeOf(tx)))return true;
-    return transactionKind(tx)===largeNamesKind(largeNames);
+  function isExpenseLarge(tx){
+    const large=normalizedLargeOf(tx);
+    return large.includes('chi tieu')||large.includes('dau tu');
+  }
+  function matchesReportTab(tx,tab){
+    return tab==='Chi tiêu'?isExpenseLarge(tx):isIncomeLarge(tx);
   }
   function byGroup(rows,largeNames){
     const totals={};
-    rows.filter(x=>matchesLargeNames(x,largeNames)).forEach(x=>{const key=x.group||x.child||largeOf(x);totals[key]=(totals[key]||0)+Number(x.amount||0);});
+    const tab=(largeNames||[]).some(name=>isExpenseLarge({loai_lon:name}))?'Chi tiêu':'Thu nhập';
+    rows.filter(x=>matchesReportTab(x,tab)).forEach(x=>{const key=x.group||x.child||largeOf(x);totals[key]=(totals[key]||0)+Number(x.amount||0);});
     return Object.entries(totals).map(([name,value],i)=>({name,value,color:colors[i%colors.length]})).sort((a,b)=>b.value-a.value);
   }
   function monthlySummary(){
@@ -121,8 +114,8 @@
     return Array.from({length:12},(_,i)=>{
       const m=String(i+1).padStart(2,'0');
       const rows=transactions().filter(x=>transactionPeriodKey(x,'month')===`${year}-${m}`);
-      const income=rows.filter(x=>matchesLargeNames(x,incomeLargeNames())).reduce((s,x)=>s+Number(x.amount||0),0);
-      const expense=rows.filter(x=>matchesLargeNames(x,expenseLargeNames())).reduce((s,x)=>s+Number(x.amount||0),0);
+      const income=rows.filter(x=>matchesReportTab(x,'Thu nhập')).reduce((s,x)=>s+Number(x.amount||0),0);
+      const expense=rows.filter(x=>matchesReportTab(x,'Chi tiêu')).reduce((s,x)=>s+Number(x.amount||0),0);
       return {m:'T'+(i+1),income,expense};
     });
   }
@@ -184,7 +177,7 @@
     const key=isYear?String(detailState.year||yearValue(yearOffset)):detailState.monthKey||monthKey(monthOffset);
     const rows=transactions().filter(x=>{
       const dateKey=transactionPeriodKey(x,isYear?'year':'month');
-      return dateKey===key&&matchesLargeNames(x,largeNames);
+      return dateKey===key&&matchesReportTab(x,detailState.tab);
     });
     const totals={};
     rows.forEach(x=>{
@@ -283,7 +276,7 @@
     const large=childDetailState.large;
     const largeNames=tabLargeNames(large);
     const child=childDetailState.child;
-    const rows=transactions().filter(x=>transactionPeriodKey(x,mode)===periodKey&&matchesLargeNames(x,largeNames)&&(x.child||x.group||largeOf(x))===child);
+    const rows=transactions().filter(x=>transactionPeriodKey(x,mode)===periodKey&&matchesReportTab(x,large)&&(x.child||x.group||largeOf(x))===child);
     const months=Array.from({length:12},(_,i)=>{
       const key=`${year}-${pad(i+1)}`;
       const value=rows.filter(x=>transactionPeriodKey(x,'month')===key).reduce((sum,x)=>sum+Number(x.amount||0),0);

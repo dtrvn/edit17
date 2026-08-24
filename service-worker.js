@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-local-date-b';
+const CACHE_NAME = 'qlct-pwa-v20260825-large-month-map-c';
 const APP_SHELL = [
   './',
   './index.html',
