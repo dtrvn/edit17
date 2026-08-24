@@ -6,7 +6,11 @@ const appLoader=document.getElementById('appLoader');
 const appLoaderTitle=document.getElementById('appLoaderTitle');
 const appLoaderText=document.getElementById('appLoaderText');
 const appLoaderLogin=document.getElementById('appLoaderLogin');
-const themes=['','theme-violet','theme-emerald','theme-rose'];
+const themes=['','theme-violet','theme-emerald','theme-rose','theme-cyan','theme-amber','theme-indigo','theme-teal','theme-slate','theme-pink'];
+const presetBackgrounds=[
+  // Đặt ảnh có sẵn vào thư mục images rồi thêm tên file vào danh sách này.
+  // Ví dụ: {name:'Xanh dịu',src:'images/xanh-diu.jpg'}
+];
 const faceIdKey='qlctFaceIdCredentialId';
 let appDataReady=false;
 let appUnlocked=false;
@@ -290,12 +294,17 @@ function canvasEdgeColor(canvas){
 
 function ensureBackgroundPicker(){
   if(document.getElementById('bg90Backdrop'))return;
+  const presetHtml=presetBackgrounds.length
+    ? presetBackgrounds.map((item,index)=>`<button class="bg90-preset" type="button" data-bg90-preset="${index}" style="background-image:url('${item.src}')"><span>${item.name}</span></button>`).join('')
+    : '<div class="bg90-empty">Chưa có ảnh trong thư mục images. Thêm ảnh vào thư mục này rồi khai báo trong presetBackgrounds.</div>';
   phone.insertAdjacentHTML('beforeend',`
     <div class="bg90-backdrop" id="bg90Backdrop"></div>
     <div class="bg90-panel" id="bg90Panel">
       <div class="bg90-handle"></div>
       <div class="bg90-title">Hình nền giao diện</div>
       <button class="bg90-option primary" id="bg90Choose" type="button"><span>Chọn ảnh mới</span><span>›</span></button>
+      <button class="bg90-option" id="bg90PresetToggle" type="button"><span>Chọn ảnh có sẵn</span><span>⌄</span></button>
+      <div class="bg90-presets" id="bg90Presets">${presetHtml}</div>
       <button class="bg90-option" id="bg90Default" type="button"><span>Background mặc định</span><span>↺</span></button>
     </div>
     <input id="bg90File" type="file" accept="image/*" hidden>
@@ -319,6 +328,28 @@ function ensureBackgroundPicker(){
   function closePanel(){backdrop.classList.remove('show');panel.classList.remove('show');}
   function openPanel(){backdrop.classList.add('show');panel.classList.add('show');}
   function closeCrop(){crop.classList.remove('show');cropState.img=null;}
+  function drawImageCoverTo(canvasTarget,img){
+    const outCtx=canvasTarget.getContext('2d');
+    const scale=Math.max(canvasTarget.width/img.width,canvasTarget.height/img.height);
+    const w=img.width*scale,h=img.height*scale;
+    outCtx.clearRect(0,0,canvasTarget.width,canvasTarget.height);
+    outCtx.drawImage(img,(canvasTarget.width-w)/2,(canvasTarget.height-h)/2,w,h);
+  }
+  function applyPresetBackground(src){
+    const img=new Image();
+    img.onload=()=>{
+      const out=document.createElement('canvas');
+      out.width=phone.clientWidth||390;
+      out.height=phone.clientHeight||844;
+      drawImageCoverTo(out,img);
+      localStorage.setItem('qlctCustomBackground',src);
+      localStorage.setItem('qlctCustomBackgroundTone',canvasTone(out));
+      localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
+      applyStoredBackground();
+      closePanel();
+    };
+    img.src=src;
+  }
   function canvasSize(){
     const ratio=phone.clientWidth/Math.max(phone.clientHeight,1);
     const w=Math.min(340,wrap.clientWidth||340);
@@ -350,6 +381,13 @@ function ensureBackgroundPicker(){
   bgBtn?.addEventListener('click',openPanel);
   backdrop.addEventListener('click',closePanel);
   document.getElementById('bg90Choose').addEventListener('click',()=>{closePanel();file.click();});
+  document.getElementById('bg90PresetToggle').addEventListener('click',()=>document.getElementById('bg90Presets')?.classList.toggle('show'));
+  document.getElementById('bg90Presets').addEventListener('click',e=>{
+    const btn=e.target.closest('[data-bg90-preset]');
+    if(!btn)return;
+    const item=presetBackgrounds[Number(btn.dataset.bg90Preset)];
+    if(item?.src)applyPresetBackground(item.src);
+  });
   document.getElementById('bg90Default').addEventListener('click',()=>{localStorage.removeItem('qlctCustomBackground');localStorage.removeItem('qlctCustomBackgroundTone');localStorage.removeItem('qlctCustomBackgroundEdge');applyStoredBackground();closePanel();});
   file.addEventListener('change',e=>{
     const selected=e.target.files?.[0];
