@@ -228,13 +228,13 @@ body.custom-bg{align-items:center}
 .expense-percent{text-align:right;color:#1f293b;font-weight:600;font-size:9.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .dock-wrap{position:absolute;left:18px;right:18px;bottom:14px;pointer-events:none;padding:0;z-index:20}
-.dock-shell{position:relative;width:100%;margin:0 auto;height:58px;pointer-events:auto;filter:drop-shadow(0 15px 26px rgba(38,55,88,.16))}
+.dock-shell{position:relative;width:100%;margin:0 auto;height:58px;pointer-events:auto;filter:drop-shadow(0 16px 28px rgba(38,55,88,.18))}
 .dock-svg{position:absolute;inset:0;width:100%;height:58px}
-.dock-svg path{fill:rgba(255,255,255,.34)!important;stroke:rgba(255,255,255,.38);stroke-width:1}
+.dock-svg path{fill:rgba(255,255,255,.58)!important;stroke:rgba(255,255,255,.72);stroke-width:1.15}
 .dock-content{position:relative;z-index:2;height:58px;display:grid;grid-template-columns:1fr 1fr 72px 1fr 1fr;align-items:center;text-align:center;padding:8px 6px 5px}
-.nav-item{height:38px;color:#7a8799;font-size:9px;font-weight:720;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.05}
-.nav-item svg{width:17px;height:17px;stroke-width:2}
-.nav-item.active{color:var(--primary);text-shadow:0 1px 9px rgba(255,255,255,.86)}
+.nav-item{height:38px;color:#475569;font-size:9.4px;font-weight:780;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.05;text-shadow:0 1px 8px rgba(255,255,255,.86)}
+.nav-item svg{width:18px;height:18px;stroke-width:2.35;filter:drop-shadow(0 1px 2px rgba(255,255,255,.72))}
+.nav-item.active{color:#1d4ed8;text-shadow:0 1px 9px rgba(255,255,255,.94)}
 .add-btn{position:absolute;left:50%;top:-21px;transform:translateX(-50%);z-index:6;width:52px;height:52px;border-radius:999px;border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 11px 23px rgba(18,126,235,.32);display:grid;place-items:center;color:#fff;pointer-events:auto}
 .add-btn svg{width:28px;height:28px;stroke-width:2.05}
 .add-label{display:none!important}
