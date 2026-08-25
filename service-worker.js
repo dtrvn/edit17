@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-test-qlct-named-app-a';
+const CACHE_NAME = 'qlct-pwa-v20260825-login-debug-a';
 const APP_SHELL = [
   './',
   './index.html',

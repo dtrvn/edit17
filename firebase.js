@@ -145,7 +145,8 @@ window.FDB=(function(){
       await auth.signInWithPopup(provider);
     }catch(error){
       const canFallback=error&&['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request','auth/operation-not-supported-in-this-environment'].includes(error.code);
-      if(isStandaloneIos()&&canFallback){
+      if(canFallback){
+        console.warn('Firebase popup sign-in failed, falling back to redirect:',error&&error.code);
         await auth.signInWithRedirect(provider);
         return;
       }

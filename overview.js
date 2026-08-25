@@ -1175,7 +1175,18 @@ appLoaderLogin?.addEventListener('click',async()=>{
     appLoader.classList.add('ready');
     return;
   }
-  if(typeof window.FIREBASE_SIGN_IN==='function')window.FIREBASE_SIGN_IN();
+  if(typeof window.FIREBASE_SIGN_IN==='function'){
+    try{
+      if(appLoaderLogin)appLoaderLogin.textContent='Đang mở Google...';
+      await window.FIREBASE_SIGN_IN();
+    }catch(error){
+      console.error('Google login failed',error);
+      appLoader.classList.add('auth-needed');
+      if(appLoaderTitle)appLoaderTitle.textContent='Không đăng nhập được Google';
+      if(appLoaderText)appLoaderText.textContent=`${error?.code||'auth/error'}: ${error?.message||'Vui lòng kiểm tra Firebase Authentication.'}`;
+      if(appLoaderLogin)appLoaderLogin.textContent='Thử lại';
+    }
+  }
 });
 document.addEventListener('firebase:status',e=>updateAppLoader(e.detail));
 setTimeout(()=>updateAppLoader(),0);
