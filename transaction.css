@@ -398,8 +398,8 @@
 #screenTxnForm .add39-asset-block .full{grid-column:1/-1!important;}
 /* Bottom sheet combobox list for add screen */
 .add39-sheet .add39-sheet-title{color:#020617!important;font-size:13.4px!important;font-weight:760!important;letter-spacing:-.012em!important;}
-.add39-sheet .add39-option{color:var(--ux-sheet-text)!important;font-size:13.4px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
-.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.2!important;}
+.add39-sheet .add39-option{height:50px!important;min-height:50px!important;color:var(--ux-sheet-text)!important;font-size:13.2px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
+.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.22!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .add39-sheet .add39-option.active{color:var(--ux-option-blue)!important;font-weight:760!important;}
 .add39-sheet .add39-check{color:var(--ux-option-blue)!important;font-size:19px!important;font-weight:650!important;}
 /* Transaction screen + transaction bottom sheet text colors */
@@ -744,6 +744,8 @@
 }
 #screenTxnForm .add39-sheet{
   z-index:370!important;
+  padding-left:16px!important;
+  padding-right:16px!important;
 }
 #screenTxnForm .add39-sheet.show{
   pointer-events:auto!important;
@@ -791,6 +793,22 @@
 #screenTxnForm .add39-sheet,
 #screenTxnForm .add39-sheet *{
   touch-action:manipulation!important;
+}
+
+#screenTxnForm .add39-control[data-add39-saving-book]{
+  height:39px!important;
+  min-height:39px!important;
+  line-height:39px!important;
+  align-items:center!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+#screenTxnForm .add39-control[data-add39-saving-book] span{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  line-height:1.25!important;
+  padding-top:1px!important;
 }
 
 /* final: lock edit transaction screen vertically */

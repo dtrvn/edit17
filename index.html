@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=header-size-20260825a" />
-<link rel="stylesheet" href="transaction.css?v=form-text-size-20260825a" />
+<link rel="stylesheet" href="transaction.css?v=saving-combobox-one-line-20260825a" />
 <link rel="stylesheet" href="category.css?v=cat-list-bottom-20260824a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
@@ -81,14 +81,14 @@
 @keyframes qlctSpin{to{transform:rotate(360deg)}}
 .add39-backdrop{position:absolute;inset:0;z-index:190;background:rgba(15,23,42,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;}
 .add39-backdrop.show{opacity:1;pointer-events:auto;}
-.add39-sheet{position:absolute;left:18px;right:18px;bottom:0;z-index:200;width:auto;max-height:78%;overflow:auto;background:rgba(255,255,255,.98);border-radius:22px 22px 0 0;box-shadow:0 -18px 44px rgba(15,23,42,.18);padding:8px 28px calc(18px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .28s cubic-bezier(.22,.61,.36,1);pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;}
+.add39-sheet{position:absolute;left:18px;right:18px;bottom:0;z-index:200;width:auto;max-height:78%;overflow:auto;background:rgba(255,255,255,.98);border-radius:22px 22px 0 0;box-shadow:0 -18px 44px rgba(15,23,42,.18);padding:8px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .28s cubic-bezier(.22,.61,.36,1);pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;}
 .add39-sheet{scrollbar-width:none;-ms-overflow-style:none;}
 .add39-sheet::-webkit-scrollbar{display:none;width:0;height:0;}
 .add39-sheet.show{transform:translateY(0);pointer-events:auto;}
 .add39-handle{width:38px;height:4px;border-radius:999px;background:#b8c3d2;margin:5px auto 13px;}
 .add39-sheet-title{text-align:center;font-size:13.2px;font-weight:710;color:#0f172a;margin-bottom:9px;letter-spacing:-.01em;line-height:1.2;}
-.add39-option{min-height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 28px;align-items:center;text-align:left;padding:8px 8px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
-.add39-option span:first-child{white-space:normal;overflow:visible;text-overflow:clip;font-weight:400;line-height:1.22;}
+.add39-option{height:50px;min-height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 28px;align-items:center;text-align:left;padding:0 6px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
+.add39-option span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400;line-height:1.22;}
 .add39-option.active{color:var(--primary);font-weight:650;}
 .add39-check{font-size:19px;text-align:center;color:var(--primary);font-weight:500;}
 .add39-cal-head{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:6px;}
@@ -107,7 +107,7 @@
 .txn16-saving-preview{display:grid;gap:4px;padding:1px 0 0;border:0;background:transparent;border-radius:0;color:#64748b;font-size:10.4px;font-weight:650;line-height:1.2;}
 .txn16-saving-preview span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .txn16-saving-preview b{color:#0f172a;font-size:10.6px;font-weight:780;}
-@media(max-width:430px){#screenTxnForm{padding-left:17px!important;padding-right:17px!important;}.add39-card{margin-left:10px;margin-right:10px}.add39-sheet{left:17px;right:17px;padding-left:28px;padding-right:28px;}}
+@media(max-width:430px){#screenTxnForm{padding-left:17px!important;padding-right:17px!important;}.add39-card{margin-left:10px;margin-right:10px}.add39-sheet{left:17px;right:17px;padding-left:16px;padding-right:16px;}}
 
 </style>
 <style id="demo45-color-combobox-fix-css">
@@ -120,16 +120,16 @@
 #screenTxnForm .add39-note{color:var(--ux-text-control)!important;font-weight:500!important;}
 #screenTxnForm .add39-control{height:40px!important;line-height:40px!important;overflow:hidden!important;}
 #screenTxnForm .add39-control span{color:var(--ux-text-control)!important;font-size:13px!important;font-weight:500!important;line-height:1.25!important;padding-top:1px!important;letter-spacing:-.006em!important;}
-#screenTxnForm .add39-control[data-add39-saving-book]{height:auto!important;min-height:44px!important;line-height:1.25!important;align-items:flex-start!important;padding-top:8px!important;padding-bottom:8px!important;}
-#screenTxnForm .add39-control[data-add39-saving-book] span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.22!important;padding-top:0!important;}
+#screenTxnForm .add39-control[data-add39-saving-book]{height:39px!important;min-height:39px!important;line-height:39px!important;align-items:center!important;padding-top:0!important;padding-bottom:0!important;}
+#screenTxnForm .add39-control[data-add39-saving-book] span{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.25!important;padding-top:1px!important;}
 #screenTxnForm .add39-field.cat-row .add39-control{height:42px!important;line-height:42px!important;}
 #screenTxnForm .add39-field.cat-row .add39-control span{line-height:1.25!important;padding-top:0!important;}
 #screenTxnForm .add39-note{font-size:13px!important;line-height:1.32!important;color:var(--ux-text-control)!important;}
 #screenTxnForm .add39-money-preview{color:var(--ux-text-muted)!important;font-weight:660!important;}
 /* Bottom sheet combobox list for add screen */
 .add39-sheet .add39-sheet-title{color:#020617!important;font-size:13.4px!important;font-weight:760!important;letter-spacing:-.012em!important;}
-.add39-sheet .add39-option{height:auto!important;min-height:50px!important;color:var(--ux-sheet-text)!important;font-size:13.4px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
-.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.22!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}
+.add39-sheet .add39-option{height:50px!important;min-height:50px!important;color:var(--ux-sheet-text)!important;font-size:13.2px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
+.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.22!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .add39-sheet .add39-option.active{color:var(--ux-option-blue)!important;font-weight:760!important;}
 .add39-sheet .add39-check{color:var(--ux-option-blue)!important;font-size:19px!important;font-weight:650!important;}
 </style>
