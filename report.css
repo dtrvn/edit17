@@ -12,8 +12,8 @@
   gap:11px!important;
 }
 #screenReports.report72-screen .slide-back{
-  width:38px!important;
-  height:38px!important;
+  width:39px!important;
+  height:39px!important;
   border-radius:15px!important;
   background:rgba(255,255,255,.94)!important;
   box-shadow:0 9px 20px rgba(15,23,42,.065)!important;
@@ -22,7 +22,7 @@
   display:grid!important;
   place-items:center!important;
 }
-#screenReports.report72-screen .slide-back svg{width:17px!important;height:17px!important;stroke-width:2.35!important;}
+#screenReports.report72-screen .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 #screenReports.report72-screen .slide-title{
   font-size:16px!important;
   font-weight:740!important;
@@ -753,14 +753,20 @@
   color:#0f172a!important;
 }
 .report72-detail-screen .slide-back{
-  width:31px!important;
-  height:31px!important;
-  border-radius:13px!important;
+  width:39px!important;
+  height:39px!important;
+  border-radius:15px!important;
+  background:rgba(255,255,255,.94)!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.07)!important;
+  color:#334155!important;
+  border:0!important;
+  display:grid!important;
+  place-items:center!important;
 }
 .report72-detail-screen .slide-back svg{
-  width:16px!important;
-  height:16px!important;
-  stroke-width:2.2!important;
+  width:18px!important;
+  height:18px!important;
+  stroke-width:2.35!important;
 }
 .report72-detail-screen .slide-body{
   height:calc(100% - 44px)!important;
@@ -1082,14 +1088,14 @@
 .report72-detail-month-nav{
   justify-self:center;
   display:grid;
-  grid-template-columns:repeat(3,34px);
+  grid-template-columns:repeat(3,48px);
   align-items:center;
   justify-content:center;
   gap:4px;
 }
 .report72-detail-month-nav button{
-  width:34px;
-  height:32px;
+  width:48px;
+  height:34px;
   border:1px solid #dfe8f5;
   border-radius:12px;
   background:#fff;
@@ -1318,14 +1324,20 @@
   text-overflow:ellipsis;
 }
 .report72-child-screen .slide-back{
-  width:31px!important;
-  height:31px!important;
-  border-radius:13px!important;
+  width:39px!important;
+  height:39px!important;
+  border-radius:15px!important;
+  background:rgba(255,255,255,.94)!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.07)!important;
+  color:#334155!important;
+  border:0!important;
+  display:grid!important;
+  place-items:center!important;
 }
 .report72-child-screen .slide-back svg{
-  width:16px!important;
-  height:16px!important;
-  stroke-width:2.2!important;
+  width:18px!important;
+  height:18px!important;
+  stroke-width:2.35!important;
 }
 .report72-child-screen .slide-body{
   height:calc(100% - 44px)!important;
@@ -1682,8 +1694,8 @@
 .report72-detail-tabs{width:100%!important;height:34px!important;margin:2px 0 10px!important;}
 .report72-detail-tabs button{font-size:12px!important;font-weight:680!important;}
 .report72-detail-month{font-size:11.3px!important;height:29px!important;line-height:29px!important;}
-.report72-detail-month-nav{grid-template-columns:repeat(3,34px)!important;}
-.report72-detail-month-nav button{width:34px!important;height:32px!important;}
+.report72-detail-month-nav{grid-template-columns:repeat(3,48px)!important;}
+.report72-detail-month-nav button{width:48px!important;height:34px!important;}
 .report72-detail-period-row,
 .report72-child-period-row{grid-template-columns:minmax(82px,1fr) 104px minmax(94px,1fr)!important;gap:9px!important;}
 .report72-detail-period-row .report72-detail-total b,

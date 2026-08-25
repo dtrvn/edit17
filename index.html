@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=header-size-20260825a" />
-<link rel="stylesheet" href="transaction.css?v=saving-combobox-one-line-20260825a" />
+<link rel="stylesheet" href="transaction.css?v=back-size-standard-20260825a" />
 <link rel="stylesheet" href="category.css?v=cat-list-bottom-20260824a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
@@ -48,8 +48,8 @@
 #screenTxnForm{padding-left:18px!important;padding-right:18px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #screenTxnForm .slide-head{height:38px!important;margin-bottom:8px!important;}
 #screenTxnForm .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.018em!important;color:#0f172a!important;}
-#screenTxnForm .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
-#screenTxnForm .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.15!important;}
+#screenTxnForm .slide-back{width:39px!important;height:39px!important;border-radius:15px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 10px 24px rgba(15,23,42,.07)!important;color:#334155!important;border:0!important;display:grid!important;place-items:center!important;}
+#screenTxnForm .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 #screenTxnForm .slide-body{height:calc(100% - 46px)!important;overflow:auto!important;padding:2px 0 24px!important;scrollbar-width:none!important;}
 #screenTxnForm .slide-body::-webkit-scrollbar{display:none!important;}
 .add39-card{border-radius:22px;background:rgba(255,255,255,.92);border:1px solid #dfe9f3;box-shadow:0 14px 30px rgba(15,23,42,.055);padding:16px 15px 16px;margin:0 11px 10px;}
@@ -87,10 +87,10 @@
 .add39-sheet.show{transform:translateY(0);pointer-events:auto;}
 .add39-handle{width:38px;height:4px;border-radius:999px;background:#b8c3d2;margin:5px auto 13px;}
 .add39-sheet-title{text-align:center;font-size:13.2px;font-weight:710;color:#0f172a;margin-bottom:9px;letter-spacing:-.01em;line-height:1.2;}
-.add39-option{height:50px;min-height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 28px;align-items:center;text-align:left;padding:0 6px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
+.add39-option{height:50px;min-height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 20px;align-items:center;text-align:left;padding:0 2px 0 6px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
 .add39-option span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400;line-height:1.22;}
 .add39-option.active{color:var(--primary);font-weight:650;}
-.add39-check{font-size:19px;text-align:center;color:var(--primary);font-weight:500;}
+.add39-check{font-size:19px;text-align:right;color:var(--primary);font-weight:500;justify-self:end;transform:translateX(5px);}
 .add39-cal-head{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:6px;}
 .add39-cal-head button{width:34px;height:34px;border:0;border-radius:14px;background:#eef5ff;color:var(--primary);font-size:20px;font-weight:760;}
 .add39-cal-title{text-align:center;font-size:13.4px;font-weight:740;letter-spacing:-.012em;}
@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=report-month-delta-20260825a">
+<link rel="stylesheet" href="report.css?v=report-nav-back-20260825a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -477,8 +477,8 @@
   gap:11px!important;
 }
 #screenReports.report72-screen .slide-back{
-  width:38px!important;
-  height:38px!important;
+  width:39px!important;
+  height:39px!important;
   border-radius:15px!important;
   background:rgba(255,255,255,.94)!important;
   box-shadow:0 9px 20px rgba(15,23,42,.065)!important;
@@ -487,7 +487,7 @@
   display:grid!important;
   place-items:center!important;
 }
-#screenReports.report72-screen .slide-back svg{width:17px!important;height:17px!important;stroke-width:2.35!important;}
+#screenReports.report72-screen .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 #screenReports.report72-screen .slide-title{
   font-size:16px!important;
   font-weight:740!important;
@@ -815,7 +815,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="gold.css?v=gold-header-clean-20260825a">
+<link rel="stylesheet" href="gold.css?v=gold-back-standard-20260825a">
 <style id="gold-inline-fallback-css">
 #screenGold.gold77-screen .gold77-sheet{
   position:absolute!important;
@@ -975,8 +975,8 @@
 #screenTxnForm{padding:18px 18px 30px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #screenTxnForm .slide-head{height:38px!important;margin-bottom:6px!important;}
 #screenTxnForm .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.02em!important;color:#0f172a!important;}
-#screenTxnForm .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
-#screenTxnForm .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.2!important;}
+#screenTxnForm .slide-back{width:39px!important;height:39px!important;border-radius:15px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 10px 24px rgba(15,23,42,.07)!important;color:#334155!important;border:0!important;display:grid!important;place-items:center!important;}
+#screenTxnForm .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 #screenTxnForm .slide-body{height:calc(100% - 44px)!important;overflow:auto!important;padding:0 0 calc(132px + env(safe-area-inset-bottom))!important;scrollbar-width:none!important;}
 #screenTxnForm .demo-card{border-radius:20px!important;background:rgba(255,255,255,.86)!important;border:1px solid #dfe9f3!important;box-shadow:0 14px 28px rgba(15,23,42,.055)!important;padding:13px 12px!important;margin:0 0 calc(112px + env(safe-area-inset-bottom))!important;}
 #screenTxnForm .add39-form{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
@@ -1170,8 +1170,32 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .report72-detail-tabs{width:100%!important;height:34px!important;margin:2px 0 10px!important;}
 .report72-detail-tabs button{font-size:12px!important;font-weight:680!important;}
 .report72-detail-month{font-size:11.3px!important;height:29px!important;line-height:29px!important;}
-.report72-detail-month-nav{grid-template-columns:repeat(3,34px)!important;}
-.report72-detail-month-nav button{width:34px!important;height:32px!important;}
+.report72-detail-month-nav{grid-template-columns:repeat(3,48px)!important;}
+.report72-detail-month-nav button{width:48px!important;height:34px!important;}
+#screenTxnForm .slide-back,
+#screenTransactions .slide-back,
+#screenAssets.asset52-screen .slide-back,
+#screenReports.report72-screen .slide-back,
+#screenCategories .slide-back,
+#screenDataTools .slide-back,
+#screenGold.gold77-screen .slide-back,
+.asset53-detail-screen .slide-back,
+.report72-detail-screen .slide-back,
+.report72-child-screen .slide-back,
+.txn16-edit .slide-back,
+.cat90-editor .slide-back{width:39px!important;height:39px!important;border-radius:15px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 10px 24px rgba(15,23,42,.07)!important;color:#334155!important;border:0!important;display:grid!important;place-items:center!important;}
+#screenTxnForm .slide-back svg,
+#screenTransactions .slide-back svg,
+#screenAssets.asset52-screen .slide-back svg,
+#screenReports.report72-screen .slide-back svg,
+#screenCategories .slide-back svg,
+#screenDataTools .slide-back svg,
+#screenGold.gold77-screen .slide-back svg,
+.asset53-detail-screen .slide-back svg,
+.report72-detail-screen .slide-back svg,
+.report72-child-screen .slide-back svg,
+.txn16-edit .slide-back svg,
+.cat90-editor .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 .report72-detail-period-row,
 .report72-child-period-row{grid-template-columns:minmax(82px,1fr) 104px minmax(94px,1fr)!important;gap:9px!important;}
 .report72-detail-period-row .report72-detail-total b,
@@ -1317,7 +1341,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=login-debug-20260825f"></script>
-<script src="overview.js?v=home-refresh-all-20260825c"></script>
+<script src="overview.js?v=numkey-keyboard-20260825a"></script>
 <script src="transaction.js?v=home-refresh-clear-edit-20260825a"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 

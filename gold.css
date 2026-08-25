@@ -13,8 +13,8 @@
   gap:10px!important;
 }
 #screenGold.gold77-screen .slide-back{
-  width:38px!important;
-  height:38px!important;
+  width:39px!important;
+  height:39px!important;
   border-radius:15px!important;
   background:rgba(255,255,255,.95)!important;
   box-shadow:0 10px 24px rgba(15,23,42,.07)!important;
@@ -23,7 +23,7 @@
   display:grid!important;
   place-items:center!important;
 }
-#screenGold.gold77-screen .slide-back svg{width:17px!important;height:17px!important;stroke-width:2.35!important;}
+#screenGold.gold77-screen .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 #screenGold.gold77-screen .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.025em!important;color:#020617!important;}
 #screenGold.gold77-screen .slide-body{
   height:calc(100% - 54px)!important;

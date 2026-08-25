@@ -129,6 +129,21 @@ function ensureNumberKeyboard(){
     target.value=value;
     emitInput();
   }
+  function appendValue(value){
+    setValue(String(target?.value||'')+String(value||''));
+  }
+  function handleNumkeyAction(action){
+    if(!target)return true;
+    if(action==='done'){close();return true;}
+    if(action==='clear'){setValue('');return true;}
+    if(action==='back'){setValue(String(target?.value||'').slice(0,-1));return true;}
+    if(action==='decimal'){
+      if(decimalAllowed()&&!String(target?.value||'').includes('.'))appendValue('.');
+      return true;
+    }
+    appendValue(action);
+    return true;
+  }
   function openFor(input){
     prepareNumericInput(input);
     target=input;
@@ -174,17 +189,36 @@ function ensureNumberKeyboard(){
       openFor(e.target);
     }
   },true);
+  function panelPress(e){
+    const action=e.target.closest('[data-numkey-done]')?'done'
+      :e.target.closest('[data-numkey-clear]')?'clear'
+      :e.target.closest('[data-numkey-back]')?'back'
+      :e.target.closest('[data-numkey-decimal]')?'decimal'
+      :e.target.closest('[data-numkey]')?.dataset.numkey;
+    if(action===undefined)return;
+    if(e.cancelable)e.preventDefault();
+    handleNumkeyAction(action);
+  }
+  panel.addEventListener('pointerdown',panelPress,{passive:false});
   panel.addEventListener('click',e=>{
-    if(e.target.closest('[data-numkey-done]')){close();return;}
-    if(e.target.closest('[data-numkey-clear]')){setValue('');return;}
-    if(e.target.closest('[data-numkey-back]')){setValue(String(target?.value||'').slice(0,-1));return;}
-    if(e.target.closest('[data-numkey-decimal]')){
-      if(decimalAllowed()&&!String(target?.value||'').includes('.'))setValue((target?.value||'')+'.');
-      return;
-    }
-    const key=e.target.closest('[data-numkey]')?.dataset.numkey;
-    if(key!==undefined)setValue(String(target?.value||'')+key);
+    if(e.detail===0)panelPress(e);
   });
+  document.addEventListener('keydown',e=>{
+    if(!target||!panel?.classList.contains('show'))return;
+    const key=e.key;
+    const code=e.code;
+    let action;
+    if(/^\d$/.test(key))action=key;
+    else if(/^Numpad\d$/.test(code))action=code.slice(-1);
+    else if(key==='Backspace')action='back';
+    else if(key==='Delete')action='clear';
+    else if(key==='Enter'||key==='NumpadEnter')action='done';
+    else if(key==='Escape')action='done';
+    else if(key==='.'||key===','||key==='Decimal'||code==='NumpadDecimal')action='decimal';
+    else return;
+    if(e.cancelable)e.preventDefault();
+    handleNumkeyAction(action);
+  },true);
   backdrop.addEventListener('click',close);
   prepareAllNumericInputs();
   new MutationObserver(mutations=>{
