@@ -1111,11 +1111,11 @@
 }
 .asset53-saving-recalled{
   position:absolute;
-  top:5px;
-  right:6px;
+  top:-5px;
+  right:-5px;
   z-index:4;
-  width:16px;
-  height:16px;
+  width:20px;
+  height:20px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1123,10 +1123,10 @@
   pointer-events:none;
 }
 .asset53-saving-recalled svg{
-  width:15px;
-  height:15px;
+  width:18px;
+  height:18px;
   display:block;
-  stroke-width:3.2;
+  stroke-width:3.4;
 }
 .asset53-bank-list{
   display:grid;
