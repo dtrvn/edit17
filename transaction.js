@@ -319,7 +319,7 @@
     window.QLCT_setBusy?.(true,'Đang xóa giao dịch');
     const tx=state.editOriginal||state.editing;
     const id=state.editing.id;
-    const request=isAssetTx(tx)&&window.ASSET52_deleteTransactionAtomic
+    const request=window.ASSET52_deleteTransactionAtomic
       ? window.ASSET52_deleteTransactionAtomic(tx,id)
       : (window.FDB?.removeNoRefresh
         ? window.FDB.removeNoRefresh(FIREBASE_COLLECTIONS.giaoDich,id)
