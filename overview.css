@@ -73,6 +73,8 @@ body.custom-bg::after{
 .topbar{height:36px;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:#334155}
 .brand-icon{width:31px;height:31px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;color:#fff;box-shadow:0 10px 24px rgba(37,99,235,.22)}
+.brand-icon[data-overview-refresh]{cursor:pointer}
+.brand-icon[data-overview-refresh]:focus-visible{outline:2px solid rgba(37,99,235,.32);outline-offset:3px}
 .theme-btn{width:33px;height:33px;border:0;border-radius:13px;background:rgba(255,255,255,.82);box-shadow:0 8px 22px rgba(15,23,42,.08);display:grid;place-items:center;color:var(--primary);cursor:pointer}
 .theme-btn svg{width:18px;height:18px;stroke-width:2}
 .top-actions{display:flex;align-items:center;gap:7px}

@@ -1038,6 +1038,17 @@ document.addEventListener('click',e=>{
   closeTransientLayers();
   closeAllScreens();
   playOverviewAnimations();
+});
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('[data-overview-refresh]'))return;
+  reloadAllDataFromHome();
+});
+
+document.addEventListener('keydown',e=>{
+  if(!e.target.closest?.('[data-overview-refresh]'))return;
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  e.preventDefault();
   reloadAllDataFromHome();
 });
 ensureHomeButtons();
