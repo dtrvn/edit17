@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-fast-delete-e';
+const CACHE_NAME = 'qlct-pwa-v20260825-read-cache-a';
 const APP_SHELL = [
   './',
   './index.html',

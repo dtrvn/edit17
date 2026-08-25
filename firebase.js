@@ -50,6 +50,8 @@ window.FDB=(function(){
   const db=firebase.firestore(app);
   const provider=new firebase.auth.GoogleAuthProvider();
   const subscribers=new Map();
+  const cache=new Map();
+  const pendingLoads=new Map();
   let authReady=false;
 
   provider.setCustomParameters({prompt:'select_account'});
@@ -73,6 +75,55 @@ window.FDB=(function(){
     if(!subscribers.has(name))subscribers.set(name,new Set());
     return subscribers.get(name);
   };
+  const cloneRows=rows=>(rows||[]).map(row=>({...row}));
+  const cachedRows=name=>cloneRows(cache.get(name)||[]);
+  function isDeleteFieldValue(value){
+    return value&&typeof value==='object'&&String(value._methodName||value.methodName||value.toString?.()||'').includes('delete');
+  }
+  function cacheData(data){
+    const clean={};
+    Object.entries(data||{}).forEach(([key,value])=>{
+      if(isDeleteFieldValue(value))return;
+      clean[key]=value;
+    });
+    return clean;
+  }
+  function notifySubscribers(name,rows){
+    const next=cloneRows(rows);
+    getSubscribers(name).forEach(item=>item.callback(next,{collection:name,cache:true}));
+  }
+  function setCache(name,rows){
+    cache.set(name,cloneRows(rows));
+    reportFirebaseStatus({
+      ok:true,
+      error:null,
+      collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
+    });
+    notifySubscribers(name,rows);
+    return cachedRows(name);
+  }
+  function patchCache(name,id,data,options){
+    if(!cache.has(name))return;
+    const rows=cachedRows(name);
+    const index=rows.findIndex(row=>String(row.id)===String(id)||String(row._docId)===String(id));
+    const current=index>=0?rows[index]:{_docId:id,id,external_id:data?.id||''};
+    const cleanData=cacheData(data);
+    const next=options&&options.delete
+      ? null
+      : {
+        ...(options&&options.merge!==false?current:{}),
+        ...cleanData,
+        _docId:id,
+        id,
+        external_id:(cleanData&&cleanData.id!==undefined)?cleanData.id:(current.external_id||'')
+      };
+    if(options&&options.delete){
+      if(index>=0)rows.splice(index,1);
+      else return;
+    }else if(index>=0)rows[index]=next;
+    else rows.push(next);
+    setCache(name,rows);
+  }
 
   function showFirebaseLogin(error){
     if(error)console.warn('Firebase auth required',error);
@@ -136,15 +187,10 @@ window.FDB=(function(){
       notifyEmptyAuth(name);
       return Promise.resolve([]);
     }
-    return collection(name).get().then(snapshot=>{
+    if(pendingLoads.has(name))return pendingLoads.get(name).then(cloneRows);
+    const request=collection(name).get().then(snapshot=>{
       const rows=rowsFrom(snapshot);
-      reportFirebaseStatus({
-        ok:true,
-        error:null,
-        collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
-      });
-      getSubscribers(name).forEach(item=>item.callback(rows,{collection:name}));
-      return rows;
+      return setCache(name,rows);
     }).catch(error=>{
       reportFirebaseStatus({
         ok:false,
@@ -154,7 +200,9 @@ window.FDB=(function(){
       console.error(`Firebase read failed: ${name}`,error);
       getSubscribers(name).forEach(item=>{if(item.onError)item.onError(error);});
       return [];
-    });
+    }).finally(()=>pendingLoads.delete(name));
+    pendingLoads.set(name,request);
+    return request.then(cloneRows);
   }
 
   async function testReads(){
@@ -199,12 +247,24 @@ window.FDB=(function(){
     return new Error('Can dang nhap Google de ghi Firestore.');
   }
 
+  function withWriteCache(name,id,data,promise,options){
+    return promise.then(result=>{
+      patchCache(name,id,data,options);
+      return result;
+    });
+  }
+
   return {
     subscribe(name,callback,onError){
       const item={callback,onError};
       getSubscribers(name).add(item);
-      if(auth.currentUser)loadCollection(name);
-      else if(authReady)notifyEmptyAuth(name);
+      if(cache.has(name)){
+        callback(cachedRows(name),{collection:name,cache:true});
+      }else if(auth.currentUser){
+        loadCollection(name);
+      }else if(authReady){
+        notifyEmptyAuth(name);
+      }
       return ()=>getSubscribers(name).delete(item);
     },
     add(name,data){
@@ -212,15 +272,17 @@ window.FDB=(function(){
       if(error)return Promise.reject(error);
       return collection(name)
         .add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
-        .then(result=>loadCollection(name).then(()=>result));
+        .then(result=>{
+          patchCache(name,result.id,{...data,_docId:result.id,id:result.id}, {merge:false});
+          return result;
+        });
     },
     set(name,id,data){
       const error=requireAuth();
       if(error)return Promise.reject(error);
-      return collection(name)
+      return withWriteCache(name,id,data,collection(name)
         .doc(id)
-        .set({...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
-        .then(result=>loadCollection(name).then(()=>result));
+        .set({...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}),{merge:true});
     },
     setNoRefresh(name,id,data){
       const error=requireAuth();
@@ -232,7 +294,7 @@ window.FDB=(function(){
     remove(name,id){
       const error=requireAuth();
       if(error)return Promise.reject(error);
-      return collection(name).doc(id).delete().then(result=>loadCollection(name).then(()=>result));
+      return withWriteCache(name,id,null,collection(name).doc(id).delete(),{delete:true});
     },
     removeNoRefresh(name,id){
       const error=requireAuth();
@@ -242,20 +304,29 @@ window.FDB=(function(){
     runTransaction(handler){
       const error=requireAuth();
       if(error)return Promise.reject(error);
+      const writes=[];
       return db.runTransaction(tx=>handler({
         get(name,id){
           return tx.get(collection(name).doc(id)).then(doc=>doc.exists?{...doc.data(),_docId:doc.id,id:doc.id,external_id:doc.data().id||''}:null);
         },
         set(name,id,data,options){
           tx.set(collection(name).doc(id),{...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},options||{merge:true});
+          writes.push({type:'set',name,id,data,options:options||{merge:true}});
         },
         remove(name,id){
           tx.delete(collection(name).doc(id));
+          writes.push({type:'remove',name,id});
         },
         fieldDelete(){
           return firebase.firestore.FieldValue.delete();
         }
-      })).then(result=>window.FIREBASE_REFRESH_ALL().then(()=>result));
+      })).then(result=>{
+        writes.forEach(write=>{
+          if(write.type==='remove')patchCache(write.name,write.id,null,{delete:true});
+          else patchCache(write.name,write.id,write.data,{merge:write.options?.merge!==false});
+        });
+        return result;
+      });
     },
     refresh(name){return loadCollection(name);},
     refreshAll(){return window.FIREBASE_REFRESH_ALL();},
