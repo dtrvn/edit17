@@ -11,6 +11,7 @@ const FIREBASE_CONFIG={
 };
 const FIREBASE_COLLECTIONS={danhMuc:'DanhMuc',giaoDich:'GiaoDich',taiSan:'TaiSan'};
 
+window.FIREBASE_CONFIG=FIREBASE_CONFIG;
 window.FIREBASE_COLLECTIONS=FIREBASE_COLLECTIONS;
 window.FIREBASE_STATUS={ok:false,auth:false,authReady:false,user:null,error:null,collections:{}};
 console.log('firebase.js loaded',FIREBASE_CONFIG.projectId);
