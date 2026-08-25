@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-all-tx-bank-accounting-a';
+const CACHE_NAME = 'qlct-pwa-v20260825-firebase-quanlychitieu-a';
 const APP_SHELL = [
   './',
   './index.html',
