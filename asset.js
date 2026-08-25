@@ -1187,9 +1187,7 @@
       ? `${movementDateHyphen(item)} (${interestText})${savingId?` - ${savingId}`:''}`
       : categoryView?[item.date,item.assetName||item.name].filter(Boolean).join(' · '):(item.date||'');
     const recalled=savingView&&!sell&&isSavingMovementRecalled(item);
-    const recallIcon=recalled?`<span class="asset53-saving-recalled" title="Sổ tiết kiệm đã tất toán" aria-label="Sổ tiết kiệm đã tất toán">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </span>`:'';
+    const recallIcon=recalled?`<span class="asset53-saving-recalled" title="Sổ tiết kiệm đã tất toán" aria-label="Sổ tiết kiệm đã tất toán"></span>`:'';
     const rightBottom=unitPriceText;
     const firstSpan=savingView?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
     const assetInfo=cashView?'':`<div class="asset53-flow-grid">

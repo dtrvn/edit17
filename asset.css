@@ -1112,7 +1112,7 @@
 .asset53-saving-recalled{
   position:absolute;
   top:-5px;
-  right:-5px;
+  right:-7px;
   z-index:4;
   width:20px;
   height:20px;
@@ -1122,11 +1122,21 @@
   color:#dc2626;
   pointer-events:none;
 }
-.asset53-saving-recalled svg{
-  width:18px;
-  height:18px;
-  display:block;
-  stroke-width:3.4;
+.asset53-saving-recalled::before,
+.asset53-saving-recalled::after{
+  content:"";
+  position:absolute;
+  width:16px;
+  height:3px;
+  border-radius:999px;
+  background:#dc2626;
+  box-shadow:0 1px 2px rgba(220,38,38,.18);
+}
+.asset53-saving-recalled::before{
+  transform:rotate(45deg);
+}
+.asset53-saving-recalled::after{
+  transform:rotate(-45deg);
 }
 .asset53-bank-list{
   display:grid;
