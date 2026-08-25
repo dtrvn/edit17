@@ -87,8 +87,8 @@
 .add39-sheet.show{transform:translateY(0);pointer-events:auto;}
 .add39-handle{width:38px;height:4px;border-radius:999px;background:#b8c3d2;margin:5px auto 13px;}
 .add39-sheet-title{text-align:center;font-size:13.2px;font-weight:710;color:#0f172a;margin-bottom:9px;letter-spacing:-.01em;line-height:1.2;}
-.add39-option{height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:1fr 28px;align-items:center;text-align:left;padding:0 8px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
-.add39-option span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400;}
+.add39-option{min-height:50px;width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 28px;align-items:center;text-align:left;padding:8px 8px;font-size:13px;font-weight:400;color:#0f172a;cursor:pointer;letter-spacing:-.006em;line-height:1.18;-webkit-font-smoothing:antialiased;text-rendering:auto;}
+.add39-option span:first-child{white-space:normal;overflow:visible;text-overflow:clip;font-weight:400;line-height:1.22;}
 .add39-option.active{color:var(--primary);font-weight:650;}
 .add39-check{font-size:19px;text-align:center;color:var(--primary);font-weight:500;}
 .add39-cal-head{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:6px;}
@@ -120,14 +120,16 @@
 #screenTxnForm .add39-note{color:var(--ux-text-control)!important;font-weight:500!important;}
 #screenTxnForm .add39-control{height:40px!important;line-height:40px!important;overflow:hidden!important;}
 #screenTxnForm .add39-control span{color:var(--ux-text-control)!important;font-size:13px!important;font-weight:500!important;line-height:1.25!important;padding-top:1px!important;letter-spacing:-.006em!important;}
+#screenTxnForm .add39-control[data-add39-saving-book]{height:auto!important;min-height:44px!important;line-height:1.25!important;align-items:flex-start!important;padding-top:8px!important;padding-bottom:8px!important;}
+#screenTxnForm .add39-control[data-add39-saving-book] span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.22!important;padding-top:0!important;}
 #screenTxnForm .add39-field.cat-row .add39-control{height:42px!important;line-height:42px!important;}
 #screenTxnForm .add39-field.cat-row .add39-control span{line-height:1.25!important;padding-top:0!important;}
 #screenTxnForm .add39-note{font-size:13px!important;line-height:1.32!important;color:var(--ux-text-control)!important;}
 #screenTxnForm .add39-money-preview{color:var(--ux-text-muted)!important;font-weight:660!important;}
 /* Bottom sheet combobox list for add screen */
 .add39-sheet .add39-sheet-title{color:#020617!important;font-size:13.4px!important;font-weight:760!important;letter-spacing:-.012em!important;}
-.add39-sheet .add39-option{color:var(--ux-sheet-text)!important;font-size:13.4px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
-.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.2!important;}
+.add39-sheet .add39-option{height:auto!important;min-height:50px!important;color:var(--ux-sheet-text)!important;font-size:13.4px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
+.add39-sheet .add39-option span:first-child{color:inherit!important;font-weight:inherit!important;line-height:1.22!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}
 .add39-sheet .add39-option.active{color:var(--ux-option-blue)!important;font-weight:760!important;}
 .add39-sheet .add39-check{color:var(--ux-option-blue)!important;font-size:19px!important;font-weight:650!important;}
 </style>
@@ -156,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=saving-movement-recalled-20260825d">
+<link rel="stylesheet" href="asset.css?v=asset-font-report-cards-20260825a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -459,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=report-child-card-click-20260825a">
+<link rel="stylesheet" href="report.css?v=report-child-card-click-20260825b">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -908,8 +910,8 @@
 .expense-chart{gap:4px!important;}
 .report72-card-head{align-items:flex-start!important;gap:7px!important;}
 .report72-title{min-width:0!important;white-space:normal!important;line-height:1.12!important;}
-.report72-row{grid-template-columns:minmax(58px,.82fr) minmax(44px,1fr) minmax(66px,.86fr)!important;gap:5px!important;height:22px!important;min-width:0!important;}
-.report72-label{font-size:9.4px!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.report72-row{grid-template-columns:minmax(58px,.82fr) minmax(44px,1fr) minmax(66px,.86fr)!important;gap:5px!important;min-height:22px!important;height:auto!important;min-width:0!important;}
+.report72-label{font-size:9.4px!important;min-width:0!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.18!important;}
 .report72-value{font-size:9px!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .report72-group-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
 .report72-group-total{font-size:10px!important;}
@@ -1122,7 +1124,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 #screenAssets.asset52-screen .asset52-card{min-height:54px!important;height:54px!important;padding-top:3px!important;padding-bottom:3px!important;}
 #screenAssets.asset52-screen .asset52-summary-main label,
 #screenAssets.asset52-screen .asset52-summary-grid label,
-#screenAssets.asset52-screen .asset52-section-head span{font-size:10.8px!important;}
+#screenAssets.asset52-screen .asset52-section-head span{font-size:11.8px!important;}
 #screenAssets.asset52-screen .asset52-summary-grid b{font-size:12.5px!important;}
 #screenAssets.asset52-screen .asset52-section-head b{font-size:11.2px!important;}
 .asset53-detail-screen .asset53-tabs button{font-size:13px!important;}
@@ -1131,6 +1133,8 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .asset53-detail-screen .asset53-field,
 .asset53-detail-screen .asset53-flow-grid span,
 .asset53-detail-screen .asset53-flow-line{font-size:12px!important;}
+.asset53-detail-screen .asset53-kpis b{font-size:13.6px!important;}
+.asset53-detail-screen .asset53-kpis label{font-size:11.2px!important;}
 .asset53-detail-screen .asset53-field b,
 .asset53-detail-screen .asset53-flow-top b,
 .asset53-detail-screen .asset53-flow-line b{font-size:12.6px!important;}
@@ -1317,9 +1321,9 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="transaction.js?v=home-refresh-clear-edit-20260825a"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
-<script src="add-transaction.js?v=saving-book-label-20260825a"></script>
+<script src="add-transaction.js?v=saving-book-label-20260825b"></script>
 <script src="asset.js?v=saving-id-format-20260825a"></script>
-<script src="report.js?v=report-child-card-click-20260825a"></script>
+<script src="report.js?v=report-child-card-click-20260825b"></script>
 <script src="gold.js?v=write-price-status-20260813"></script>
 
 <script>

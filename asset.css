@@ -635,7 +635,7 @@
 }
 .asset53-kpis b{
   color:#0f172a;
-  font-size:12.5px;
+  font-size:13.4px;
   line-height:1.12;
   font-weight:620;
   text-align:right;
@@ -1380,7 +1380,7 @@
 #screenAssets.asset52-screen .asset52-card{min-height:54px!important;height:54px!important;padding-top:3px!important;padding-bottom:3px!important;}
 #screenAssets.asset52-screen .asset52-summary-main label,
 #screenAssets.asset52-screen .asset52-summary-grid label,
-#screenAssets.asset52-screen .asset52-section-head span{font-size:10.8px!important;}
+#screenAssets.asset52-screen .asset52-section-head span{font-size:11.8px!important;}
 #screenAssets.asset52-screen .asset52-summary-grid b{font-size:12.5px!important;}
 #screenAssets.asset52-screen .asset52-section-head b{font-size:11.2px!important;}
 .asset53-detail-screen .asset53-tabs button{font-size:13px!important;}
@@ -1389,6 +1389,8 @@
 .asset53-detail-screen .asset53-field,
 .asset53-detail-screen .asset53-flow-grid span,
 .asset53-detail-screen .asset53-flow-line{font-size:12px!important;}
+.asset53-detail-screen .asset53-kpis b{font-size:13.6px!important;}
+.asset53-detail-screen .asset53-kpis label{font-size:11.2px!important;}
 .asset53-detail-screen .asset53-field b,
 .asset53-detail-screen .asset53-flow-top b,
 .asset53-detail-screen .asset53-flow-line b{font-size:12.6px!important;}

@@ -223,7 +223,7 @@
     if(!screen)return;
     const data=detailChartData();
     const periodLabel=data.isYear?data.key:`Tháng ${Number(data.key.slice(5,7))}/${data.key.slice(0,4)}`;
-    const title=data.isYear?'Chi tiết thu nhập và chi tiêu theo năm':'Chi tiết thu nhập và chi tiêu theo tháng';
+    const title=data.isYear?'Chi tiết Thu chi năm':'Chi tiết Thu chi tháng';
     screen.innerHTML=`<div class="slide-head"><button class="slide-back" data-report-detail-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">${title}</div></div>
       <div class="slide-body">
         <div class="report72-detail-tabs" role="tablist">
@@ -294,9 +294,10 @@
       const day=transactionDate(tx)||tx.date||'';
       (groups[day]||(groups[day]=[])).push(tx);
     });
-    const groupedRows=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(day=>`<section class="report72-child-day-group">
+    const rowColor=childDetailState.color||'#2563eb';
+    const groupedRows=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(day=>`<section class="report72-child-day-group" style="--c:${rowColor}">
       <div class="report72-child-day">${formatDate(day)}</div>
-      ${groups[day].map(tx=>`<div class="report72-child-tx"><div class="report72-child-tx-note">${escapeHtml(childTxNote(tx))}</div><div class="report72-child-tx-amount">${fmt(tx.amount)}</div></div>`).join('')}
+      <div class="report72-child-tx-stack">${groups[day].map(tx=>`<div class="report72-child-tx"><div class="report72-child-tx-note">${escapeHtml(childTxNote(tx))}</div><div class="report72-child-tx-amount">${fmt(tx.amount)}</div></div>`).join('')}</div>
     </section>`).join('');
     const total=rows.reduce((sum,x)=>sum+Number(x.amount||0),0);
     const max=Math.max(...months.map(x=>x.value),1);
@@ -405,7 +406,7 @@
     const yearExpenseTotal=yearMonths.reduce((sum,x)=>sum+x.expense,0);
     const animateMonth=animateScope==='all'||animateScope==='month';
     const animateYear=animateScope==='all'||animateScope==='year';
-    root.innerHTML=`<section class="report72-card report72-month-card ${animateMonth?'report72-animate':''}"><div class="report72-card-head"><div class="report72-title">Tóm tắt tháng theo nhóm</div>${seg('month',monthOffset)}</div><div class="report72-month-line"><div class="report72-chip">${monthLabel(monthOffset)}</div><button class="report72-detail-link" data-report-detail>Chi tiết</button></div>${summaryBox('Thu nhập',incomeTotal,summary.income)}${summaryBox('Chi tiêu',expenseTotal,summary.expense)}</section><section class="report72-card"><div class="report72-card-head"><div class="report72-title">Thu chi 12 tháng</div>${seg('year',yearOffset)}</div><div class="report72-year-line"><div class="report72-chip">${yearLabel(yearOffset)}</div><div class="report72-year-line-metric in"><i></i><span>Thu ${compactMoney(yearIncomeTotal)}</span></div><div class="report72-year-line-metric out"><i></i><span>Chi ${compactMoney(yearExpenseTotal)}</span></div><button class="report72-detail-link report72-year-detail" data-report-year-detail type="button">Chi tiết</button></div>${yearlyChart(yearMonths,animateYear)}</section>`;
+    root.innerHTML=`<section class="report72-card report72-month-card ${animateMonth?'report72-animate':''}"><div class="report72-card-head"><div class="report72-title">Thu chi tháng</div>${seg('month',monthOffset)}</div><div class="report72-month-line"><div class="report72-chip">${monthLabel(monthOffset)}</div><button class="report72-detail-link" data-report-detail>Chi tiết</button></div>${summaryBox('Thu nhập',incomeTotal,summary.income)}${summaryBox('Chi tiêu',expenseTotal,summary.expense)}</section><section class="report72-card"><div class="report72-card-head"><div class="report72-title">Thu chi năm</div>${seg('year',yearOffset)}</div><div class="report72-year-line"><div class="report72-chip">${yearLabel(yearOffset)}</div><div class="report72-year-line-metric in"><i></i><span>Thu ${compactMoney(yearIncomeTotal)}</span></div><div class="report72-year-line-metric out"><i></i><span>Chi ${compactMoney(yearExpenseTotal)}</span></div><button class="report72-detail-link report72-year-detail" data-report-year-detail type="button">Chi tiết</button></div>${yearlyChart(yearMonths,animateYear)}</section>`;
   }
   function rerenderOpenDetails(){
     const detail=document.getElementById('screenReportDetail');

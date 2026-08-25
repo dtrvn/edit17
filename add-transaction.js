@@ -163,7 +163,7 @@
         const date=String(tx.date||tx.ngay||'');
         const value=String(tx.savingBookId||tx.so_tiet_kiem_id||tx.id||tx.external_id||books.length);
         const external=String(tx.external_id||tx.id||'');
-        const label=[`So ${books.length+1}`,date,rate?`LS ${rate.includes('%')?rate:rate+'%'}`:'',money(amount)].filter(Boolean).join(' - ');
+        const label=[`Sổ ${books.length+1}`,date,rate?`LS ${rate.includes('%')?rate:rate+'%'}`:'',money(amount)].filter(Boolean).join(' - ');
         books.push({value,label,term,rate,cost:amount,name:String(tx.assetName||tx.ten_tai_san||'Gui tiet kiem'),ids:[value,external].filter(Boolean)});
       });
     return books;
