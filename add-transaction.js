@@ -40,6 +40,7 @@
     return n;
   }
   const isGoldState=()=>normalizeDong(plainText([state.type,state.group,state.child,state.assetName].join(' '))).includes('vang')||normalizeDong(plainText([state.type,state.group,state.child,state.assetName].join(' '))).includes('gold');
+  const isDivestGoldState=()=>isGoldState()&&txType(state.type)==='DIVEST';
   const isAssetState=()=>{
     const text=normalizeDong(plainText(state.type));
     return text.includes('dau tu')||text.includes('thu hoi')||isSavingState();
@@ -173,6 +174,32 @@
     return books.find(book=>book.value===state.savingBookId)||books[0]||null;
   }
 
+  function goldHoldingOptions(){
+    const snapshot=typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets():null;
+    const items=Array.isArray(snapshot?.assets)?snapshot.assets:[];
+    return items
+      .filter(asset=>{
+        const key=normalizeDong(plainText([asset.key,asset.cls,asset.name].join(' ')));
+        return (key.includes('gold')||key.includes('vang'))&&Number(asset.aggregateQty||0)>0;
+      })
+      .map(asset=>({
+        name:String(asset.name||'Vàng 98%').trim(),
+        qty:Number(asset.aggregateQty||0),
+        label:[String(asset.name||'Vàng 98%').trim(),asset.qtyText].filter(Boolean).join(' - ')
+      }));
+  }
+
+  function selectedGoldHolding(){
+    const rows=goldHoldingOptions();
+    const wanted=plainText(state.assetName);
+    return rows.find(row=>plainText(row.name)===wanted)||rows[0]||null;
+  }
+
+  function showSaveIssue(title,message){
+    if(window.showAppMessage)window.showAppMessage(title,message);
+    else window.alert?.(`${title}: ${message}`);
+  }
+
   function generatedSavingBookId(businessId){
     return String(businessId||'').replace(/^GD/,'STK')||('STK'+Date.now());
   }
@@ -300,6 +327,10 @@
     form.className='add39-form';
     const emptyText=catalog.types.length?'':'Chưa có danh mục trong Firebase';
     const isGold=isGoldState();
+    const divestGold=isDivestGoldState();
+    const goldRows=goldHoldingOptions();
+    if(divestGold&&goldRows.length&&!goldRows.some(row=>plainText(row.name)===plainText(state.assetName)))state.assetName=goldRows[0].name;
+    const selectedGold=selectedGoldHolding();
     const assetNameValue=state.assetName||(isGold?'Vàng 98%':state.child||'');
     const unitValue=state.assetUnit||(isGold?'Chỉ':'');
     const unitField=isGold
@@ -314,7 +345,10 @@
     const amountLabel=divestSaving?'Số tiền tất toán sổ':'Số tiền';
     const savingFields=`<div class="add39-asset-block saving-mode"><div class="add39-field full"><label class="add39-label">Kỳ hạn</label><button class="add39-control" data-add39-saving-term type="button"><span>${state.savingTerm||'1 tháng'}</span>${chev}</button></div><div class="add39-field full"><label class="add39-label">Lãi suất / năm</label><input class="add39-input" id="add39AssetInterest" inputmode="decimal" value="${state.assetInterest||''}" placeholder="VD: 5.5"></div><div class="add39-field full"><div class="add39-saving-preview"><span>Lãi dự kiến: <b id="add39SavingMaturity">${money(maturityInterest)}</b></span></div></div></div>`;
     const savingWithdrawFields=`<div class="add39-asset-block saving-mode"><div class="add39-field full"><label class="add39-label">Sổ tiết kiệm</label><button class="add39-control" data-add39-saving-book type="button"><span>${selectedBook?.label||'Chưa có sổ tiết kiệm'}</span>${chev}</button></div></div>`;
-    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">Tên tài sản</label><input class="add39-input" id="add39AssetName" value="${assetNameValue}" placeholder="${isGold?'Vàng 98%':'Tên tài sản'}"></div><div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div><div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div><div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div></div>`;
+    const assetNameControl=divestGold
+      ? `<button class="add39-control" data-add39-gold-asset type="button"><span>${selectedGold?.label||'Chưa có vàng để bán'}</span>${chev}</button>`
+      : `<input class="add39-input" id="add39AssetName" value="${assetNameValue}" placeholder="${isGold?'Vàng 98%':'Tên tài sản'}">`;
+    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">Tên tài sản</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div><div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div><div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div></div>`;
     const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):defaultAssetFields):'';
     form.innerHTML=`<div class="add39-field"><label class="add39-label">Ngày giao dịch</label><button class="add39-control" data-add39-date><span>${dmy(state.date)}</span>${calIcon}</button></div><div class="add39-field"><label class="add39-label">Loại giao dịch</label><button class="add39-control" data-add39-type><span>${state.type||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Nhóm danh mục</label><button class="add39-control" data-add39-group><span>${state.group||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Hạng mục con</label><button class="add39-control" data-add39-child><span>${state.child||emptyText}</span>${chev}</button></div><div class="add39-field full"><div class="add39-label-row"><label class="add39-label">${amountLabel}</label><span class="add39-money-preview" id="add39MoneyPreview">${money(state.amount)}</span></div><input class="add39-input" id="add39Amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${state.amount||''}"></div>${assetFields}<div class="add39-field full"><label class="add39-label">Ghi chú</label><textarea class="add39-note" id="add39Note" placeholder="Nhập ghi chú">${state.note||''}</textarea></div><div class="add39-actions"><button type="button" class="add39-cancel" data-close="screenTxnForm">Hủy</button><button type="button" class="add39-save" id="add39Save">Lưu giao dịch</button></div>`;
   }
@@ -358,6 +392,19 @@
     const fee=Number(String(state.fee||0).replace(/\D/g,''))||0;
     const unitForTx=saveAsset?'Sổ':(state.assetUnit||(isGoldState()?'Chỉ':'Đơn vị'));
     const priceQty=isGoldState()?goldQtyToChi(qty,unitForTx):qty;
+    if(isDivestGoldState()){
+      const holding=selectedGoldHolding();
+      const sellQty=goldQtyToChi(qty,unitForTx);
+      if(!holding){
+        showSaveIssue('Chưa có vàng để bán','Vui lòng thêm giao dịch mua vàng trước, hoặc chọn đúng loại vàng đang có trong Tài sản.');
+        return;
+      }
+      if(sellQty>Number(holding.qty||0)){
+        showSaveIssue('Không đủ số lượng vàng',`Bạn đang bán ${sellQty} chỉ nhưng ${holding.name} chỉ còn ${holding.qty} chỉ.`);
+        return;
+      }
+      state.assetName=holding.name;
+    }
     const price=Math.round(amount/Math.max(priceQty,1));
     const savingTerm=book?.term||state.savingTerm||'1 tháng';
     const savingRate=book?.rate||state.assetInterest||'';
@@ -426,6 +473,13 @@
     if(e.target.closest('[data-add39-group]'))openOptions('Nhóm danh mục',catalog.groups[state.type]||[],state.group,v=>{state.group=v;state.child=childOptions(state.type,state.group)[0]||'';});
     if(e.target.closest('[data-add39-child]'))openOptions('Hạng mục con',childOptions(state.type,state.group),state.child,v=>state.child=v);
     if(e.target.closest('[data-add39-asset-unit]'))openOptions('Đơn vị',GOLD_UNITS,state.assetUnit||'Chỉ',v=>state.assetUnit=v);
+    if(e.target.closest('[data-add39-gold-asset]')){
+      const rows=goldHoldingOptions();
+      openOptions('Loại vàng',rows.length?rows.map(row=>row.label):['Chưa có vàng để bán'],selectedGoldHolding()?.label||'Chưa có vàng để bán',label=>{
+        const picked=rows.find(row=>row.label===label);
+        state.assetName=picked?.name||state.assetName;
+      });
+    }
     if(e.target.closest('[data-add39-saving-term]'))openOptions('Kỳ hạn',SAVING_TERMS,state.savingTerm||'1 tháng',v=>state.savingTerm=v);
     if(e.target.closest('[data-add39-saving-book]')){
       const books=savingBookOptions();
