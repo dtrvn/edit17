@@ -1,6 +1,6 @@
 /* Firebase data layer shared by the screens.
    Firestore document id is exposed as `id`; business field `id` is `external_id`. */
-const FIREBASE_CONFIG={
+/*const FIREBASE_CONFIG={
   apiKey:"AIzaSyBIuqYBLk4GwpTEBpRLNHSDI41TWDsZNIs",
   authDomain:"quanlychitieu-912c3.firebaseapp.com",
   projectId:"quanlychitieu-912c3",
@@ -8,6 +8,15 @@ const FIREBASE_CONFIG={
   messagingSenderId:"920220207130",
   appId:"1:920220207130:web:61aec0b9081fe3ea0729a3",
   measurementId:"G-1290WPZRWZ"
+};*/
+const firebaseConfig = {
+  apiKey: "AIzaSyBchmRedpv84YDT8G7WOFW7-yd-3v8N0SA",
+  authDomain: "test-qlct.firebaseapp.com",
+  projectId: "test-qlct",
+  storageBucket: "test-qlct.firebasestorage.app",
+  messagingSenderId: "44896306415",
+  appId: "1:44896306415:web:c99424cf2f2d4e0b43871a",
+  measurementId: "G-Y2QYVB6WD4"
 };
 const FIREBASE_COLLECTIONS={danhMuc:'DanhMuc',giaoDich:'GiaoDich',taiSan:'TaiSan'};
 
