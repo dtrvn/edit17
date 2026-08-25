@@ -10,8 +10,8 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=home-refresh-all-20260825b" />
-<link rel="stylesheet" href="transaction.css?v=txn-edit-bottom-20260824b" />
+<link rel="stylesheet" href="overview.css?v=header-size-20260825a" />
+<link rel="stylesheet" href="transaction.css?v=form-text-size-20260825a" />
 <link rel="stylesheet" href="category.css?v=cat-list-bottom-20260824a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
@@ -47,7 +47,7 @@
 /* demo40: add transaction - category fields separate rows + better bottom sheet typography */
 #screenTxnForm{padding-left:18px!important;padding-right:18px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #screenTxnForm .slide-head{height:38px!important;margin-bottom:8px!important;}
-#screenTxnForm .slide-title{font-size:14.2px!important;font-weight:700!important;letter-spacing:-.018em!important;color:#0f172a!important;}
+#screenTxnForm .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.018em!important;color:#0f172a!important;}
 #screenTxnForm .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
 #screenTxnForm .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.15!important;}
 #screenTxnForm .slide-body{height:calc(100% - 46px)!important;overflow:auto!important;padding:2px 0 24px!important;scrollbar-width:none!important;}
@@ -58,7 +58,7 @@
 .add39-field.full{grid-column:1/-1;}
 .add39-field.cat-row{grid-column:1/-1;}
 .add39-label-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.add39-label{font-size:10.5px;font-weight:640;color:#53657a;letter-spacing:-.004em;line-height:1.15;}
+.add39-label{font-size:11.4px;font-weight:640;color:#53657a;letter-spacing:-.004em;line-height:1.15;}
 .add39-money-preview{font-size:10.8px;font-weight:640;color:#53657a;white-space:nowrap;letter-spacing:-.004em;}
 .add39-control,.add39-input,.add39-note{width:100%;border:1px solid #dce6f1;background:#fff;border-radius:14px;color:#0f172a;font-size:13px;font-weight:400;letter-spacing:-.006em;outline:none;}
 .add39-control{height:38px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;overflow:hidden;}
@@ -72,7 +72,7 @@
 .add39-cal-ico{width:28px;height:28px;min-width:28px;border-radius:11px;background:#edf3ff;color:#2563eb;display:grid;place-items:center;flex:0 0 auto;margin-left:8px;}
 .add39-cal-ico svg{display:block;width:17px;height:17px;stroke:#2563eb;stroke-width:2.35;stroke-linecap:round;stroke-linejoin:round;fill:none;overflow:visible;}
 .add39-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-.add39-cancel,.add39-save{height:38px;border-radius:14px;font-size:12.5px;font-weight:760;border:0;cursor:pointer;letter-spacing:-.012em;}
+.add39-cancel,.add39-save{height:38px;border-radius:14px;font-size:12.8px;font-weight:760;border:0;cursor:pointer;letter-spacing:-.012em;}
 .add39-cancel{border:1px solid #dce6f1;background:#eef5ff;color:var(--primary);}
 .add39-save{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 10px 20px rgba(37,99,235,.16);}
 .add39-save.is-loading,.txn16-save.is-loading,.txn16-delete.is-loading{position:relative;color:transparent!important;pointer-events:none;}
@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=report-child-card-click-20260825b">
+<link rel="stylesheet" href="report.css?v=report-month-delta-20260825a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -815,7 +815,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="gold.css">
+<link rel="stylesheet" href="gold.css?v=gold-header-clean-20260825a">
 <style id="gold-inline-fallback-css">
 #screenGold.gold77-screen .gold77-sheet{
   position:absolute!important;
@@ -974,20 +974,20 @@
 #screenTxnForm .add39-control[data-add39-date] span{font-weight:400!important;}
 #screenTxnForm{padding:18px 18px 30px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #screenTxnForm .slide-head{height:38px!important;margin-bottom:6px!important;}
-#screenTxnForm .slide-title{font-size:14px!important;font-weight:730!important;letter-spacing:-.02em!important;color:#0f172a!important;}
+#screenTxnForm .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.02em!important;color:#0f172a!important;}
 #screenTxnForm .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
 #screenTxnForm .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.2!important;}
 #screenTxnForm .slide-body{height:calc(100% - 44px)!important;overflow:auto!important;padding:0 0 calc(132px + env(safe-area-inset-bottom))!important;scrollbar-width:none!important;}
 #screenTxnForm .demo-card{border-radius:20px!important;background:rgba(255,255,255,.86)!important;border:1px solid #dfe9f3!important;box-shadow:0 14px 28px rgba(15,23,42,.055)!important;padding:13px 12px!important;margin:0 0 calc(112px + env(safe-area-inset-bottom))!important;}
 #screenTxnForm .add39-form{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
 #screenTxnForm .add39-field{display:grid!important;gap:5px!important;}
-#screenTxnForm .add39-label{font-size:10.5px!important;font-weight:720!important;}
+#screenTxnForm .add39-label{font-size:11.4px!important;font-weight:720!important;}
 #screenTxnForm .add39-control,#screenTxnForm .add39-input,#screenTxnForm .add39-note{border-radius:14px!important;padding-left:10px!important;padding-right:10px!important;font-size:12.5px!important;}
 #screenTxnForm .add39-control,#screenTxnForm .add39-input,#screenTxnForm .add39-field.cat-row .add39-control{height:39px!important;min-height:39px!important;line-height:39px!important;overflow:hidden!important;}
 #screenTxnForm .add39-control span,#screenTxnForm .add39-field.cat-row .add39-control span{font-size:12.5px!important;line-height:1.25!important;padding-top:1px!important;}
 #screenTxnForm .add39-note{height:68px!important;padding:10px!important;}
 #screenTxnForm .add39-actions{gap:8px!important;margin-top:10px!important;}
-#screenTxnForm .add39-cancel,#screenTxnForm .add39-save{height:36px!important;min-height:36px!important;border-radius:13px!important;font-size:11.8px!important;font-weight:760!important;line-height:36px!important;padding:0 10px!important;}
+#screenTxnForm .add39-cancel,#screenTxnForm .add39-save{height:36px!important;min-height:36px!important;border-radius:13px!important;font-size:12.8px!important;font-weight:760!important;line-height:36px!important;padding:0 10px!important;}
 #phone #screenTxnForm.slide-screen{position:absolute!important;inset:0!important;z-index:120!important;height:100%!important;min-height:100%!important;max-height:100%!important;overflow:hidden!important;pointer-events:none!important;}
 #phone #screenTxnForm.slide-screen.active{pointer-events:auto!important;}
 #phone #screenTxnForm .slide-body{height:calc(100% - 44px)!important;max-height:calc(100% - 44px)!important;overflow-y:auto!important;overflow-x:hidden!important;padding-bottom:calc(154px + env(safe-area-inset-bottom))!important;}
@@ -1170,8 +1170,8 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .report72-detail-tabs{width:100%!important;height:34px!important;margin:2px 0 10px!important;}
 .report72-detail-tabs button{font-size:12px!important;font-weight:680!important;}
 .report72-detail-month{font-size:11.3px!important;height:29px!important;line-height:29px!important;}
-.report72-detail-month-nav{grid-template-columns:repeat(3,30px)!important;}
-.report72-detail-month-nav button{width:30px!important;height:30px!important;}
+.report72-detail-month-nav{grid-template-columns:repeat(3,34px)!important;}
+.report72-detail-month-nav button{width:34px!important;height:32px!important;}
 .report72-detail-period-row,
 .report72-child-period-row{grid-template-columns:minmax(82px,1fr) 104px minmax(94px,1fr)!important;gap:9px!important;}
 .report72-detail-period-row .report72-detail-total b,
@@ -1321,10 +1321,10 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="transaction.js?v=home-refresh-clear-edit-20260825a"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
-<script src="add-transaction.js?v=saving-book-label-20260825b"></script>
+<script src="add-transaction.js?v=saving-book-label-20260825c"></script>
 <script src="asset.js?v=saving-id-format-20260825a"></script>
-<script src="report.js?v=report-child-card-click-20260825b"></script>
-<script src="gold.js?v=write-price-status-20260813"></script>
+<script src="report.js?v=report-month-delta-20260825a"></script>
+<script src="gold.js?v=gold-header-clean-20260825a"></script>
 
 <script>
 if('serviceWorker' in navigator){

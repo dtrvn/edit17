@@ -12,7 +12,7 @@
 #screenTransactions{padding:18px 18px 0!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #phone #screenTransactions.slide-screen{padding-bottom:env(safe-area-inset-bottom,0px)!important;}
 #screenTransactions .slide-head{height:38px!important;margin-bottom:6px!important;}
-#screenTransactions .slide-title,.txn16-edit .slide-title{font-size:14px!important;font-weight:730!important;letter-spacing:-.02em!important;color:#0f172a!important;}
+#screenTransactions .slide-title,.txn16-edit .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.02em!important;color:#0f172a!important;}
 #screenTransactions .slide-back{width:31px!important;height:31px!important;border-radius:13px!important;}
 #screenTransactions .slide-back svg{width:16px!important;height:16px!important;stroke-width:2.2!important;}
 #screenTransactions .slide-body{height:calc(100% - 44px)!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;padding:0!important;}
@@ -107,7 +107,7 @@
 }
 .txn16-edit .txn16-asset-block .full{grid-column:1/-1!important;}
 .txn16-label-row{display:flex!important;align-items:center!important;justify-content:space-between!important;}
-.txn16-label{font-size:10.5px!important;font-weight:720!important;color:#53657a!important;}
+.txn16-label{font-size:11.4px!important;font-weight:720!important;color:#53657a!important;}
 .txn16-preview{font-size:10.8px!important;font-weight:760!important;color:#53657a!important;}
 .txn16-control,.txn16-money-input,.txn16-note-input{border:1px solid #dce6f1!important;border-radius:14px!important;background:#fff!important;padding:0 10px!important;font-size:12.5px!important;font-weight:500!important;color:#0f172a!important;outline:none!important;}
 .txn16-control{height:39px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;overflow:hidden!important;}
@@ -115,7 +115,7 @@
 .txn16-money-input{height:39px!important;}
 .txn16-note-input{height:68px!important;padding:10px!important;resize:none!important;}
 .txn16-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:12px!important;}
-.txn16-delete,.txn16-save{height:39px!important;border-radius:14px!important;font-size:12px!important;font-weight:800!important;}
+.txn16-delete,.txn16-save{height:39px!important;border-radius:14px!important;font-size:12.8px!important;font-weight:800!important;}
 .txn16-delete{border:1px solid #ffb8c5!important;background:#fff1f2!important;color:#e11d48!important;}
 .txn16-save{border:0!important;background:linear-gradient(135deg,var(--primary),var(--primary2))!important;color:#fff!important;}
 .txn16-backdrop{position:absolute!important;inset:0!important;z-index:190!important;background:rgba(15,23,42,.32)!important;opacity:0!important;pointer-events:none!important;transition:opacity .22s ease!important;}
@@ -255,8 +255,8 @@
   text-rendering:auto!important;
 }
 #screenTransactions .slide-title{
-  font-size:14px!important;
-  font-weight:700!important;
+  font-size:17px!important;
+  font-weight:740!important;
   letter-spacing:-.018em!important;
   color:#0f172a!important;
 }
@@ -534,7 +534,7 @@
   margin-bottom:6px!important;
 }
 #screenTxnForm .slide-title{
-  font-size:14px!important;
+  font-size:17px!important;
   font-weight:730!important;
   letter-spacing:-.02em!important;
   color:#0f172a!important;
@@ -574,7 +574,7 @@
   gap:5px!important;
 }
 #screenTxnForm .add39-label{
-  font-size:10.5px!important;
+  font-size:11.4px!important;
   font-weight:720!important;
 }
 #screenTxnForm .add39-control,
@@ -616,7 +616,7 @@
   height:36px!important;
   min-height:36px!important;
   border-radius:13px!important;
-  font-size:11.8px!important;
+  font-size:12.8px!important;
   font-weight:760!important;
   line-height:36px!important;
   padding:0 10px!important;
@@ -632,7 +632,7 @@
   height:36px!important;
   min-height:36px!important;
   border-radius:13px!important;
-  font-size:11.8px!important;
+  font-size:12.8px!important;
   font-weight:760!important;
   line-height:36px!important;
   padding:0 10px!important;

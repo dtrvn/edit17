@@ -71,7 +71,7 @@ body.custom-bg::after{
 .app{position:relative;z-index:2;height:100%;padding:18px 16px 112px;display:flex;flex-direction:column;gap:7px;overflow:hidden}
 
 .topbar{height:36px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:#334155}
+.brand{display:flex;align-items:center;gap:9px;font-weight:740;font-size:17px;color:#334155}
 .brand-icon{width:31px;height:31px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;color:#fff;box-shadow:0 10px 24px rgba(37,99,235,.22)}
 .brand-icon[data-overview-refresh]{cursor:pointer}
 .brand-icon[data-overview-refresh]:focus-visible{outline:2px solid rgba(37,99,235,.32);outline-offset:3px}
