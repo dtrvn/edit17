@@ -442,7 +442,7 @@
     const savedDate=state.date;
     const txForAsset={...txData,date:savedDate,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
     saving=true;
-    const request=isAssetState()&&window.ASSET52_saveTransactionAtomic
+    const request=window.ASSET52_saveTransactionAtomic
       ? window.ASSET52_saveTransactionAtomic(txForAsset,businessId,txData,{mode:'create'})
       : Promise.resolve(window.FDB.setNoRefresh
         ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)

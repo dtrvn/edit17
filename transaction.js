@@ -251,9 +251,14 @@
       so_luong:isAssetTx(data)?(Number(data.assetQty||0)||1):0,
       ten_tai_san:isAssetTx(data)?(data.assetName||(assetTypeOf(data)==='GOLD'?'Vàng 98%':data.child||data.group||'Tài sản')):''
     };
-    window.FDB.add(FIREBASE_COLLECTIONS.giaoDich,txData)
-      .then(ref=>window.ASSET52_syncTransactionAsset?.({...data,...txData,assetQty:txData.so_luong,assetUnit:txData.don_vi,assetPrice:txData.don_gia,fee:txData.phi,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san},ref.id,{mode:'create'}))
-      .catch(console.error);
+    const docId=txData.id;
+    const payload={...data,...txData,assetQty:txData.so_luong,assetUnit:txData.don_vi,assetPrice:txData.don_gia,fee:txData.phi,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san};
+    const request=window.ASSET52_saveTransactionAtomic
+      ? window.ASSET52_saveTransactionAtomic(payload,docId,txData,{mode:'create'})
+      : (window.FDB.setNoRefresh
+        ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,docId,txData)
+        : window.FDB.set(FIREBASE_COLLECTIONS.giaoDich,docId,txData));
+    Promise.resolve(request).then(()=>window.TXN_upsertTransaction?.({...txData,_docId:docId})).catch(console.error);
   };
   window.TXN_renderList=function(){renderList();};
   window.TXN_upsertTransaction=function(raw){
@@ -339,7 +344,7 @@
     if(!state.editing||state.saving)return Promise.resolve();
     state.saving=true;
     window.QLCT_setBusy?.(true,'Đang lưu thay đổi');
-    const request=isAssetTx(state.editing)&&window.ASSET52_saveTransactionAtomic
+    const request=window.ASSET52_saveTransactionAtomic
       ? window.ASSET52_saveTransactionAtomic(state.editing,state.editing.id,txToFirestore(state.editing),{mode:'edit'})
       : (window.FDB?.setNoRefresh
         ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing))

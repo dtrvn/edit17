@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-gold-sell-holdings-a';
+const CACHE_NAME = 'qlct-pwa-v20260825-all-tx-bank-accounting-a';
 const APP_SHELL = [
   './',
   './index.html',
