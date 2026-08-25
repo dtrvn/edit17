@@ -1181,16 +1181,20 @@
     const amountValue=sell?Number(item.proceeds||0):Math.abs(Number(item.totalCost||item.cost||item.current||0));
     const categoryView=isCategoryKey(key);
     const interestValue=item.interestRate?String(item.interestRate).trim():'-';
-    const interestText=interestValue==='-'?'Lãi suất -':`Lãi suất ${interestValue.includes('%')?interestValue:interestValue+'%'}`;
-    const savingId=String(item.savingBookId||item.sourceTxnExternalId||item.sourceTxnDocId||item.id||'').trim();
+    const interestText=interestValue==='-'?'LS -':`LS ${interestValue.includes('%')?interestValue:interestValue+'%'}`;
+    const savingId=savingMovementId(item);
     const leftTop=savingView
-      ? [movementDateHyphen(item),interestText,savingId].filter(Boolean).join(' - ')
+      ? `${movementDateHyphen(item)} (${interestText})${savingId?` - ${savingId}`:''}`
       : categoryView?[item.date,item.assetName||item.name].filter(Boolean).join(' · '):(item.date||'');
+    const recalled=savingView&&!sell&&isSavingMovementRecalled(item);
+    const recallIcon=recalled?`<span class="asset53-saving-recalled" title="Sổ tiết kiệm đã tất toán" aria-label="Sổ tiết kiệm đã tất toán">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </span>`:'';
     const rightBottom=unitPriceText;
     const firstSpan=savingView?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
     const assetInfo=cashView?'':`<div class="asset53-flow-grid">
         ${firstSpan}
-        <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}</span>
+        <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}${recallIcon}</span>
         <span>${amountPrefix}: ${fmt(Math.abs(amountValue))}</span>
         <span>${rightBottom}</span>
       </div>`;
@@ -1202,6 +1206,30 @@
 
   function isSellMovement(item){
     return String(item.action||'').toUpperCase()==='SELL'||Number(item.qtyChi||item.qtyRaw||0)<0||Number(item.current||0)<0;
+  }
+
+  function savingMovementKeys(item){
+    return [item?.savingBookId,item?.sourceTxnExternalId,item?.sourceTxnDocId,item?.external_id,item?.id]
+      .map(value=>String(value||'').trim())
+      .filter(Boolean);
+  }
+
+  function savingMovementId(item){
+    return savingMovementKeys(item)[0]||'';
+  }
+
+  function recalledSavingBookIds(rows){
+    const ids=new Set();
+    (rows||[]).filter(isSellMovement).forEach(row=>{
+      savingMovementKeys(row).forEach(id=>ids.add(id));
+    });
+    return ids;
+  }
+
+  function isSavingMovementRecalled(item){
+    const ids=detailState.recalledSavingBookIds;
+    if(!ids||!ids.size)return false;
+    return savingMovementKeys(item).some(id=>ids.has(id));
   }
 
   function movementQtyText(item,key){
@@ -1491,6 +1519,7 @@
       const year=Number(detailState.year||new Date().getFullYear());
       const mode=detailState.flow==='sell'?'sell':'buy';
       const anim=(detailState.flowAnim||detailState.yearAnim||detailState.tabAnim)?` ${detailState.flowAnim||detailState.yearAnim||detailState.tabAnim}`:'';
+      detailState.recalledSavingBookIds=recalledSavingBookIds(rows);
       const movementRows=rows.filter(row=>(mode==='sell'?isSellMovement(row):!isSellMovement(row))&&movementYear(row)===year);
       return `<div class="asset53-fixed-panel">
         <div class="asset53-movement-pin">
@@ -1502,7 +1531,7 @@
       </div>
       <div class="asset53-scroll-list">
         ${movementRows.length
-          ? `<div class="asset53-detail-card gold-buy-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
           : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'rút':'gửi'} tiết kiệm trong năm này.</div>`}
       </div>`;
     }
