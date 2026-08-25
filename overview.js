@@ -900,6 +900,24 @@ function resetTransactionFilters(){
   if(clearBtn) clearBtn.click();
 }
 
+let homeRefreshPromise=null;
+
+async function reloadAllDataFromHome(){
+  if(!window.FDB?.refreshAll)return;
+  if(homeRefreshPromise)return homeRefreshPromise;
+  window.QLCT_setBusy?.(true,'Đang tải lại dữ liệu');
+  homeRefreshPromise=window.FDB.refreshAll()
+    .catch(error=>{
+      console.error('Home refresh failed',error);
+      window.showAppMessage?.('Không tải lại được dữ liệu',error?.message||'Vui lòng thử lại.');
+    })
+    .finally(()=>{
+      homeRefreshPromise=null;
+      window.QLCT_setBusy?.(false);
+    });
+  return homeRefreshPromise;
+}
+
 function cleanExportRow(row){
   return JSON.parse(JSON.stringify(row||{}));
 }
@@ -1020,6 +1038,7 @@ document.addEventListener('click',e=>{
   closeTransientLayers();
   closeAllScreens();
   playOverviewAnimations();
+  reloadAllDataFromHome();
 });
 ensureHomeButtons();
 new MutationObserver(mutations=>{
