@@ -1,14 +1,5 @@
 /* Firebase data layer shared by the screens.
    Firestore document id is exposed as `id`; business field `id` is `external_id`. */
-/*const FIREBASE_CONFIG={
-  apiKey:"AIzaSyBIuqYBLk4GwpTEBpRLNHSDI41TWDsZNIs",
-  authDomain:"quanlychitieu-912c3.firebaseapp.com",
-  projectId:"quanlychitieu-912c3",
-  storageBucket:"quanlychitieu-912c3.firebasestorage.app",
-  messagingSenderId:"920220207130",
-  appId:"1:920220207130:web:61aec0b9081fe3ea0729a3",
-  measurementId:"G-1290WPZRWZ"
-};*/
 const FIREBASE_CONFIG={
   apiKey: "AIzaSyBchmRedpv84YDT8G7WOFW7-yd-3v8N0SA",
   authDomain: "test-qlct.firebaseapp.com",
@@ -47,7 +38,8 @@ window.FDB=(function(){
     return null;
   }
 
-  const app=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);
+  const appName=`qlct-${FIREBASE_CONFIG.projectId}`;
+  const app=firebase.apps.find(item=>item.name===appName)||firebase.initializeApp(FIREBASE_CONFIG,appName);
   if(typeof firebase.auth!=='function'){
     const error=new Error('Firebase Auth SDK chua load duoc.');
     reportFirebaseStatus({ok:false,auth:false,error});
