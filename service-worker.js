@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-login-debug-a';
+const CACHE_NAME = 'qlct-pwa-v20260825-asset-atomic-create-a';
 const APP_SHELL = [
   './',
   './index.html',

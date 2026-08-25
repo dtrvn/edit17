@@ -5,6 +5,16 @@
   let saving=false;
   const GOLD_UNITS=['Cây','Chỉ','Phân'];
   const SAVING_TERMS=['1 tuần','2 tuần','3 tuần','1 tháng','2 tháng','3 tháng','4 tháng','5 tháng','6 tháng','7 tháng','8 tháng','9 tháng','10 tháng','11 tháng','12 tháng','18 tháng','24 tháng','36 tháng'];
+  const FALLBACK_CATEGORIES=[
+    {large:'Thu nhập',group:'Lương',child:'Lương'},
+    {large:'Chi tiêu',group:'Sinh hoạt',child:'Ăn uống'},
+    {large:'Đầu tư',group:'Vàng',child:'Mua vàng'},
+    {large:'Thu hồi tài sản',group:'Vàng',child:'Bán vàng'},
+    {large:'Đầu tư',group:'Tiết kiệm',child:'Gửi tiết kiệm'},
+    {large:'Thu hồi tài sản',group:'Tiết kiệm',child:'Rút tiết kiệm'},
+    {large:'Đầu tư',group:'Chứng khoán',child:'Mua cổ phiếu'},
+    {large:'Thu hồi tài sản',group:'Chứng khoán',child:'Bán cổ phiếu'}
+  ];
 
   const unique=items=>Array.from(new Set((items||[]).filter(Boolean)));
   const pad=n=>String(n).padStart(2,'0');
@@ -181,8 +191,13 @@
   }
 
   function refreshCatalog(){
+    const shared=typeof window.CAT90_getCatalog==='function'?window.CAT90_getCatalog():null;
+    if(shared&&Array.isArray(shared.large)&&shared.large.length){
+      catalog={types:shared.large,groups:shared.groups||{},children:shared.children||{}};
+      return;
+    }
     const rows=typeof window.CAT90_getRows==='function'?window.CAT90_getRows():[];
-    catalog=Array.isArray(rows)&&rows.length?buildCatalog(rows):{types:[],groups:{},children:{}};
+    catalog=buildCatalog(Array.isArray(rows)&&rows.length?rows:FALLBACK_CATEGORIES);
   }
   function childOptions(type,group){
     return catalog.children[childKey(type,group)]||catalog.children[group]||[];
@@ -380,15 +395,14 @@
     const savedDate=state.date;
     const txForAsset={...txData,date:savedDate,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
     saving=true;
-    const saveDoc=window.FDB.setNoRefresh
-      ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)
-      : window.FDB.set(FIREBASE_COLLECTIONS.giaoDich,businessId,txData);
-    const request=Promise.resolve(saveDoc).then(()=>{
-      window.TXN_upsertTransaction?.({...txData,_docId:businessId});
-      return isAssetState()?window.ASSET52_syncTransactionAsset?.(txForAsset,businessId,{mode:'create'}):null;
-    });
+    const request=isAssetState()&&window.ASSET52_saveTransactionAtomic
+      ? window.ASSET52_saveTransactionAtomic(txForAsset,businessId,txData,{mode:'create'})
+      : Promise.resolve(window.FDB.setNoRefresh
+        ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)
+        : window.FDB.set(FIREBASE_COLLECTIONS.giaoDich,businessId,txData));
     window.QLCT_setBusy?.(true,'Đang lưu giao dịch');
     Promise.resolve(request).then(()=>{
+      window.TXN_upsertTransaction?.({...txData,_docId:businessId});
       closeScreen('screenTxnForm');
       openScreen('screenTransactions');
       window.TXN_showDate?.(savedDate);
