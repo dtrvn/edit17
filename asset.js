@@ -1213,8 +1213,15 @@
       .filter(Boolean);
   }
 
+  function displaySavingBookId(id){
+    const value=String(id||'').trim();
+    const match=value.match(/^STK(20\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\d{3})?$/);
+    if(match)return `STK${match[3]}${match[2]}${match[1]}${match[4]}${match[5]}${match[6]}`;
+    return value;
+  }
+
   function savingMovementId(item){
-    return savingMovementKeys(item)[0]||'';
+    return displaySavingBookId(savingMovementKeys(item)[0]||'');
   }
 
   function recalledSavingBookIds(rows){

@@ -315,9 +315,18 @@
   function rerenderEdit(){const old=document.getElementById('txn16Edit');if(old){old.outerHTML=editHtml();const el=document.getElementById('txn16Edit');el.classList.add('active');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el)}}
   function closeEditScreen(){
     const el=document.getElementById('txn16Edit');
+    state.editing=null;
+    state.editOriginal=null;
     el?.classList.remove('active');
     setTimeout(()=>el?.remove(),330);
   }
+  window.TXN_closeEditScreen=function(){
+    state.editing=null;
+    state.editOriginal=null;
+    const el=document.getElementById('txn16Edit');
+    el?.classList.remove('active');
+    el?.remove();
+  };
   function deleteEditingTransaction(){
     if(!state.editing||state.saving)return Promise.resolve();
     state.saving=true;

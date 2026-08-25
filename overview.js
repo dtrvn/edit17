@@ -207,11 +207,8 @@ function applyTheme(){
 function closeTransientLayers(){
   document.querySelectorAll('.add39-backdrop.show,.add39-sheet.show,.txn16-backdrop.show,.txn16-sheet.show,.gold77-backdrop.show,.gold77-sheet.show,.cat90-backdrop.show,.cat90-sheet.show,.report72-backdrop.show,.report72-sheet.show')
     .forEach(el=>el.classList.remove('show'));
-  document.querySelectorAll('#txn16Edit.active')
-    .forEach(el=>{
-      el.classList.remove('active');
-      el.setAttribute('aria-hidden','true');
-    });
+  if(typeof window.TXN_closeEditScreen==='function')window.TXN_closeEditScreen();
+  else document.querySelectorAll('#txn16Edit').forEach(el=>el.remove());
   if(typeof window.closeCategoryEditor==='function')window.closeCategoryEditor();
   else {
     const catEditor=document.getElementById('cat90Editor');
@@ -905,6 +902,9 @@ let homeRefreshPromise=null;
 async function reloadAllDataFromHome(){
   if(!window.FDB?.refreshAll)return;
   if(homeRefreshPromise)return homeRefreshPromise;
+  closeTransientLayers();
+  closeAllScreens();
+  playOverviewAnimations();
   window.QLCT_setBusy?.(true,'Đang tải lại dữ liệu');
   homeRefreshPromise=window.FDB.refreshAll()
     .catch(error=>{
@@ -913,6 +913,9 @@ async function reloadAllDataFromHome(){
     })
     .finally(()=>{
       homeRefreshPromise=null;
+      closeTransientLayers();
+      closeAllScreens();
+      playOverviewAnimations();
       window.QLCT_setBusy?.(false);
     });
   return homeRefreshPromise;

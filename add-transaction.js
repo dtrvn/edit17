@@ -163,7 +163,7 @@
         const date=String(tx.date||tx.ngay||'');
         const value=String(tx.savingBookId||tx.so_tiet_kiem_id||tx.id||tx.external_id||books.length);
         const external=String(tx.external_id||tx.id||'');
-        const label=[`So ${books.length+1}`,date,rate?`LS ${rate.includes('%')?rate:rate+'%'}`:'',value,money(amount)].filter(Boolean).join(' - ');
+        const label=[`So ${books.length+1}`,date,rate?`LS ${rate.includes('%')?rate:rate+'%'}`:'',money(amount)].filter(Boolean).join(' - ');
         books.push({value,label,term,rate,cost:amount,name:String(tx.assetName||tx.ten_tai_san||'Gui tiet kiem'),ids:[value,external].filter(Boolean)});
       });
     return books;
@@ -201,7 +201,11 @@
   }
 
   function generatedSavingBookId(businessId){
-    return String(businessId||'').replace(/^GD/,'STK')||('STK'+Date.now());
+    const text=String(businessId||'');
+    const match=text.match(/^GD(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/);
+    if(match)return `STK${match[3]}${match[2]}${match[1]}${match[4]}${match[5]}${match[6]}`;
+    const now=new Date();
+    return `STK${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   }
 
   function buildCatalog(rows){
