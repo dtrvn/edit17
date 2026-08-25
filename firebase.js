@@ -9,7 +9,7 @@
   appId:"1:920220207130:web:61aec0b9081fe3ea0729a3",
   measurementId:"G-1290WPZRWZ"
 };*/
-const firebaseConfig = {
+const FIREBASE_CONFIG={
   apiKey: "AIzaSyBchmRedpv84YDT8G7WOFW7-yd-3v8N0SA",
   authDomain: "test-qlct.firebaseapp.com",
   projectId: "test-qlct",
