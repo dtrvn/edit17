@@ -1194,12 +1194,13 @@
     const firstSpan=savingView?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
     const assetInfo=cashView?'':`<div class="asset53-flow-grid">
         ${firstSpan}
-        <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}${recallIcon}</span>
+        <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}</span>
         <span>${amountPrefix}: ${fmt(Math.abs(amountValue))}</span>
         <span>${rightBottom}</span>
       </div>`;
     const cashLine=cashView?`<div class="asset53-flow-line ${item.current>=0?'plus':'minus'}"><span>Ngân hàng</span><b>${signedFmt(item.current)}</b></div>`:'';
     return `<div class="asset53-detail-row asset53-flow-row" style="--asset-detail-color:${color}">
+      ${recallIcon}
       ${assetInfo||`<div class="asset53-flow-lines">${cashLine}</div>`}
     </div>`;
   }
