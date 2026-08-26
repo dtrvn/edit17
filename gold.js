@@ -88,7 +88,7 @@
     screen.classList.add('gold77-screen');
     const item=selected();
     const activeStatus=saveStatus.text&&Date.now()<Number(saveStatus.until||0)?saveStatus:null;
-    root.innerHTML=item?`<div class="gold77-card"><div class="gold77-top"><div class="gold77-icon">${icon}</div><div><div class="gold77-top-label" id="gold77CurrentType">${item.name}</div><div class="gold77-current-price" id="gold77CurrentPrice">${fmt(item.price)}</div><div class="gold77-time" id="gold77UpdatedAt">Cập nhật: ${nowText()}</div><div class="gold77-save-status ${activeStatus?.type||''}" id="gold77SaveStatus" aria-live="polite">${activeStatus?.text||''}</div></div></div><div class="gold77-form"><div><div class="gold77-label-row"><label class="gold77-label">Loại vàng</label></div><button class="gold77-select" id="gold77Select" type="button"><span class="mini">${icon}</span><span class="name">${item.name}</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg></button></div><div><div class="gold77-label-row"><label class="gold77-label">Giá vàng mới</label><span class="gold77-live-value" id="gold77LiveValue">0 đ</span></div><input id="gold77Input" class="gold77-input" inputmode="numeric" autocomplete="off" value="0" /><div class="gold77-field-status ${activeStatus?.type||''}" id="gold77FieldStatus" aria-live="polite">${activeStatus?.text||''}</div></div><div class="gold77-stat-grid"><div class="gold77-stat"><span>Tổng số lượng</span><b>${item.qtyText||'-'}</b></div><div class="gold77-stat"><span>Giá trị hiện tại</span><b id="gold77Value">${fmt(Number(item.qtyChi||0)*Number(item.price||0))}</b></div></div><button id="gold77Update" class="gold77-update" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 12a8 8 0 0 1-13.66 5.66"/><path d="M4 12A8 8 0 0 1 17.66 6.34"/><path d="M18 3v4h-4"/><path d="M6 21v-4h4"/></svg> Cập nhật giá vàng</button></div></div>`:'<div class="gold77-card"><div class="gold77-note">Chưa có dữ liệu vàng trong collection TaiSan.</div></div>';
+    root.innerHTML=item?`<div class="gold77-card"><div class="gold77-top"><div class="gold77-icon">${icon}</div><div><div class="gold77-top-label" id="gold77CurrentType">${item.name}</div><div class="gold77-current-price" id="gold77CurrentPrice">${fmt(item.price)}</div><div class="gold77-time" id="gold77UpdatedAt">Cập nhật: ${nowText()}</div></div></div><div class="gold77-form"><div><div class="gold77-label-row"><label class="gold77-label">Loại vàng</label></div><button class="gold77-select" id="gold77Select" type="button"><span class="mini">${icon}</span><span class="name">${item.name}</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg></button></div><div><div class="gold77-label-row"><label class="gold77-label">Giá vàng mới</label><span class="gold77-live-value" id="gold77LiveValue">0 đ</span></div><input id="gold77Input" class="gold77-input" inputmode="numeric" autocomplete="off" value="0" /><div class="gold77-field-status ${activeStatus?.type||''}" id="gold77FieldStatus" aria-live="polite">${activeStatus?.text||''}</div></div><div class="gold77-stat-grid"><div class="gold77-stat"><span>Tổng số lượng</span><b>${item.qtyText||'-'}</b></div><div class="gold77-stat"><span>Giá trị hiện tại</span><b id="gold77Value">${fmt(Number(item.qtyChi||0)*Number(item.price||0))}</b></div></div><button id="gold77Update" class="gold77-update" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 12a8 8 0 0 1-13.66 5.66"/><path d="M4 12A8 8 0 0 1 17.66 6.34"/><path d="M18 3v4h-4"/><path d="M6 21v-4h4"/></svg> Cập nhật giá vàng</button></div></div>`:'<div class="gold77-card"><div class="gold77-note">Chưa có dữ liệu vàng trong collection TaiSan.</div></div>';
     ensureSheet();
     bindGold();
     hasRendered=true;
@@ -131,16 +131,11 @@
     const input=document.getElementById('gold77Input');
     const live=document.getElementById('gold77LiveValue');
     const fieldStatus=document.getElementById('gold77FieldStatus');
-    const saveStatusEl=document.getElementById('gold77SaveStatus');
     function setFieldStatus(type,text){
       saveStatus={type:type||'',text:text||'',until:text?Date.now()+4500:0};
       if(!fieldStatus)return;
       fieldStatus.className='gold77-field-status'+(type?` ${type}`:'');
       fieldStatus.textContent=text||'';
-      if(saveStatusEl){
-        saveStatusEl.className='gold77-save-status'+(type?` ${type}`:'');
-        saveStatusEl.textContent=text||'';
-      }
     }
     input?.addEventListener('focus',()=>{if(input.value==='0')input.value='';});
     input?.addEventListener('input',()=>{const cleaned=cleanInputValue(input.value);input.value=cleaned;live.textContent=fmt(parseMoney(cleaned));if(saveStatus.type!=='success')setFieldStatus('','');});
@@ -155,17 +150,19 @@
       live.textContent=fmt(price);
       const request=window.ASSET52_updateGoldPrice?window.ASSET52_updateGoldPrice({...item,price}):null;
       Promise.resolve(request).then(()=>{
-        setFieldStatus('success','Đã cập nhật giá vàng vào Firebase.');
+        saveStatus={type:'success',text:'Cập nhật giá vàng thành công',until:Date.now()+4500};
+        if(document.getElementById('screenGold')?.classList.contains('active'))renderGold();
       }).catch(error=>{
         console.error(error);
-        setFieldStatus('error','Không cập nhật được Firebase. Kiểm tra quyền ghi TaiSan.');
+        saveStatus={type:'error',text:'Không cập nhật được Firebase. Kiểm tra quyền ghi TaiSan.',until:Date.now()+4500};
+        if(document.getElementById('screenGold')?.classList.contains('active'))renderGold();
       });
     });
   }
 
   window.GOLD77_render=renderGold;
   document.addEventListener('asset52:changed',()=>{if(document.getElementById('screenGold')?.classList.contains('active'))renderGold();});
-  document.addEventListener('click',e=>{const tool=e.target.closest('.tool');if(tool&&tool.textContent.trim()==='Giá vàng')setTimeout(renderGold,0);const opt=e.target.closest('[data-gold-id]');if(opt){selectedId=opt.dataset.goldId;renderGold();closeSheet();return;}if(e.target.closest('#gold77Backdrop'))closeSheet();if(e.target.closest('[data-close="screenGold"]'))closeSheet();},true);
+  document.addEventListener('click',e=>{const tool=e.target.closest('.tool');if(tool&&tool.textContent.trim()==='Giá vàng')setTimeout(renderGold,0);const opt=e.target.closest('[data-gold-id]');if(opt){selectedId=opt.dataset.goldId;saveStatus={type:'',text:'',until:0};renderGold();closeSheet();return;}if(e.target.closest('#gold77Backdrop'))closeSheet();if(e.target.closest('[data-close="screenGold"]'))closeSheet();},true);
   const observer=new MutationObserver(()=>{const screen=document.getElementById('screenGold');if(screen&&screen.classList.contains('active')&&!hasRendered)renderGold();});
   const start=()=>{const s=document.getElementById('screenGold');if(s)observer.observe(s,{attributes:true,attributeFilter:['class']});};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
