@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260826-gold-price-a';
+const CACHE_NAME = 'qlct-pwa-v20260826-gold-status-b';
 const APP_SHELL = [
   './',
   './index.html',
