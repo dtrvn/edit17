@@ -158,6 +158,7 @@ function ensureNumberKeyboard(){
   }
   function close(){
     if(target){
+      window.__numkeyClosedAt=Date.now();
       try{target.blur();}catch(_err){}
       target.classList.remove('numkey-active-input');
       target.setAttribute('inputmode','none');

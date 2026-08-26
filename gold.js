@@ -11,6 +11,13 @@
   function selected(){return goldTypes.find(x=>x.id===selectedId)||goldTypes[0]||null;}
   function isGoldKey(key){const text=String(key||'').toLowerCase();return text.includes('gold')||text.includes('vang');}
   function goldGroupKey(name){return String(name||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+  function numericValue(...values){
+    for(const value of values){
+      const n=Number(value||0);
+      if(n)return n;
+    }
+    return 0;
+  }
   function formatGoldQty(totalChi){
     const totalPhan=Math.round(Number(totalChi||0)*10);
     const cay=Math.floor(totalPhan/100);
@@ -24,6 +31,25 @@
   }
   function refreshGoldTypesGrouped(){
     const data=typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets():null;
+    const aggregateRows=(data?.assets||[]).filter(row=>isGoldKey([row.key,row.cls,row.name].join(' ')));
+    if(aggregateRows.length){
+      goldTypes=aggregateRows.map(row=>{
+        const qtyChi=numericValue(row.aggregateQty,row.qtyChi);
+        const value=numericValue(row.aggregateValue,row.value);
+        const price=numericValue(row.aggregateCurrentPrice,row.price,qtyChi&&value?Math.round(value/qtyChi):0);
+        return {
+          id:String(row.key||row.id||row.name),
+          name:String(row.name||'Vàng').trim(),
+          qtyText:row.aggregateQtyText||row.qtyText||formatGoldQty(qtyChi),
+          qtyChi,
+          price,
+          key:row.key,
+          docId:row.docId||row.id
+        };
+      }).filter(x=>x.id&&x.name);
+      if(!goldTypes.some(x=>x.id===selectedId))selectedId=goldTypes[0]?.id||'';
+      return;
+    }
     const rows=Object.values(data?.detailData||{}).flat().filter(row=>isGoldKey(row.key));
     const groups={};
     rows.forEach(row=>{
@@ -113,6 +139,7 @@
     input?.addEventListener('blur',()=>{if(!input.value){input.value='0';live.textContent='0 đ';}});
     document.getElementById('gold77Select')?.addEventListener('click',openSheet);
     document.getElementById('gold77Update')?.addEventListener('click',()=>{
+      if(Date.now()-Number(window.__numkeyClosedAt||0)<500)return;
       const item=selected();
       const price=parseMoney(input?.value);
       if(!item)return;

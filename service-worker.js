@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260825-firebase-quanlychitieu-b';
+const CACHE_NAME = 'qlct-pwa-v20260826-gold-price-a';
 const APP_SHELL = [
   './',
   './index.html',
