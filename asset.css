@@ -652,19 +652,20 @@
 .asset53-profit-row span{
   display:grid;
   justify-items:end;
-  gap:3px;
+  gap:2px;
+  flex:1 1 auto;
   min-width:0;
 }
 .asset53-profit-row .asset53-formula{
-  max-width:min(230px,52vw);
+  max-width:100%;
   text-align:right;
   color:#94a3b8;
-  font-size:9.4px;
-  line-height:1.1;
+  font-size:8.3px;
+  line-height:1.25;
   font-weight:480;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  overflow:visible;
+  text-overflow:clip;
 }
 .asset53-result{
   width:max-content;
