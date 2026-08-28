@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=export-excel-20260829a" />
 <link rel="stylesheet" href="transaction.css?v=asset-tone-20260829b" />
-<link rel="stylesheet" href="category.css?v=cat-list-bottom-20260824a" />
+<link rel="stylesheet" href="category.css?v=category-top-add-20260829a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
 .slide-screen{
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=realestate-brown-20260829a">
+<link rel="stylesheet" href="asset.css?v=realestate-slate-20260829a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -296,7 +296,7 @@
 .asset52-card.stock{--asset-color:#10b981;--asset-soft:#e7f8f1;}
 .asset52-card.saving{--asset-color:#8b5cf6;--asset-soft:#f1ebff;}
 .asset52-card.insurance{--asset-color:#06b6d4;--asset-soft:#e7faff;}
-.asset52-card.realestate{--asset-color:#7c2d12;--asset-soft:#ffedd5;}
+.asset52-card.realestate{--asset-color:#475569;--asset-soft:#f1f5f9;}
 
 /* Asset detail screen */
 .asset53-detail-screen{
@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=detail-card-auto-20260829b">
+<link rel="stylesheet" href="report.css?v=detail-card-auto-20260829c">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -1235,12 +1235,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   grid-template-rows:auto auto!important;
   align-items:start!important;
   align-content:start!important;
-  min-height:74px!important;
+  min-height:56px!important;
   height:auto!important;
-  row-gap:11px!important;
+  row-gap:6px!important;
   overflow:hidden!important;
-  padding-top:12px!important;
-  padding-bottom:12px!important;
+  padding-top:2px!important;
+  padding-bottom:2px!important;
 }
 .report72-detail-bar-label{
   align-self:start!important;
@@ -1267,8 +1267,8 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 @media(max-width:430px){
   .report72-detail-bar-row{
     grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
-    min-height:72px!important;
-    row-gap:10px!important;
+    min-height:54px!important;
+    row-gap:6px!important;
   }
 }
 </style>
@@ -1386,15 +1386,15 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
 <script src="overview.js?v=export-excel-20260829b"></script>
 <script src="transaction.js?v=asset-tone-20260829b"></script>
-<script src="category.js?v=cat-pan-y-20260822a"></script>
+<script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=saving-book-label-20260825c"></script>
-<script src="asset.js?v=realestate-brown-20260829a"></script>
+<script src="asset.js?v=realestate-slate-20260829a"></script>
 <script src="report.js?v=report-month-delta-20260825a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260829b';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260829e';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1408,7 +1408,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=export-excel-20260829b')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=export-excel-20260829e')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

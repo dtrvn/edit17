@@ -10,7 +10,8 @@
   let eventsBound=false;
   let catTouchStart=null;
   let catEditorSwipeStart=null;
-  let formState={large:'Chi tiêu',group:'Sinh hoạt',child:'Ăn uống'};
+  const baseLargeOptions=['Thu nhập','Chi tiêu','Đầu tư','Thu hồi tài sản'];
+  let formState={large:'Thu nhập',group:'',child:''};
 
   function saveRows(){
     document.dispatchEvent(new CustomEvent('cat90:changed',{detail:{rows}}));
@@ -66,7 +67,7 @@
   }
 
   function largeOptions(){
-    return mergeUnique(rows.map(x=>x.large).concat(defaults.map(x=>x.large)).concat(draftCatalog.large||[]));
+    return mergeUnique(baseLargeOptions.concat(rows.map(x=>x.large)).concat(defaults.map(x=>x.large)).concat(draftCatalog.large||[]));
   }
 
   function groupOptions(large){
@@ -100,11 +101,38 @@
 
   function normalizeForm(){
     const largeList=largeOptions();
-    if(!largeList.includes(formState.large))formState.large=largeList[0]||'Chi tiêu';
+    if(!largeList.includes(formState.large))formState.large=largeList.includes('Thu nhập')?'Thu nhập':(largeList[0]||'Thu nhập');
     const groups=groupOptions(formState.large);
     if(!groups.includes(formState.group))formState.group=groups[0]||'';
     const children=childOptions(formState.large,formState.group);
     if(!children.includes(formState.child))formState.child=children[0]||'';
+  }
+
+  function defaultAddState(){
+    const large='Thu nhập';
+    const groups=groupOptions(large);
+    const group=groups[0]||'';
+    const children=childOptions(large,group);
+    return {large,group,child:children[0]||''};
+  }
+
+  function ensureTopAddButton(){
+    const head=document.querySelector('#screenCategories.cat90-screen > .slide-head');
+    if(!head)return;
+    let btn=head.querySelector('#cat90TopAddBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='cat90TopAddBtn';
+      btn.className='cat90-top-add';
+      btn.type='button';
+      btn.title='Thêm danh mục mới';
+      btn.setAttribute('aria-label','Thêm danh mục mới');
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
+    }
+    const home=head.querySelector('.slide-home');
+    if(home&&btn.nextElementSibling!==home)head.insertBefore(btn,home);
+    else if(!home&&!head.contains(btn))head.appendChild(btn);
+    btn.onclick=()=>openEditor('add');
   }
 
   function treeData(){
@@ -119,9 +147,9 @@
 
   function openQuickAdd(level){
     openEditor('add');
-    const fallbackLarge=largeOptions()[0]||'Chi tiêu';
-    const fallbackGroup=groupOptions(fallbackLarge)[0]||'Sinh hoạt';
-    const fallbackChild=childOptions(fallbackLarge,fallbackGroup)[0]||'Ăn uống';
+    const fallbackLarge='Thu nhập';
+    const fallbackGroup=groupOptions(fallbackLarge)[0]||'';
+    const fallbackChild=childOptions(fallbackLarge,fallbackGroup)[0]||'';
 
     if(level==='group'){
       formState={large:fallbackLarge,group:'',child:''};
@@ -252,22 +280,10 @@
     const tree=treeData();
     const largeNames=Object.keys(tree).sort((a,b)=>a.localeCompare(b,'vi'));
     const total=rows.length;
+    ensureTopAddButton();
 
     root.className='cat90-root';
     root.innerHTML=`
-      <div class="cat90-toolbar">
-        <div class="cat90-toolbar-copy">
-          <span class="cat90-toolbar-eyebrow">Danh&nbsp;mục</span>
-          <strong>Không gian chi tiêu</strong>
-          <small>${total} hạng mục đang sử dụng</small>
-        </div>
-        <button id="cat90AddBtn" class="cat90-add cat90-add-standalone" type="button" aria-label="Thêm danh mục mới" title="Thêm danh mục mới">
-          <span class="cat90-add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
-          <span class="cat90-add-copy"><b>Thêm danh mục mới</b><small>Tạo loại lớn, nhóm và hạng mục con</small></span>
-          <svg class="cat90-add-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
-      </div>
-
       <section class="cat90-head">
         <div class="cat90-title-row">
           <div class="cat90-title-block">
@@ -435,7 +451,7 @@
       if(!item)return;
       formState={large:item.large,group:item.group,child:item.child};
     }else{
-      formState={large:'Chi tiêu',group:'Sinh hoạt',child:'Ăn uống'};
+      formState=defaultAddState();
       normalizeForm();
     }
 

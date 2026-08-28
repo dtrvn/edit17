@@ -1694,7 +1694,7 @@ function assetColor(asset,index){
   if(key.includes('cash')||key.includes('bank'))return '#2563eb';
   if(key.includes('stock')||key.includes('co-phieu'))return '#10b981';
   if(key.includes('saving')||key.includes('tiet-kiem'))return '#8b5cf6';
-  if(key.includes('real')||key.includes('nha')||key.includes('dat'))return '#7c2d12';
+  if(key.includes('real')||key.includes('nha')||key.includes('dat'))return '#475569';
   return ['#06b6d4','#14b8a6','#6366f1','#f97316','#84cc16'][index%5];
 }
 
@@ -1750,7 +1750,7 @@ function assetColor(asset,index){
   if(key.includes('cash')||key.includes('bank'))return '#2563eb';
   if(key.includes('saving')||key.includes('tiet-kiem'))return '#8b5cf6';
   if(key.includes('stock')||key.includes('co-phieu'))return '#10b981';
-  if(key.includes('real')||key.includes('nha')||key.includes('dat'))return '#7c2d12';
+  if(key.includes('real')||key.includes('nha')||key.includes('dat'))return '#475569';
   return ['#06b6d4','#14b8a6','#6366f1','#f97316','#84cc16'][index%5];
 }
 
