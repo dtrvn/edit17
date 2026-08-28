@@ -123,7 +123,7 @@
     const fallback={
       GOLD:'#f59e0b',
       INSURANCE:'#06b6d4',
-      LAND:'#4f46e5',
+      LAND:'#7c2d12',
       STOCK:'#10b981',
       SAVING:'#8b5cf6'
     }[type]||'#7c4dff';
@@ -131,7 +131,7 @@
     const soft={
       '#f59e0b':'#fff4dd',
       '#06b6d4':'#e7faff',
-      '#4f46e5':'#eef2ff',
+      '#7c2d12':'#ffedd5',
       '#10b981':'#e7f8f1',
       '#8b5cf6':'#f1ebff'
     }[finalColor]||'#f3edff';

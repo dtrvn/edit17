@@ -1719,14 +1719,16 @@
 
 /* Allow long category names in report detail rows to grow the card cleanly. */
 .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) minmax(76px,88px) 27px!important;
+  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
   grid-template-rows:auto auto!important;
   align-items:start!important;
   align-content:start!important;
-  min-height:62px!important;
+  min-height:74px!important;
   height:auto!important;
-  row-gap:8px!important;
+  row-gap:11px!important;
   overflow:hidden!important;
+  padding-top:12px!important;
+  padding-bottom:12px!important;
 }
 .report72-detail-bar-label{
   align-self:start!important;
@@ -1741,16 +1743,19 @@
 .report72-detail-bar-value{
   align-self:center!important;
 }
+.report72-detail-bar-value{
+  transform:translateX(-6px)!important;
+}
 .report72-detail-bar-track{
-  width:100%!important;
+  width:calc(100% - 18px)!important;
 }
 .report72-detail-bar-next{
   align-self:center!important;
 }
 @media(max-width:430px){
   .report72-detail-bar-row{
-    grid-template-columns:minmax(0,1fr) minmax(68px,80px) 27px!important;
-    min-height:60px!important;
-    row-gap:7px!important;
+    grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
+    min-height:72px!important;
+    row-gap:10px!important;
   }
 }
