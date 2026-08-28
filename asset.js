@@ -6,8 +6,11 @@
   let cleanedGeneratedCashRows=false;
   let cleanedNonAssetTransactionRows=false;
   let cleanedOrphanTransactionRows=false;
+  let repairingBankBalance=false;
   const pendingPostAttempts=new Set();
   const BANK_ASSET_DOC_ID='TS_BANK_220820260000';
+  const BANK_EXPECTED_BALANCE=133670533;
+  const BANK_BALANCE_REPAIR_KEY='asset52-bank-balance-repair-20260829';
   const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#475569',other:'#06b6d4'};
   const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const fmtProfit=n=>Number(n||0)===0?'0 đ':(Number(n)>0?'+':'')+fmt(n);
@@ -447,6 +450,45 @@
       ||null;
   }
 
+  function isPrimaryBankRow(row){
+    return String(row?.id||'')===BANK_ASSET_DOC_ID;
+  }
+
+  function isCashAssetRow(row){
+    return isCashKey(assetKey(row));
+  }
+
+  function bankDisplayRow(rows){
+    return (rows||[]).find(isPrimaryBankRow)
+      ||(rows||[]).find(row=>!row.source_txn_doc_id&&!row.source_txn_external_id&&isCashAssetRow(row))
+      ||null;
+  }
+
+  function bankCurrentValue(row){
+    return parseNumber(row?.gia_tri_hien_tai??row?.so_tien??row?.value);
+  }
+
+  function repairBankBalanceOnce(){
+    if(!window.FDB||typeof window.FDB.set!=='function')return;
+    if(repairingBankBalance)return;
+    const key=BANK_BALANCE_REPAIR_KEY;
+    try{
+      if(window.localStorage?.getItem(key)==='done')return;
+    }catch(_){}
+    const row=rawAssetRows.find(isPrimaryBankRow);
+    if(!row)return;
+    const current=bankCurrentValue(row);
+    if(current===BANK_EXPECTED_BALANCE){
+      try{window.localStorage?.setItem(key,'done');}catch(_){}
+      return;
+    }
+    repairingBankBalance=true;
+    window.FDB.set(FIREBASE_COLLECTIONS.taiSan,BANK_ASSET_DOC_ID,bankPayloadAfter(row,BANK_EXPECTED_BALANCE-current))
+      .then(()=>{try{window.localStorage?.setItem(key,'done');}catch(_){}})
+      .catch(error=>console.error('Repair bank balance failed',error))
+      .finally(()=>{repairingBankBalance=false;});
+  }
+
   function removeStaleTransactionAssets(txnDocId,keepIds,sourceTx){
     return Promise.resolve([]);
   }
@@ -454,7 +496,7 @@
   function cleanupGeneratedTransactionCashRows(){
     if(cleanedGeneratedCashRows||!window.FDB)return;
     cleanedGeneratedCashRows=true;
-    const rows=rawAssetRows.filter(row=>row.source_txn_doc_id&&isCashKey(assetKey(row)));
+    const rows=rawAssetRows.filter(row=>(row.source_txn_doc_id||row.source_txn_external_id)&&isCashKey(assetKey(row)));
     if(!rows.length)return;
     Promise.all(rows.map(row=>window.FDB.remove(FIREBASE_COLLECTIONS.taiSan,row.id).catch(console.error))).catch(console.error);
   }
@@ -539,6 +581,14 @@
       const tx=sourceTransaction(row,lookup);
       return !!tx&&['BUY','SELL'].includes(transactionAssetAction(tx));
     });
+  }
+
+  function summaryAssetRows(rows){
+    const visible=visibleAssetRows(rows);
+    const bank=bankDisplayRow(visible);
+    if(!bank)return visible;
+    const bankId=String(bank.id||'');
+    return visible.filter(row=>!isCashAssetRow(row)||String(row.id||'')===bankId);
   }
 
   function displayAssetRows(rows){
@@ -762,7 +812,7 @@
   function normalizeAssets(rows){
     const groups={};
     detailData={};
-    displayAssetRows(visibleAssetRows(rows)).forEach(row=>{
+    displayAssetRows(summaryAssetRows(rows)).forEach(row=>{
       const key=assetKey(row);
       const aggregate=normalizeDetail(row,key);
       const details=Array.isArray(row.items)?row.items:Array.isArray(row.details)?row.details:null;
@@ -2214,6 +2264,7 @@
     if(!window.FDB)return;
     window.FDB.subscribe(FIREBASE_COLLECTIONS.taiSan,data=>{
       rawAssetRows=data.slice();
+      repairBankBalanceOnce();
       cleanupOrphanTransactionAssetRows();
       normalizeAssets(data);
       renderAssets();

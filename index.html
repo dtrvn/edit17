@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=detail-expense-only-20260829a">
+<link rel="stylesheet" href="report.css?v=detail-column-balance-20260829a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -1242,7 +1242,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   align-self:center!important;
 }
 .report72-detail-screen.report72-income-tab .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) 88px 27px!important;
+  grid-template-columns:minmax(0,1fr) 78px 27px!important;
   min-height:56px!important;
   height:56px!important;
   padding:10px 10px 10px 12px!important;
@@ -1255,7 +1255,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   word-break:normal!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
+  grid-template-columns:minmax(0,1fr) minmax(60px,72px) 27px!important;
   grid-template-rows:auto auto!important;
   min-height:54px!important;
   height:auto!important;
@@ -1275,11 +1275,11 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   transform:translateX(-6px)!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-track{
-  width:calc(100% - 18px)!important;
+  width:calc(100% - 12px)!important;
 }
 @media(max-width:430px){
   .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-    grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
+    grid-template-columns:minmax(0,1fr) minmax(58px,68px) 27px!important;
     min-height:52px!important;
     row-gap:4px!important;
   }
@@ -1402,12 +1402,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=saving-book-label-20260825c"></script>
-<script src="asset.js?v=bank-reversal-20260829a"></script>
+<script src="asset.js?v=bank-balance-repair-20260829a"></script>
 <script src="report.js?v=detail-expense-only-20260829a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260829g';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260829j';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1421,7 +1421,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=export-excel-20260829g')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=export-excel-20260829j')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

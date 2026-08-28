@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260829-export-excel-g';
+const CACHE_NAME = 'qlct-pwa-v20260829-export-excel-j';
 const APP_SHELL = [
   './',
   './index.html',

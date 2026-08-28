@@ -1730,7 +1730,7 @@
   align-self:center!important;
 }
 .report72-detail-screen.report72-income-tab .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) 88px 27px!important;
+  grid-template-columns:minmax(0,1fr) 78px 27px!important;
   min-height:56px!important;
   height:56px!important;
   padding:10px 10px 10px 12px!important;
@@ -1743,7 +1743,7 @@
   word-break:normal!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
+  grid-template-columns:minmax(0,1fr) minmax(60px,72px) 27px!important;
   grid-template-rows:auto auto!important;
   min-height:54px!important;
   height:auto!important;
@@ -1763,11 +1763,11 @@
   transform:translateX(-6px)!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-track{
-  width:calc(100% - 18px)!important;
+  width:calc(100% - 12px)!important;
 }
 @media(max-width:430px){
   .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-    grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
+    grid-template-columns:minmax(0,1fr) minmax(58px,68px) 27px!important;
     min-height:52px!important;
     row-gap:4px!important;
   }
