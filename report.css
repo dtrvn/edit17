@@ -1717,45 +1717,58 @@
   padding-bottom:env(safe-area-inset-bottom,0px)!important;
 }
 
-/* Allow long category names in report detail rows to grow the card cleanly. */
+/* Expense detail rows can grow for long category names; income rows stay compact. */
 .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
-  grid-template-rows:auto auto!important;
-  align-items:start!important;
-  align-content:start!important;
-  min-height:56px!important;
-  height:auto!important;
-  row-gap:6px!important;
-  overflow:hidden!important;
-  padding-top:2px!important;
-  padding-bottom:2px!important;
+  align-items:center!important;
+  align-content:center!important;
 }
-.report72-detail-bar-label{
-  align-self:start!important;
-  overflow-wrap:anywhere!important;
-  word-break:break-word!important;
-}
-.report72-detail-bar-percent{
-  align-self:start!important;
-  line-height:1.2!important;
-}
+.report72-detail-bar-label,
+.report72-detail-bar-percent,
 .report72-detail-bar-track,
-.report72-detail-bar-value{
-  align-self:center!important;
-}
-.report72-detail-bar-value{
-  transform:translateX(-6px)!important;
-}
-.report72-detail-bar-track{
-  width:calc(100% - 18px)!important;
-}
+.report72-detail-bar-value,
 .report72-detail-bar-next{
   align-self:center!important;
 }
+.report72-detail-screen.report72-income-tab .report72-detail-bar-row{
+  grid-template-columns:minmax(0,1fr) 88px 27px!important;
+  min-height:56px!important;
+  height:56px!important;
+  padding:10px 10px 10px 12px!important;
+  row-gap:6px!important;
+}
+.report72-detail-screen.report72-income-tab .report72-detail-bar-label{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  word-break:normal!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
+  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
+  grid-template-rows:auto auto!important;
+  min-height:54px!important;
+  height:auto!important;
+  row-gap:4px!important;
+  overflow:hidden!important;
+  padding-top:5px!important;
+  padding-bottom:5px!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-label{
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-percent{
+  line-height:1.2!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-value{
+  transform:translateX(-6px)!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-track{
+  width:calc(100% - 18px)!important;
+}
 @media(max-width:430px){
-  .report72-detail-bar-row{
+  .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
     grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
-    min-height:54px!important;
-    row-gap:6px!important;
+    min-height:52px!important;
+    row-gap:4px!important;
   }
 }

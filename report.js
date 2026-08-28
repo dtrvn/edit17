@@ -222,6 +222,9 @@
     const screen=document.getElementById('screenReportDetail');
     if(!screen)return;
     const data=detailChartData();
+    const isExpenseTab=plainText(detailState.tab).includes('chi tieu');
+    screen.classList.toggle('report72-expense-tab',isExpenseTab);
+    screen.classList.toggle('report72-income-tab',!isExpenseTab);
     const periodLabel=data.isYear?data.key:`Tháng ${Number(data.key.slice(5,7))}/${data.key.slice(0,4)}`;
     const title=data.isYear?'Chi tiết Thu chi năm':'Chi tiết Thu chi tháng';
     screen.innerHTML=`<div class="slide-head"><button class="slide-back" data-report-detail-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">${title}</div></div>

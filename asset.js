@@ -1656,7 +1656,7 @@
     return list;
   }
 
-  function transactionUpdatePayload(tx,rule,detail,balanceDelta){
+  function transactionUpdatePayload(tx,rule,detail,balanceDelta,bankId){
     return {
       loai_giao_dich:rule.txType,
       loai_tai_san:rule.assetType,
@@ -1665,7 +1665,7 @@
       so_tiet_kiem_id:firstValue(tx,['so_tiet_kiem_id','savingBookId'])||detail?.so_tiet_kiem_id||'',
       so_tiet_kiem_label:firstValue(tx,['so_tiet_kiem_label','savingBookLabel'])||detail?.so_tiet_kiem_label||'',
       gia_von_tat_toan:parseNumber(firstValue(tx,['gia_von_tat_toan','settlementCost'])||detail?.gia_von_da_ban),
-      tai_khoan_id:bankRow()?.id||'',
+      tai_khoan_id:bankId||bankRow()?.id||BANK_ASSET_DOC_ID,
       bien_dong_so_du:balanceDelta,
       trang_thai_hach_toan:'POSTED'
     };
@@ -1681,6 +1681,35 @@
       bien_dong_so_du:positive?amount:-amount,
       trang_thai_hach_toan:'POSTED'
     };
+  }
+
+  function explicitBalanceDelta(tx){
+    if(!tx)return null;
+    const stored=firstValue(tx,['bien_dong_so_du']);
+    if(stored!=='')return parseNumber(stored);
+    const normalized=firstValue(tx,['balanceDelta']);
+    const value=parseNumber(normalized);
+    return normalized!==''&&value!==0?value:null;
+  }
+
+  function balanceDeltaForSource(source,fallback){
+    const tx={...(fallback||{}),...(source||{})};
+    const rule=assetRuleFor(tx);
+    const explicit=explicitBalanceDelta(source);
+    if(explicit!==null&&(!rule||explicit!==0||amountOf(tx)===0))return explicit;
+    const fallbackExplicit=explicitBalanceDelta(fallback);
+    if(fallbackExplicit!==null&&(!rule||fallbackExplicit!==0||amountOf(tx)===0))return fallbackExplicit;
+    if(rule){
+      const input=convertedAssetInput(tx,rule);
+      const amount=amountOf(tx);
+      return rule.txType==='INVEST'?-(amount+input.fee):(amount-input.fee);
+    }
+    return accountingPayload(tx).bien_dong_so_du;
+  }
+
+  function hasPostedAccounting(source,fallback){
+    const status=String(source?.trang_thai_hach_toan||fallback?.postingStatus||fallback?.trang_thai_hach_toan||'').toUpperCase();
+    return status==='POSTED'||explicitBalanceDelta(source)!==null||explicitBalanceDelta(fallback)!==null;
   }
 
   function assetPayloadFromRow(row){
@@ -1898,8 +1927,9 @@
       const storedTx=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       const sourceTx=storedTx?{...tx,...storedTx}:tx;
       const input=rule?convertedAssetInput(sourceTx,rule):null;
-      const missingAssetDetail=rule&&storedTx&&storedTx.trang_thai_hach_toan==='POSTED'&&!storedTx.chi_tiet_tai_san;
-      if(storedTx&&storedTx.trang_thai_hach_toan==='POSTED'&&!missingAssetDetail)return;
+      const storedPosted=hasPostedAccounting(storedTx,tx);
+      const missingAssetDetail=rule&&storedTx&&storedPosted&&!storedTx.chi_tiet_tai_san;
+      if(storedTx&&storedPosted&&!missingAssetDetail)return;
       const sourceAmount=amountOf(sourceTx);
       const balanceDelta=rule
         ? (rule.txType==='INVEST'?-(sourceAmount+input.fee):(sourceAmount-input.fee))
@@ -1916,7 +1946,7 @@
           loai_tai_san:rule.assetType,
           chi_tiet_tai_san:applied.detail,
           tai_khoan_id:storedTx.tai_khoan_id||bankId,
-          bien_dong_so_du:Number(storedTx.bien_dong_so_du||balanceDelta),
+          bien_dong_so_du:balanceDeltaForSource(storedTx,sourceTx),
           trang_thai_hach_toan:'POSTED'
         },{merge:true});
         return;
@@ -1934,7 +1964,7 @@
       const applied=applyAssetDelta(currentState,tx,rule,input);
       writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},balanceDelta),{merge:true});
       writer.set(FIREBASE_COLLECTIONS.taiSan,assetId,assetStatePayload(applied.state),{merge:true});
-      writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,transactionUpdatePayload(tx,rule,applied.detail,balanceDelta),{merge:true});
+      writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,transactionUpdatePayload(tx,rule,applied.detail,balanceDelta,bankId),{merge:true});
     };
     if(typeof window.FDB.runTransaction==='function')return window.FDB.runTransaction(run);
     return Promise.resolve();
@@ -1943,16 +1973,15 @@
   function reversePostedTransaction(tx,txnDocId){
     if(!tx||!txnDocId||!window.FDB)return Promise.resolve();
     const detail=tx.assetDetail||tx.chi_tiet_tai_san;
-    const balanceDelta=Number(tx.balanceDelta||tx.bien_dong_so_du||0);
     const run=async writer=>{
       const storedTx=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       const source=storedTx||tx;
-      if(source.trang_thai_hach_toan!=='POSTED'&&tx.postingStatus!=='POSTED')return;
+      if(!hasPostedAccounting(source,tx))return;
       const bankId=source.tai_khoan_id||tx.accountId||bankRow()?.id||BANK_ASSET_DOC_ID;
       const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
       const d=source.chi_tiet_tai_san||detail;
       const asset=d?.tai_san_id?await writer.get(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id):null;
-      writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},-(Number(source.bien_dong_so_du||balanceDelta)||0)),{merge:true});
+      writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},-balanceDeltaForSource(source,tx)),{merge:true});
       if(d?.tai_san_id){
         if(asset){
           const state=assetPayloadFromRow(asset);
@@ -1983,12 +2012,12 @@
   async function reversePostedInWriter(writer,txnDocId,fallbackTx){
     const storedTx=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
     const source=storedTx||fallbackTx||{};
-    if(source.trang_thai_hach_toan!=='POSTED'&&fallbackTx?.postingStatus!=='POSTED')return;
+    if(!hasPostedAccounting(source,fallbackTx))return;
     const d=source.chi_tiet_tai_san||fallbackTx?.assetDetail||fallbackTx?.chi_tiet_tai_san;
     const bankId=source.tai_khoan_id||fallbackTx?.accountId||bankRow()?.id||BANK_ASSET_DOC_ID;
     const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
     const asset=d?.tai_san_id?await writer.get(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id):null;
-    writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},-(Number(source.bien_dong_so_du||fallbackTx?.balanceDelta||0)||0)),{merge:true});
+    writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},-balanceDeltaForSource(source,fallbackTx)),{merge:true});
     if(!d?.tai_san_id||!asset)return;
     const state=assetPayloadFromRow(asset);
     const qty=Number(d.so_luong_quy_doi||0);
@@ -2030,18 +2059,18 @@
     const applied=applyAssetDelta(currentState,tx,rule,input);
     writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},balanceDelta),{merge:true});
     writer.set(FIREBASE_COLLECTIONS.taiSan,assetId,assetStatePayload(applied.state),{merge:true});
-    writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(tx,rule,applied.detail,balanceDelta)},{merge:true});
+    writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(tx,rule,applied.detail,balanceDelta,bankId)},{merge:true});
   }
 
   function saveTransactionAtomic(tx,txnDocId,baseData,options){
     if(!tx||!txnDocId||!window.FDB||typeof window.FDB.runTransaction!=='function')return Promise.resolve();
     const run=async writer=>{
       const stored=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
-      if(options?.mode==='create'&&stored?.trang_thai_hach_toan==='POSTED')return;
+      if(options?.mode==='create'&&hasPostedAccounting(stored,tx))return;
       const source={...tx,...(baseData||{})};
       const oldSource=stored||{};
       const oldDetail=oldSource.chi_tiet_tai_san;
-      const shouldReverse=oldSource.trang_thai_hach_toan==='POSTED';
+      const shouldReverse=hasPostedAccounting(oldSource,tx);
       const newRule=assetRuleFor(source);
       const newInput=newRule?convertedAssetInput(source,newRule):null;
       const oldBankId=shouldReverse?(oldSource.tai_khoan_id||bankRow()?.id||BANK_ASSET_DOC_ID):'';
@@ -2056,7 +2085,7 @@
       for(const id of bankIds)bankRows[id]=await writer.get(FIREBASE_COLLECTIONS.taiSan,id);
       for(const id of assetIds)assetRows[id]=await writer.get(FIREBASE_COLLECTIONS.taiSan,id);
       if(shouldReverse&&oldBankId){
-        bankRows[oldBankId]=bankPayloadAfter(bankRows[oldBankId]||{},-(Number(oldSource.bien_dong_so_du||0)||0));
+        bankRows[oldBankId]=bankPayloadAfter(bankRows[oldBankId]||{},-balanceDeltaForSource(oldSource,tx));
       }
       if(shouldReverse&&oldAssetId&&assetRows[oldAssetId]){
         const state=assetPayloadFromRow(assetRows[oldAssetId]);
@@ -2093,7 +2122,7 @@
         const applied=applyAssetDelta(currentState,source,newRule,newInput);
         bankRows[newBankId]=bankPayloadAfter(bankRows[newBankId]||{},balanceDelta);
         assetRows[newAssetId]=assetStatePayload(applied.state);
-        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(source,newRule,applied.detail,balanceDelta)},{merge:true});
+        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(source,newRule,applied.detail,balanceDelta,newBankId)},{merge:true});
       }
       bankIds.forEach(id=>writer.set(FIREBASE_COLLECTIONS.taiSan,id,bankRows[id],{merge:true}));
       removedAssetIds.forEach(id=>writer.remove(FIREBASE_COLLECTIONS.taiSan,id));
@@ -2110,7 +2139,7 @@
     const run=async writer=>{
       const stored=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       const source=stored||tx||{};
-      const wasPosted=source.trang_thai_hach_toan==='POSTED'||tx?.postingStatus==='POSTED'||source.bien_dong_so_du!==undefined;
+      const wasPosted=hasPostedAccounting(source,tx);
       if(wasPosted)await reversePostedInWriter(writer,txnDocId,tx);
       if(typeof writer.remove==='function')writer.remove(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       else throw new Error('Transaction writer does not support remove().');
