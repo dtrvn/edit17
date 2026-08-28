@@ -296,7 +296,7 @@
 .asset52-card.stock{--asset-color:#10b981;--asset-soft:#e7f8f1;}
 .asset52-card.saving{--asset-color:#8b5cf6;--asset-soft:#f1ebff;}
 .asset52-card.insurance{--asset-color:#06b6d4;--asset-soft:#e7faff;}
-.asset52-card.realestate{--asset-color:#ef4444;--asset-soft:#feeef1;}
+.asset52-card.realestate{--asset-color:#14b8a6;--asset-soft:#e6fffb;}
 
 /* Asset detail screen */
 .asset53-detail-screen{
@@ -1227,6 +1227,43 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 #screenCategories.cat90-screen .cat90-root>.cat90-tree{
   margin-bottom:-6px!important;
   padding-bottom:14px!important;
+}
+
+/* Allow long category names in report detail rows to grow the card cleanly. */
+.report72-detail-bar-row{
+  grid-template-columns:minmax(0,1fr) minmax(76px,88px) 27px!important;
+  grid-template-rows:auto auto!important;
+  align-items:start!important;
+  align-content:start!important;
+  min-height:0!important;
+  height:auto!important;
+  row-gap:8px!important;
+  overflow:hidden!important;
+}
+.report72-detail-bar-label{
+  align-self:start!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+}
+.report72-detail-bar-percent{
+  align-self:start!important;
+  line-height:1.2!important;
+}
+.report72-detail-bar-track,
+.report72-detail-bar-value{
+  align-self:center!important;
+}
+.report72-detail-bar-track{
+  width:100%!important;
+}
+.report72-detail-bar-next{
+  align-self:center!important;
+}
+@media(max-width:430px){
+  .report72-detail-bar-row{
+    grid-template-columns:minmax(0,1fr) minmax(68px,80px) 27px!important;
+    row-gap:7px!important;
+  }
 }
 </style>
 </head>

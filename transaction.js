@@ -110,11 +110,32 @@
   function assetTypeOf(t){
     const text=plainText([t?.assetType,t?.assetName,t?.group,t?.child].join(' '));
     if(text.includes('vang')||text.includes('gold'))return 'GOLD';
-    if(text.includes('bao hiem'))return 'INSURANCE';
-    if(text.includes('bat dong san')||text.includes('dat')||text.includes('nha'))return 'LAND';
-    if(text.includes('chung khoan')||text.includes('co phieu')||text.includes('quy'))return 'STOCK';
-    if(text.includes('tiet kiem'))return 'SAVING';
+    if(text.includes('insurance')||text.includes('bao hiem'))return 'INSURANCE';
+    if(text.includes('land')||text.includes('realestate')||text.includes('real estate')||text.includes('bat dong san')||text.includes('dat')||text.includes('nha'))return 'LAND';
+    if(text.includes('stock')||text.includes('chung khoan')||text.includes('co phieu')||text.includes('quy'))return 'STOCK';
+    if(text.includes('saving')||text.includes('deposit')||text.includes('tiet kiem'))return 'SAVING';
     return '';
+  }
+  function assetToneForTx(t){
+    const helper=window.ASSET52_colorForTransaction;
+    const color=typeof helper==='function'?helper(t):'';
+    const type=assetTypeOf(t);
+    const fallback={
+      GOLD:'#f59e0b',
+      INSURANCE:'#06b6d4',
+      LAND:'#14b8a6',
+      STOCK:'#10b981',
+      SAVING:'#8b5cf6'
+    }[type]||'#7c4dff';
+    const finalColor=color||fallback;
+    const soft={
+      '#f59e0b':'#fff4dd',
+      '#06b6d4':'#e7faff',
+      '#14b8a6':'#e6fffb',
+      '#10b981':'#e7f8f1',
+      '#8b5cf6':'#f1ebff'
+    }[finalColor]||'#f3edff';
+    return {color:finalColor,soft};
   }
   function goldQtyToChi(qty,unit){
     const n=Number(String(qty||'').replace(',','.'))||1;
@@ -199,7 +220,7 @@
   const signedAmount=t=>(isIncomeTx(t)?1:-1)*Number(t.amount||0);
   function meta(t){
     if(isIncomeTx(t))return{cls:'txn16-in',icon:'↗',sign:'+'};
-    if(t.type==='INVEST'||t.large==='Đầu tư')return{cls:'txn16-invest',icon:'↗',sign:'-'};
+    if(t.type==='INVEST'||t.large==='Đầu tư')return{cls:'txn16-invest',icon:'↗',sign:'-',...assetToneForTx(t)};
     return{cls:'txn16-out',icon:'↘',sign:'-'};
   }
   function init(){const screen=document.getElementById('screenTransactions');if(!screen)return;screen.innerHTML=`<div class="slide-head"><button class="slide-back" data-txn16-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Giao dịch</div></div><div class="slide-body"><div class="txn16-filter"><div class="txn16-row top"><input class="txn16-input" id="txn16Search" placeholder="Tìm giao dịch..."><button class="txn16-select" data-type-sheet><span id="txn16TypeText">Hiển thị tất cả</span>${chev()}</button></div><div class="txn16-row range"><button class="txn16-select" data-range-sheet><span id="txn16RangeText">1 tháng gần nhất</span>${chev()}</button><button class="txn16-clear" id="txn16Clear">Clear</button></div><div class="txn16-row dates" id="txn16Dates" style="display:none"><button class="txn16-date" data-date-field="from"><span id="txn16From">${toDMY(state.from)}</span>${cal()}</button><button class="txn16-date" data-date-field="to"><span id="txn16To">${toDMY(state.to)}</span>${cal()}</button></div><div class="txn16-error" id="txn16Error">Ngày kết thúc không được nhỏ hơn ngày bắt đầu.</div></div><div class="txn16-total neutral" id="txn16Total"><b>0 đ</b></div><div class="txn16-list" id="txn16List"></div></div>`;screen.addEventListener('click',onClick);document.getElementById('txn16Search').addEventListener('input',e=>{state.search=e.target.value;renderList()});document.getElementById('txn16Clear').onclick=()=>{const range=defaultRange();state.search='';state.type='ALL';state.range='1M';state.from=range.from;state.to=range.to;sync();const d=document.getElementById('txn16Dates');if(d)d.style.display='none';const e=document.getElementById('txn16Error');if(e)e.classList.remove('show');renderList();setTimeout(()=>{const d2=document.getElementById('txn16Dates');if(d2)d2.style.display='none';},0)};document.addEventListener('cat90:changed',()=>{refreshCategories();if(state.editing)rerenderEdit();});ensureSheet();sync();renderList();if(!window.FDB){document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));return;}window.FDB.subscribe(FIREBASE_COLLECTIONS.giaoDich,data=>{transactions=data.map(normalizeTx).filter(x=>x.id&&x.large&&x.group&&x.child);if(state.editing){const fresh=transactions.find(x=>x.id===state.editing.id);if(fresh)state.editing=JSON.parse(JSON.stringify(fresh));}document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));renderList();},console.error);}
@@ -227,7 +248,7 @@
       return bd.localeCompare(ad);
     });
   }
-  function renderList(){if(!validate())return;const list=document.getElementById('txn16List');const rows=filtered();const total=rows.reduce((sum,x)=>sum+signedAmount(x),0);const totalEl=document.getElementById('txn16Total');if(totalEl){totalEl.className=`txn16-total ${total>0?'positive':total<0?'negative':'neutral'}`;totalEl.innerHTML=`<b>${fmt(total)}</b>`;}if(!rows.length){list.innerHTML='<div class="txn16-empty">Không có giao dịch phù hợp</div>';return}const groups={};rows.forEach(x=>(groups[x.date]||(groups[x.date]=[])).push(x));list.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(day=>`<section><div class="txn16-day-label">${dayLabel(day)}</div><div class="txn16-group">${groups[day].map(t=>{const m=meta(t);return `<button class="txn16-item ${m.cls}" data-edit="${t.id}"><span class="txn16-icon">${m.icon}</span><span><div class="txn16-title">${t.child}</div><div class="txn16-note">${t.note}</div></span><span class="txn16-amount">${m.sign}${fmt(t.amount)}</span></button>`}).join('')}</div></section>`).join('')}
+  function renderList(){if(!validate())return;const list=document.getElementById('txn16List');const rows=filtered();const total=rows.reduce((sum,x)=>sum+signedAmount(x),0);const totalEl=document.getElementById('txn16Total');if(totalEl){totalEl.className=`txn16-total ${total>0?'positive':total<0?'negative':'neutral'}`;totalEl.innerHTML=`<b>${fmt(total)}</b>`;}if(!rows.length){list.innerHTML='<div class="txn16-empty">Không có giao dịch phù hợp</div>';return}const groups={};rows.forEach(x=>(groups[x.date]||(groups[x.date]=[])).push(x));list.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(day=>`<section><div class="txn16-day-label">${dayLabel(day)}</div><div class="txn16-group">${groups[day].map(t=>{const m=meta(t);const tone=m.color?` style="--txn-asset-color:${m.color};--txn-asset-soft:${m.soft}"`:'';return `<button class="txn16-item ${m.cls}" data-edit="${t.id}"${tone}><span class="txn16-icon">${m.icon}</span><span><div class="txn16-title">${t.child}</div><div class="txn16-note">${t.note}</div></span><span class="txn16-amount">${m.sign}${fmt(t.amount)}</span></button>`}).join('')}</div></section>`).join('')}
   window.TXN_addTransaction=function(tx){
     if(!tx)return;
     if(!tx.createdAt)tx.createdAt=new Date().toISOString();

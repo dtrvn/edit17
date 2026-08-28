@@ -8,7 +8,7 @@
   let cleanedOrphanTransactionRows=false;
   const pendingPostAttempts=new Set();
   const BANK_ASSET_DOC_ID='TS_BANK_220820260000';
-  const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#ef4444',other:'#06b6d4'};
+  const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#14b8a6',other:'#06b6d4'};
   const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const fmtProfit=n=>Number(n||0)===0?'0 đ':(Number(n)>0?'+':'')+fmt(n);
 
@@ -2172,6 +2172,12 @@
   };
   window.ASSET52_reverseTransactionAsset=reversePostedTransaction;
   window.ASSET52_isTransactionAsset=isTransactionAsset;
+  window.ASSET52_colorForTransaction=function(tx){
+    const rule=assetRuleFor(tx);
+    const type=rule?.assetType||firstValue(tx,['assetType','loai_tai_san','loaiTaiSan']);
+    const name=firstValue(tx,['assetName','ten_tai_san','tenTaiSan','group','nhom_danh_muc','child','hang_muc_con']);
+    return colorForKey(assetKey({loai_tai_san:type,ten_tai_san:name,nhom_danh_muc:name}),{loai_tai_san:type,ten_tai_san:name,nhom_danh_muc:name});
+  };
   window.ASSET52_getAssets=()=>({assets:assets.slice(),detailData:{...detailData}});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
   function start(){

@@ -73,10 +73,10 @@
 #screenTransactions .txn16-amount{grid-column:3!important;grid-row:2!important;align-self:start!important;justify-self:end!important;margin:0!important;padding:0!important;font-size:10.8px!important;font-weight:700!important;line-height:16px!important;height:16px!important;letter-spacing:0!important;white-space:nowrap!important;}
 #screenTransactions .txn16-in .txn16-icon{background:#e8fbf1!important;color:#00a84f!important;}
 #screenTransactions .txn16-out .txn16-icon{background:#fff1f2!important;color:#ff3b45!important;}
-#screenTransactions .txn16-invest .txn16-icon{background:#f3edff!important;color:#7c4dff!important;}
+#screenTransactions .txn16-invest .txn16-icon{background:var(--txn-asset-soft,#f3edff)!important;color:var(--txn-asset-color,#7c4dff)!important;}
 #screenTransactions .txn16-in .txn16-amount{color:#009446!important;}
 #screenTransactions .txn16-out .txn16-amount{color:#ff2f37!important;}
-#screenTransactions .txn16-invest .txn16-amount{color:#7c4dff!important;}
+#screenTransactions .txn16-invest .txn16-amount{color:var(--txn-asset-color,#7c4dff)!important;}
 .txn16-edit{position:absolute!important;inset:0!important;z-index:70!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;transform:translateX(100%)!important;transition:transform .32s cubic-bezier(.22,.61,.36,1), visibility .32s ease!important;visibility:hidden!important;pointer-events:none!important;overflow:hidden!important;padding:18px 18px 30px!important;}
 .txn16-edit.active{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;}
 .txn16-edit.closing-left-to-right{transform:translateX(100%)!important;visibility:visible!important;pointer-events:none!important;}
