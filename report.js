@@ -244,8 +244,10 @@
         </div>
         <div class="report72-detail-donut" style="background:${detailDonutGradient(data.items,data.total)}" aria-hidden="true"></div>
         <div class="report72-detail-bars">${data.items.length?data.items.map((item,index)=>`<button type="button" class="report72-detail-bar-row" style="--i:${index};--c:${item.color}" data-report-child="${escapeHtml(item.name)}" data-report-child-color="${item.color}" aria-label="Xem chi tiết ${escapeHtml(item.name)}">
-          <div class="report72-detail-bar-label">${escapeHtml(item.name)}</div>
-          <div class="report72-detail-bar-percent">${data.total?Math.round(item.value/data.total*100):0}%</div>
+          <div class="report72-detail-bar-top">
+            <div class="report72-detail-bar-label">${escapeHtml(item.name)}</div>
+            <div class="report72-detail-bar-percent">${data.total?Math.round(item.value/data.total*100):0}%</div>
+          </div>
           <div class="report72-detail-bar-track"><div class="report72-detail-bar-fill" style="--w:${Math.round(item.value/data.max*100)}%"></div></div>
           <div class="report72-detail-bar-value">${fmt(item.value)}</div>
           <span class="report72-detail-bar-next" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 18 6-6-6-6"/></svg></span>

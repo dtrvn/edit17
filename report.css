@@ -1190,6 +1190,9 @@
   overflow:visible;
   text-overflow:clip;
 }
+.report72-detail-bar-top{
+  display:contents;
+}
 .report72-detail-bar-percent{
   grid-column:2;
   grid-row:1;
@@ -1743,7 +1746,7 @@
   word-break:normal!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-  grid-template-columns:minmax(0,1fr) minmax(60px,72px) 27px!important;
+  grid-template-columns:minmax(0,1fr) minmax(70px,82px) 27px!important;
   grid-template-rows:auto auto!important;
   min-height:54px!important;
   height:auto!important;
@@ -1751,6 +1754,15 @@
   overflow:hidden!important;
   padding-top:5px!important;
   padding-bottom:5px!important;
+}
+.report72-detail-screen.report72-expense-tab .report72-detail-bar-top{
+  grid-column:1 / 3!important;
+  grid-row:1!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 42px!important;
+  align-items:center!important;
+  gap:6px!important;
+  min-width:0!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-label{
   overflow-wrap:anywhere!important;
@@ -1761,14 +1773,21 @@
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-value{
   transform:translateX(-6px)!important;
+  max-width:none!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-track{
-  width:calc(100% - 12px)!important;
+  width:calc(100% - 18px)!important;
 }
 @media(max-width:430px){
   .report72-detail-screen.report72-expense-tab .report72-detail-bar-row{
-    grid-template-columns:minmax(0,1fr) minmax(58px,68px) 27px!important;
+    grid-template-columns:minmax(0,1fr) minmax(66px,76px) 27px!important;
     min-height:52px!important;
     row-gap:4px!important;
+  }
+  .report72-detail-screen.report72-expense-tab .report72-detail-bar-top{
+    grid-template-columns:minmax(0,1fr) 38px!important;
+    gap:5px!important;
   }
 }
