@@ -60,6 +60,18 @@
     };
   }
 
+  function assetProfitState(state){
+    const type=String(state?.type||'').toUpperCase();
+    if(type==='GOLD')return goldProfitState(state);
+    const currentValue=type==='SAVING'
+      ? Math.round(Number(state?.totalCost||0))
+      : Math.round(Number(state?.qty||0)*Number(state?.currentPrice||0));
+    const totalProfit=type==='SAVING'
+      ? Math.round(Number(state?.realizedProfit||0))
+      : Math.round(currentValue-Number(state?.totalCost||0)+Number(state?.realizedProfit||0));
+    return {currentValue,totalProfit};
+  }
+
   function amountOf(tx){
     return parseNumber(firstValue(tx,['amount','so_tien','soTien','money','value','gia_tri','giaTri']));
   }
@@ -83,12 +95,17 @@
     const large=plainText(firstValue(tx,['large','loai_lon']));
     const group=plainText(firstValue(tx,['group','nhom_danh_muc']));
     const child=plainText(firstValue(tx,['child','hang_muc_con']));
+    const assetType=String(firstValue(tx,['assetType','loai_tai_san','loaiTaiSan'])||'').toUpperCase();
+    const rawType=String(firstValue(tx,['type','loai_giao_dich'])||'').toUpperCase();
     const exact=assetRules.find(rule=>plainText(rule.large)===large&&plainText(rule.group)===group&&plainText(rule.child)===child);
     if(exact)return exact;
     if(group.includes('vang')&&child.includes('ban'))return assetRules.find(rule=>rule.assetType==='GOLD'&&rule.action==='SELL')||null;
     if(group.includes('vang')&&child.includes('mua'))return assetRules.find(rule=>rule.assetType==='GOLD'&&rule.action==='BUY')||null;
+    if(assetType==='LAND'||group.includes('bat dong san')||group.includes('bds')||child.includes('bat dong san')){
+      if(rawType==='DIVEST'||rawType==='SELL'||large.includes('thu hoi')||child.includes('ban')||child.includes('thu hoi'))return assetRules.find(rule=>rule.assetType==='LAND'&&rule.action==='SELL')||null;
+      if(rawType==='INVEST'||rawType==='BUY'||large.includes('dau tu')||child.includes('mua'))return assetRules.find(rule=>rule.assetType==='LAND'&&rule.action==='BUY')||null;
+    }
     if(group.includes('tiet kiem')||child.includes('tiet kiem')){
-      const rawType=String(firstValue(tx,['type','loai_giao_dich'])||'').toUpperCase();
       if(rawType==='DIVEST'||rawType==='SELL'||large.includes('thu hoi')||child.includes('rut'))return assetRules.find(rule=>rule.assetType==='SAVING'&&rule.action==='SELL')||null;
       if(rawType==='INVEST'||rawType==='BUY'||large.includes('dau tu')||child.includes('gui'))return assetRules.find(rule=>rule.assetType==='SAVING'&&rule.action==='BUY')||null;
     }
@@ -245,6 +262,11 @@
       const p=amount?Math.round(amount/Math.max(q,1)):normalizeGoldPrice(storedPrice,unit);
       return {qty:q,unit:'Chỉ',unitPrice:p,fee,interestRate,settlementCost};
     }
+    if(rule.assetType==='LAND'){
+      const storedPrice=parseNumber(firstValue(tx,['assetPrice','don_gia','donGia','price','gia_hien_tai']));
+      const p=amount||storedPrice||Math.round(amount||0);
+      return {qty:1,unit:'tài sản',unitPrice:p,fee,interestRate,settlementCost,displayQty:qty,displayUnit:unit,displayUnitPrice:Math.round((amount||storedPrice||0)/Math.max(qty,1))};
+    }
     const rawPrice=amount?Math.round(amount/Math.max(qty,1)):parseNumber(firstValue(tx,['assetPrice','don_gia','donGia','price']));
     const p=rawPrice||Math.round(amount/Math.max(qty,1));
     return {qty,unit:unit||rule.unit||'Đơn vị',unitPrice:p,fee,interestRate,settlementCost};
@@ -306,6 +328,20 @@
   function assetDocIdFor(tx,rule){
     const detail=tx?.assetDetail||tx?.chi_tiet_tai_san;
     const name=transactionAssetName(tx);
+    if(rule.assetType==='LAND'){
+      const holdingId=String(firstValue(tx,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId'])||detail?.tai_san_thu_hoi_id||detail?.assetHoldingId||'').trim();
+      if(holdingId){
+        const buyTx=typeof window.TXN_getTransactions==='function'
+          ? (window.TXN_getTransactions()||[]).find(item=>String(item.id||item.external_id||'')===holdingId)
+          : null;
+        const buyName=buyTx?transactionAssetName(buyTx):name;
+        const matched=buyTx?findAssetRowByName(rule.assetType,buyName,buyTx):null;
+        if(matched?.id)return String(matched.id);
+        return `TS_LAND_${slug(holdingId).toUpperCase().replace(/-/g,'_')}`;
+      }
+      const id=String(firstValue(tx,['id','_docId','external_id'])||'').trim();
+      if(id)return `TS_LAND_${slug(id).toUpperCase().replace(/-/g,'_')}`;
+    }
     const stableId=stableAssetDocId(rule.assetType,name,tx);
     const matched=findAssetRowByName(rule.assetType,name,tx);
     if(matched?.id)return String(matched.id);
@@ -370,6 +406,9 @@
           so_luong_quy_doi:input.qty,
           don_vi_quy_doi:input.unit,
           don_gia_quy_doi:input.unitPrice,
+          so_luong_hien_thi:input.displayQty||input.qty,
+          don_vi_hien_thi:input.displayUnit||input.unit,
+          don_gia_hien_thi:input.displayUnitPrice||input.unitPrice,
           lai_suat:input.interestRate||'',
           so_tiet_kiem_id:firstValue(tx,['so_tiet_kiem_id','savingBookId']),
           so_tiet_kiem_label:firstValue(tx,['so_tiet_kiem_label','savingBookLabel']),
@@ -401,6 +440,9 @@
         so_luong_quy_doi:sellQty,
         don_vi_quy_doi:input.unit,
         don_gia_quy_doi:input.unitPrice,
+        so_luong_hien_thi:input.displayQty||sellQty,
+        don_vi_hien_thi:input.displayUnit||input.unit,
+        don_gia_hien_thi:input.displayUnitPrice||input.unitPrice,
         lai_suat:input.interestRate||state.interestRate||'',
         gia_von_binh_quan_luc_ban:avgBefore,
         gia_von_da_ban:costSold,
@@ -419,16 +461,14 @@
   }
 
   function assetAggregatePayload(state){
-    const saving=state.type==='SAVING';
-    const value=saving?Math.round(Number(state.totalCost||0)):Math.round(state.qty*Number(state.currentPrice||0));
-    const profitState=saving?{totalProfit:Math.round(Number(state.realizedProfit||0))}:goldProfitState(state);
+    const profitState=assetProfitState(state);
     return {
       loai_tai_san:state.type,
       ten_tai_san:state.name,
       so_luong:state.qty,
       don_vi:state.unit,
       gia_hien_tai:state.currentPrice||0,
-      gia_tri_hien_tai:value,
+      gia_tri_hien_tai:profitState.currentValue,
       tong_gia_von:Math.round(state.totalCost),
       gia_von_binh_quan:state.avgCost,
       so_tien_da_mua:Math.round(state.purchasedTotal||0),
@@ -672,6 +712,9 @@
     const qtyChi=toGoldChi(row.so_luong??row.soLuong??row.qtyChi??0,row.don_vi||row.donVi);
     const unitPrice=Number(row.gia_hien_tai??row.price??0);
     const qtyRawNumber=Number(row.so_luong??row.soLuong??row.qty??row.quantity??0);
+    const displayQty=Number(row.so_luong_hien_thi??row.displayQty??0);
+    const displayUnit=String(row.don_vi_hien_thi??row.displayUnit??'').trim();
+    const displayPrice=Number(row.don_gia_hien_thi??row.displayUnitPrice??0);
     const avgCost=Number(row.gia_von_binh_quan??row.giaVonBinhQuan??row.avgCost??0)||Math.round(Math.abs(totalCost||cost)/Math.max(Math.abs(qtyRawNumber)||1,1));
     const storedCurrent=Number(row.current??row.gia_tri_hien_tai??row.currentValue??row.giaTriHienTai??row.value??row.gia_tri??row.giaTri??row.so_tien??row.soTien??0);
     const current=storedCurrent||(isGoldKey(key)&&unitPrice&&qtyChi?Math.round(unitPrice*qtyChi):cost);
@@ -711,10 +754,15 @@
       savingBookLabel:String(row.so_tiet_kiem_label||row.savingBookLabel||''),
       sourceTxnDocId:String(row.source_txn_doc_id||''),
       sourceTxnExternalId:String(row.source_txn_external_id||row.external_id||''),
+      assetHoldingId:String(row.assetHoldingId||row.tai_san_thu_hoi_id||row.landHoldingId||''),
+      tai_san_thu_hoi_id:String(row.tai_san_thu_hoi_id||row.assetHoldingId||row.landHoldingId||''),
       goldTypeId:row.goldTypeId||row.typeId||row.external_id||row.id,
       price:unitPrice,
       qtyRaw:qtyRawNumber,
       unit,
+      displayQty,
+      displayUnit,
+      displayPrice,
       qtyChi,
       key
     };
@@ -756,6 +804,7 @@
       return `${total.toLocaleString('vi-VN')} Sổ tiết kiệm`;
     }
     const total=rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0);
+    if(assetSection({key})==='realestate'&&total<=0)return '0 tài sản';
     const units=[...new Set(rows.map(row=>String(row.unit||'').trim()).filter(Boolean))];
     if(!total&&!units.length)return '';
     return `${total.toLocaleString('vi-VN')}${units.length===1?' '+units[0]:''}`.trim();
@@ -920,6 +969,20 @@
         groups[key].aggregateQtyText=`${Math.max(0,Number(state.qty||0)).toLocaleString('vi-VN')} Sổ tiết kiệm`;
         groups[key].value=currentValue;
       }
+      if(!isGoldKey(key)&&state.type!=='SAVING'){
+        const profitState=assetProfitState(state);
+        groups[key].aggregateRows=state.transactions.length;
+        groups[key].aggregateValue=profitState.currentValue;
+        groups[key].aggregateCost=Math.round(Number(state.totalCost||0));
+        groups[key].aggregateProfit=profitState.totalProfit;
+        groups[key].aggregateRealized=Math.round(Number(state.realizedProfit||0));
+        groups[key].aggregatePurchased=Math.round(Number(state.purchasedTotal||0));
+        groups[key].aggregateRecovered=Math.round(Number(state.recoveredTotal||0));
+        groups[key].aggregateCurrentPrice=Number(state.currentPrice||0);
+        groups[key].aggregateQty=Number(state.qty||0);
+        groups[key].aggregateQtyText=formatAssetQty([{qtyRaw:Number(state.qty||0),unit:state.unit}],key);
+        groups[key].value=profitState.currentValue;
+      }
       detailData[key]=state.transactions.map(item=>{
         const detail=item.detail;
         const tx=item.tx;
@@ -936,6 +999,9 @@
           so_luong:sign*Number(detail.so_luong_quy_doi||0),
           don_vi:detail.don_vi_quy_doi,
           gia_hien_tai:detail.don_gia_quy_doi,
+          so_luong_hien_thi:detail.so_luong_hien_thi,
+          don_vi_hien_thi:detail.don_vi_hien_thi,
+          don_gia_hien_thi:detail.don_gia_hien_thi,
           gia_von_binh_quan:detail.gia_von_binh_quan_luc_ban||detail.gia_von_binh_quan_sau_giao_dich,
           tong_gia_von:totalCost,
           gia_tri_hien_tai:totalCost,
@@ -946,6 +1012,8 @@
           so_tiet_kiem_label:detail.so_tiet_kiem_label||firstValue(tx,['savingBookLabel','so_tiet_kiem_label']),
           source_txn_doc_id:detail.source_txn_doc_id||firstValue(tx,['id','_docId']),
           source_txn_external_id:detail.source_txn_external_id||firstValue(tx,['external_id','id']),
+          assetHoldingId:firstValue(tx,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId']),
+          tai_san_thu_hoi_id:firstValue(tx,['tai_san_thu_hoi_id','assetHoldingId','landHoldingId']),
           lai_lo_da_thuc_hien:detail.lai_lo_thuc_hien||0,
           giao_dich_action:detail.giao_dich_action,
           ghi_chu:firstValue(tx,['note','ghi_chu','ghiChu'])
@@ -1064,13 +1132,50 @@
 
   function buildCategoryDetail(label,cls,items){
     const key=categoryDetailKey(cls);
-    const rows=items.flatMap(asset=>(detailData[asset.key]||[]).map(row=>({...row,assetName:asset.name,categoryKey:key})));
-    const total=items.reduce((sum,x)=>sum+Number(x.value||0),0);
-    const cost=items.reduce((sum,x)=>sum+Number(x.aggregateCost||0),0);
-    const profit=items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0);
-    const realized=items.reduce((sum,x)=>sum+Number(x.aggregateRealized||0),0);
+    const realestateStates=cls==='realestate'&&typeof window.TXN_getTransactions==='function'
+      ? rebuildAssetState(window.TXN_getTransactions()).filter(state=>state.type==='LAND')
+      : null;
+    const rows=realestateStates
+      ? realestateStates
+        .flatMap(state=>state.transactions.map(item=>{
+          const detail=item.detail;
+          const tx=item.tx;
+          const sign=detail.giao_dich_action==='SELL'?-1:1;
+          const fee=parseNumber(firstValue(tx,['fee','phi','phí']));
+          const totalCost=detail.giao_dich_action==='SELL'?-Number(detail.gia_von_da_ban||0):amountOf(tx)+fee;
+          const proceeds=detail.giao_dich_action==='SELL'?amountOf(tx)-fee:amountOf(tx);
+          return normalizeDetail({
+            id:tx.id,
+            ngay:firstValue(tx,['date','ngay']),
+            ten_tai_san:state.name,
+            nhom_danh_muc:firstValue(tx,['group','nhom_danh_muc']),
+            hang_muc_con:firstValue(tx,['child','hang_muc_con']),
+            so_luong:sign*Number(detail.so_luong_quy_doi||0),
+            don_vi:detail.don_vi_quy_doi,
+            gia_hien_tai:detail.don_gia_quy_doi,
+            so_luong_hien_thi:detail.so_luong_hien_thi,
+            don_vi_hien_thi:detail.don_vi_hien_thi,
+            don_gia_hien_thi:detail.don_gia_hien_thi,
+            gia_von_binh_quan:detail.gia_von_binh_quan_luc_ban||detail.gia_von_binh_quan_sau_giao_dich,
+            tong_gia_von:totalCost,
+            gia_tri_hien_tai:totalCost,
+            so_tien:proceeds,
+            source_txn_doc_id:detail.source_txn_doc_id||firstValue(tx,['id','_docId']),
+            source_txn_external_id:detail.source_txn_external_id||firstValue(tx,['external_id','id']),
+            assetHoldingId:firstValue(tx,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId']),
+            tai_san_thu_hoi_id:firstValue(tx,['tai_san_thu_hoi_id','assetHoldingId','landHoldingId']),
+            lai_lo_da_thuc_hien:detail.lai_lo_thuc_hien||0,
+            giao_dich_action:detail.giao_dich_action,
+            ghi_chu:firstValue(tx,['note','ghi_chu','ghiChu'])
+          },state.id);
+        }).map(row=>({...row,assetName:state.name,categoryKey:key})))
+      : items.flatMap(asset=>(detailData[asset.key]||[]).map(row=>({...row,assetName:asset.name,categoryKey:key})));
+    const total=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).currentValue,0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
+    const cost=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.totalCost||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateCost||0),0);
+    const profit=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).totalProfit,0):items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0);
+    const realized=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.realizedProfit||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateRealized||0),0);
     const saving=cls==='saving';
-    const qty=saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):items.reduce((sum,x)=>sum+Number(x.aggregateQty||0),0);
+    const qty=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.qty||0),0):(saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):items.reduce((sum,x)=>sum+Number(x.aggregateQty||0),0));
     detailData[key]=rows;
     const asset={
       key,
@@ -1083,7 +1188,7 @@
       aggregateProfit:profit,
       aggregateRealized:realized,
       aggregateQty:qty,
-      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(items.length?`${items.length} tài sản`:'-'),
+      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(cls==='realestate'?`${qty.toLocaleString('vi-VN')} tài sản`:(items.length?`${items.length} tài sản`:'-')),
       isCategory:true
     };
     categoryAssets[key]=asset;
@@ -1091,11 +1196,11 @@
   }
 
   function categoryCard({label,cls,icon,items}){
-    const total=items.reduce((sum,x)=>sum+Number(x.value||0),0);
     const count=items.length;
     const key=count?categoryDetailKey(cls):'';
     const detail=count?buildCategoryDetail(label,cls,items):null;
-    const subText=cls==='saving'?(detail?.qtyText||'Chưa có tài sản'):(count?`${count} tài sản`:'Chưa có tài sản');
+    const total=cls==='realestate'&&detail?Number(detail.value||0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
+    const subText=cls==='saving'?(detail?.qtyText||'Chưa có tài sản'):(cls==='realestate'?(detail?.qtyText||'0 tài sản'):(count?`${count} tài sản`:'Chưa có tài sản'));
     return `<button class="asset52-card ${cls} ${key?'':'is-static'}" type="button" ${key?`data-asset-key="${key}"`:''}>
       <span class="asset52-icon">${iconSvg(icon)}</span>
       <span class="asset52-info"><span class="asset52-name">${label}</span><span class="asset52-sub">${subText}</span></span>
@@ -1205,7 +1310,7 @@
     const cost=hasAggregate?Number(asset.aggregateCost||0):remainingCost(rows,asset.key);
     const realized=hasAggregate?Number(asset.aggregateRealized||0):rows.reduce((sum,x)=>sum+Number(x.realizedProfit||0),0);
     const saving=assetSection(asset)==='saving';
-    const profit=saving?realized:(hasAggregate?Number(asset.aggregateProfit||0)+realized:now-cost+realized);
+    const profit=saving?realized:(hasAggregate?Number(asset.aggregateProfit||0):now-cost+realized);
     const qty=saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):(hasAggregate?Number(asset.aggregateQty||0):Math.abs(rows.reduce((sum,row)=>sum+costQty(row,asset.key),0)));
     const unit=isGoldKey(asset.key)?'chỉ':'đơn vị';
     const averageKpis=isGoldKey(asset.key)&&qty?`
@@ -1227,7 +1332,8 @@
     const sell=isSellMovement(item);
     const unitPriceText=convertedUnitPriceText(item,key);
     const savingView=assetSection({key})==='saving';
-    const amountPrefix=savingView?(sell?'Số tiền tất toán':'Số tiền gửi'):(sell?'Số tiền bán':'Số tiền mua');
+    const realestateView=assetSection({key})==='realestate';
+    const amountPrefix=savingView?(sell?'Tất toán':'Số tiền gửi'):(sell?'Số tiền bán':'Số tiền mua');
     const amountValue=sell?Number(item.proceeds||0):Math.abs(Number(item.totalCost||item.cost||item.current||0));
     const categoryView=isCategoryKey(key);
     const interestValue=item.interestRate?String(item.interestRate).trim():'-';
@@ -1235,11 +1341,13 @@
     const savingId=savingMovementId(item);
     const leftTop=savingView
       ? `${movementDateHyphen(item)} (${interestText})${savingId?` - ${savingId}`:''}`
+      : realestateView?movementDateWithRealestateName(item)
       : categoryView?[item.date,item.assetName||item.name].filter(Boolean).join(' · '):(item.date||'');
-    const recalled=savingView&&!sell&&isSavingMovementRecalled(item);
-    const recallIcon=recalled?`<span class="asset53-saving-recalled" title="Sổ tiết kiệm đã tất toán" aria-label="Sổ tiết kiệm đã tất toán"></span>`:'';
+    const recalled=(savingView&&!sell&&isSavingMovementRecalled(item))||(realestateView&&!sell&&isRealestateMovementRecalled(item));
+    const recallTitle=realestateView?'Bất động sản đã bán':'Sổ tiết kiệm đã tất toán';
+    const recallIcon=recalled?`<span class="asset53-saving-recalled" title="${recallTitle}" aria-label="${recallTitle}"></span>`:'';
     const rightBottom=unitPriceText;
-    const firstSpan=savingView?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
+    const firstSpan=(savingView||realestateView)?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
     const assetInfo=cashView?'':`<div class="asset53-flow-grid">
         ${firstSpan}
         <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}</span>
@@ -1288,12 +1396,40 @@
     return savingMovementKeys(item).some(id=>ids.has(id));
   }
 
+  function realestateMovementKeys(item){
+    return [item?.sourceTxnDocId,item?.sourceTxnExternalId,item?.external_id,item?.id]
+      .map(value=>String(value||'').trim())
+      .filter(Boolean);
+  }
+
+  function recalledRealestateIds(rows){
+    const ids=new Set();
+    (rows||[]).filter(isSellMovement).forEach(row=>{
+      [row?.assetHoldingId,row?.tai_san_thu_hoi_id,row?.landHoldingId,row?.sourceTxnDocId,row?.sourceTxnExternalId]
+        .map(value=>String(value||'').trim())
+        .filter(Boolean)
+        .forEach(id=>ids.add(id));
+    });
+    return ids;
+  }
+
+  function isRealestateMovementRecalled(item){
+    const ids=detailState.recalledRealestateIds;
+    if(!ids||!ids.size)return false;
+    return realestateMovementKeys(item).some(id=>ids.has(id));
+  }
+
   function movementQtyText(item,key){
     const sell=isSellMovement(item);
     const sign=sell?'- ':'+ ';
     if(isGoldKey(key)){
       const qty=Math.abs(Number(item.qtyChi||0));
       return `${sign}${formatGoldQty(qty)}`;
+    }
+    if(assetSection({key})==='realestate'){
+      const qty=Math.abs(Number(item.displayQty||0))||Math.abs(Number(item.qtyRaw||0));
+      const unit=String(item.displayUnit||item.unit||'').trim();
+      if(qty)return `${sign}${qty.toLocaleString('vi-VN')}${unit?' '+unit:''}`;
     }
     const qty=Math.abs(Number(item.qtyRaw||0));
     const unit=assetSection({key})==='saving'?'Sổ':String(item.unit||'').trim();
@@ -1302,6 +1438,11 @@
   }
 
   function convertedUnitPriceText(item,key){
+    if(assetSection({key})==='realestate'){
+      const unit=String(item.displayUnit||item.unit||'đơn vị').trim().toLowerCase();
+      const price=Number(item.displayPrice||0)||Number(item.price||0)||Number(item.avgCost||0);
+      return price?`${fmt(Math.abs(price))} / ${unit}`:'-';
+    }
     const unit=isGoldKey(key)?'chỉ':String(item.unit||'đơn vị').trim().toLowerCase();
     const price=Number(item.price||0)||Number(item.avgCost||0);
     return price?`${fmt(Math.abs(price))} / ${unit}`:'-';
@@ -1330,6 +1471,11 @@
     const local=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
     if(local)return `${String(local[1]).padStart(2,'0')}-${String(local[2]).padStart(2,'0')}-${local[3]}`;
     return raw;
+  }
+
+  function movementDateWithRealestateName(item){
+    const name=String(item?.assetName||item?.name||'').trim();
+    return [movementDateHyphen(item),name].filter(Boolean).join(' · ');
   }
 
   function chartPath(values,width,height,pad){
@@ -1421,8 +1567,43 @@
     </div>`;
   }
 
+  function realestateFlowChartHtml(rows,year,mode){
+    const isSell=mode==='sell';
+    const monthly=Array.from({length:12},()=>0);
+    (rows||[]).forEach(row=>{
+      const month=Math.max(1,Math.min(12,movementMonth(row)));
+      const value=isSell?Number(row.proceeds||0):Math.abs(Number(row.totalCost||row.cost||row.current||0));
+      monthly[month-1]+=Math.abs(value);
+    });
+    const width=380,height=132,pad=20;
+    const chart=chartGeometry(monthly,width,height,pad,moneyShort);
+    const total=monthly.reduce((sum,value)=>sum+value,0);
+    return `<div class="asset53-movement-chart saving-flow-chart ${isSell?'sell':'buy'}">
+      <div class="asset53-chart-meta"><span>${isSell?'Tổng bán':'Tổng mua'} ${year}</span><b>${moneyShort(total)}</b><button type="button" data-asset-flow="${isSell?'buy':'sell'}" aria-label="${isSell?'Xem mua bất động sản':'Xem bán bất động sản'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="${isSell?'m15 18-6-6 6-6':'m9 18 6-6-6-6'}"/></svg></button></div>
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Biểu đồ ${isSell?'bán':'mua'} bất động sản năm ${year}">
+        <path class="area" d="${chart.area}"></path>
+        <path class="grid" d="M20 34H360M20 66H360M20 98H360"></path>
+        <g class="guides">${chart.guides}</g>
+        <line class="baseline" x1="${pad}" y1="${height-pad}" x2="${width-pad}" y2="${height-pad}"></line>
+        <polyline class="line" points="${chart.polyline}"></polyline>
+        <g class="points">${chart.points}</g>
+      </svg>
+      <div class="asset53-chart-months">${Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('')}</div>
+    </div>`;
+  }
+
   function moneyShort(value){
     const n=Math.abs(Number(value||0));
+    if(n>=1000000000){
+      const whole=Math.floor(n/1000000000);
+      const millionRemainder=Math.floor((n%1000000000)/1000000);
+      const hasSubMillion=n%1000000!==0;
+      if(!millionRemainder)return `${whole} tỷ`;
+      if(hasSubMillion)return `${whole}.${String(millionRemainder).padStart(3,'0')} tỷ`;
+      if(millionRemainder%100===0)return `${whole}.${Math.floor(millionRemainder/100)} tỷ`;
+      if(millionRemainder%10===0)return `${whole}.${String(Math.floor(millionRemainder/10)).padStart(2,'0')} tỷ`;
+      return `${whole}.${String(millionRemainder).padStart(3,'0')} tỷ`;
+    }
     if(n>=1000000){
       const v=n/1000000;
       return `${Number.isInteger(v)?v:v.toLocaleString('vi-VN',{maximumFractionDigits:1})} tr`;
@@ -1591,6 +1772,27 @@
           : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'rút':'gửi'} tiết kiệm trong năm này.</div>`}
       </div>`;
     }
+    if(assetSection({key})==='realestate'){
+      const year=Number(detailState.year||new Date().getFullYear());
+      const mode=detailState.flow==='sell'?'sell':'buy';
+      const anim=(detailState.flowAnim||detailState.yearAnim||detailState.tabAnim)?` ${detailState.flowAnim||detailState.yearAnim||detailState.tabAnim}`:'';
+      detailState.recalledRealestateIds=recalledRealestateIds(rows);
+      const chartRows=rows.filter(row=>(mode==='sell'?isSellMovement(row):!isSellMovement(row))&&movementYear(row)===year);
+      const movementRows=chartRows;
+      return `<div class="asset53-fixed-panel">
+        <div class="asset53-movement-pin">
+          ${goldMovementHeaderHtml(year)}
+          <div class="asset53-movement-stage${anim}">
+            ${realestateFlowChartHtml(chartRows,year,mode)}
+          </div>
+        </div>
+      </div>
+      <div class="asset53-scroll-list">
+        ${movementRows.length
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list realestate-flow-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
+          : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'bán':'mua'} bất động sản trong năm này.</div>`}
+      </div>`;
+    }
     return rows.length
       ? `<div class="asset53-detail-card">${rows.map(row=>detailRow(row,color,key)).join('')}</div>`
       : '<div class="asset53-empty">Chưa có dữ liệu biến động.</div>';
@@ -1715,6 +1917,8 @@
       so_tiet_kiem_id:firstValue(tx,['so_tiet_kiem_id','savingBookId'])||detail?.so_tiet_kiem_id||'',
       so_tiet_kiem_label:firstValue(tx,['so_tiet_kiem_label','savingBookLabel'])||detail?.so_tiet_kiem_label||'',
       gia_von_tat_toan:parseNumber(firstValue(tx,['gia_von_tat_toan','settlementCost'])||detail?.gia_von_da_ban),
+      tai_san_thu_hoi_id:firstValue(tx,['tai_san_thu_hoi_id','assetHoldingId','landHoldingId'])||detail?.tai_san_thu_hoi_id||detail?.assetHoldingId||'',
+      assetHoldingId:firstValue(tx,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId'])||detail?.assetHoldingId||detail?.tai_san_thu_hoi_id||'',
       tai_khoan_id:bankId||bankRow()?.id||BANK_ASSET_DOC_ID,
       bien_dong_so_du:balanceDelta,
       trang_thai_hach_toan:'POSTED'
@@ -1763,20 +1967,26 @@
   }
 
   function assetPayloadFromRow(row){
+    const type=String(row?.loai_tai_san||row?.loaiTaiSan||'');
+    const isLand=type.toUpperCase()==='LAND';
+    const rawQty=parseNumber(row?.so_luong??row?.soLuong);
+    const rawCurrentValue=parseNumber(row?.gia_tri_hien_tai??row?.currentValue??row?.value);
+    const rawTotalCost=parseNumber(row?.tong_gia_von??row?.cost);
+    const landUnitPrice=rawCurrentValue||rawTotalCost||parseNumber(row?.gia_hien_tai??row?.price);
     return {
       id:row?.id||'',
       sourceTxnDocId:String(row?.source_txn_doc_id||row?.sourceTxnDocId||''),
       sourceTxnExternalId:String(row?.source_txn_external_id||row?.sourceTxnExternalId||''),
       savingBookId:String(row?.so_tiet_kiem_id||row?.savingBookId||''),
       savingBookLabel:String(row?.so_tiet_kiem_label||row?.savingBookLabel||''),
-      type:String(row?.loai_tai_san||row?.loaiTaiSan||''),
+      type,
       name:String(row?.ten_tai_san||row?.name||''),
-      qty:parseNumber(row?.so_luong??row?.soLuong),
-      unit:String(row?.don_vi||row?.donVi||''),
-      currentPrice:parseNumber(row?.gia_hien_tai??row?.price),
-      currentValue:parseNumber(row?.gia_tri_hien_tai??row?.currentValue??row?.value),
-      totalCost:parseNumber(row?.tong_gia_von??row?.cost),
-      avgCost:parseNumber(row?.gia_von_binh_quan??row?.avgCost),
+      qty:isLand&&rawQty>0?1:rawQty,
+      unit:isLand?'tài sản':String(row?.don_vi||row?.donVi||''),
+      currentPrice:isLand?landUnitPrice:parseNumber(row?.gia_hien_tai??row?.price),
+      currentValue:rawCurrentValue,
+      totalCost:rawTotalCost,
+      avgCost:isLand?(rawTotalCost||landUnitPrice):parseNumber(row?.gia_von_binh_quan??row?.avgCost),
       tempProfit:parseNumber(row?.lai_lo_tam_tinh??row?.profit),
       realizedProfit:parseNumber(row?.lai_lo_da_thuc_hien??row?.realizedProfit),
       purchasedTotal:parseNumber(row?.so_tien_da_mua??row?.purchasedTotal),
@@ -1849,6 +2059,9 @@
         so_luong_quy_doi:input.qty,
         don_vi_quy_doi:input.unit,
         don_gia_quy_doi:input.unitPrice,
+        so_luong_hien_thi:input.displayQty||input.qty,
+        don_vi_hien_thi:input.displayUnit||input.unit,
+        don_gia_hien_thi:input.displayUnitPrice||input.unitPrice,
         lai_suat:input.interestRate||'',
         so_tiet_kiem_id:firstValue(tx,['so_tiet_kiem_id','savingBookId']),
         so_tiet_kiem_label:firstValue(tx,['so_tiet_kiem_label','savingBookLabel']),
@@ -1883,6 +2096,9 @@
       so_luong_quy_doi:sellQty,
       don_vi_quy_doi:input.unit,
       don_gia_quy_doi:input.unitPrice,
+      so_luong_hien_thi:input.displayQty||sellQty,
+      don_vi_hien_thi:input.displayUnit||input.unit,
+      don_gia_hien_thi:input.displayUnitPrice||input.unitPrice,
       lai_suat:input.interestRate||state.interestRate||'',
       gia_von_binh_quan_luc_ban:avgBefore,
       gia_von_da_ban:costSold,

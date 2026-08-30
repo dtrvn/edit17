@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260830-detail-top-row-grid-a';
+const CACHE_NAME = 'qlct-pwa-v20260831-realestate-display-unit-a';
 const APP_SHELL = [
   './',
   './index.html',

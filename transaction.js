@@ -116,6 +116,17 @@
     if(text.includes('saving')||text.includes('deposit')||text.includes('tiet kiem'))return 'SAVING';
     return '';
   }
+  function assetUnitOptionsForType(type){
+    if(type==='LAND')return ['m2','Lô'];
+    if(type==='STOCK')return ['Cổ'];
+    if(type==='INSURANCE')return ['Hợp đồng'];
+    if(type==='GOLD')return goldUnitOptions.map(option=>option.value||option.label||option);
+    return [];
+  }
+  function defaultAssetUnitForType(type){
+    const options=assetUnitOptionsForType(type);
+    return options[0]||'';
+  }
   function assetToneForTx(t){
     const helper=window.ASSET52_colorForTransaction;
     const color=typeof helper==='function'?helper(t):'';
@@ -147,8 +158,9 @@
   function assetUnitPriceForTx(t){
     if(!isAssetTx(t))return 0;
     const qty=Number(t.assetQty||0)||1;
-    const unit=t.assetUnit||(assetTypeOf(t)==='GOLD'?'Chỉ':'Đơn vị');
-    const priceQty=assetTypeOf(t)==='GOLD'?goldQtyToChi(qty,unit):qty;
+    const type=assetTypeOf(t);
+    const unit=t.assetUnit||defaultAssetUnitForType(type)||(type==='GOLD'?'Chỉ':'Đơn vị');
+    const priceQty=type==='GOLD'?goldQtyToChi(qty,unit):qty;
     return Math.round(Number(t.amount||0)/Math.max(priceQty,1));
   }
   const normalizeTx=x=>({
@@ -177,6 +189,7 @@
     savingBookId:String(firstValue(x,['savingBookId','so_tiet_kiem_id','soTietKiemId'])||x.chi_tiet_tai_san?.so_tiet_kiem_id||x.assetDetail?.so_tiet_kiem_id||''),
     savingBookLabel:String(firstValue(x,['savingBookLabel','so_tiet_kiem_label','soTietKiemLabel'])||x.chi_tiet_tai_san?.so_tiet_kiem_label||x.assetDetail?.so_tiet_kiem_label||''),
     settlementCost:parseAmount(firstValue(x,['settlementCost','gia_von_tat_toan','giaVonTatToan'])),
+    assetHoldingId:String(firstValue(x,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId'])||''),
     assetDetail:x.chi_tiet_tai_san||x.assetDetail||null,
     accountId:String(firstValue(x,['tai_khoan_id','accountId'])||''),
     balanceDelta:parseAmount(firstValue(x,['bien_dong_so_du','balanceDelta'])),
@@ -198,7 +211,7 @@
       loai_tai_san:isAssetTx(t)?(t.assetType||assetTypeOf(t)):'',
       ten_tai_san:isAssetTx(t)?(saving?'Gửi tiết kiệm':(t.assetName||(assetTypeOf(t)==='GOLD'?'Vàng 98%':t.child||t.group||'Tài sản'))):'',
       so_luong:isAssetTx(t)?(saving?1:(Number(t.assetQty||0)||1)):0,
-      don_vi:isAssetTx(t)?(saving?'Sổ':(t.assetUnit||(assetTypeOf(t)==='GOLD'?'Chỉ':'Đơn vị'))):'',
+      don_vi:isAssetTx(t)?(saving?'Sổ':(t.assetUnit||defaultAssetUnitForType(assetTypeOf(t))||(assetTypeOf(t)==='GOLD'?'Chỉ':'Đơn vị'))):'',
       don_gia:assetUnitPriceForTx(t),
       phi:isAssetTx(t)?Number(t.fee||0):0,
       updated_at:new Date().toISOString(),
@@ -211,6 +224,8 @@
       so_tiet_kiem_label:t.savingBookLabel||'',
       gia_von_tat_toan:Number(t.settlementCost||0)
     };
+    if(t.assetHoldingId)data.tai_san_thu_hoi_id=t.assetHoldingId;
+    if(t.assetHoldingId)data.assetHoldingId=t.assetHoldingId;
     if(t.external_id)data.id=t.external_id;
     return data;
   }
@@ -266,7 +281,7 @@
       so_tien:Number(data.amount||0),
       ghi_chu:data.note||'',
       don_gia:assetUnitPriceForTx(data),
-      don_vi:isAssetTx(data)?(data.assetUnit||(assetTypeOf(data)==='GOLD'?'Chỉ':'Đơn vị')):'',
+      don_vi:isAssetTx(data)?(data.assetUnit||defaultAssetUnitForType(assetTypeOf(data))||(assetTypeOf(data)==='GOLD'?'Chỉ':'Đơn vị')):'',
       loai_tai_san:isAssetTx(data)?(data.assetType||assetTypeOf(data)):'',
       phi:0,
       so_luong:isAssetTx(data)?(Number(data.assetQty||0)||1):0,
@@ -328,11 +343,12 @@
     }
     const isGold=type==='GOLD';
     const assetName=t.assetName||(isGold?'Vàng 98%':t.child||'');
-    const unit=t.assetUnit||(isGold?'Chỉ':'Đơn vị');
-    const unitField=isGold?`<button class="txn16-control" data-edit-asset-unit type="button"><span>${unit}</span>${chev()}</button>`:`<input class="txn16-money-input" id="txn16AssetUnit" value="${unit}">`;
+    const unit=t.assetUnit||(defaultAssetUnitForType(type)||(isGold?'Chỉ':'Đơn vị'));
+    const unitOptions=assetUnitOptionsForType(type);
+    const unitField=unitOptions.length?`<button class="txn16-control" data-edit-asset-unit type="button"><span>${unit}</span>${chev()}</button>`:`<input class="txn16-money-input" id="txn16AssetUnit" value="${unit}">`;
     return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên tài sản</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field"><label class="txn16-label">Đơn vị</label>${unitField}</div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
   }
-  function editHtml(){const t=state.editing;return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại lớn</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">Số tiền</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
+  function editHtml(){const t=state.editing;return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại giao dịch</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">Số tiền</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
   function rerenderEdit(){const old=document.getElementById('txn16Edit');if(old){old.outerHTML=editHtml();const el=document.getElementById('txn16Edit');el.classList.add('active');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el)}}
   function closeEditScreen(){
     const el=document.getElementById('txn16Edit');
@@ -441,7 +457,7 @@
     if(e.target?.id==='txn16AssetInterest'){state.editing.assetInterest=e.target.value;state.editing.assetRate=e.target.value;updateEditSavingPreview();}
     if(e.target?.id==='txn16Amount')setTimeout(updateEditSavingPreview,0);
   },true);
-  function bindEdit(el){el.onclick=e=>{const t=state.editing;if(e.target.closest('[data-edit-back]')){el.classList.remove('active');setTimeout(()=>el.remove(),330);return}if(e.target.closest('[data-edit-date]'))openCalendar(t.date,v=>{t.date=v;rerenderEdit()});if(e.target.closest('[data-edit-large]')){refreshCategories();openOptions('Loại lớn',categories.large.map(x=>({value:x,label:x})),t.large,v=>{t.large=v;t.type=typeFromLarge(v);const groups=categories.groups[v]||[];t.group=groups[0]||'';const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-group]')){refreshCategories();openOptions('Nhóm danh mục',(categories.groups[t.large]||[]).map(x=>({value:x,label:x})),t.group,v=>{t.group=v;const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-child]')){refreshCategories();openOptions('Hạng mục con',categoryChildren(t.large,t.group).map(x=>({value:x,label:x})),t.child,v=>{t.child=v;if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-asset-unit]')){openOptions('Đơn vị',goldUnitOptions,t.assetUnit||'Chỉ',v=>{t.assetUnit=v;rerenderEdit()});}};el.querySelector('#txn16Amount').oninput=e=>{state.editing.amount=Number(String(e.target.value).replace(/\D/g,''))||0;const p=el.querySelector('.txn16-preview');if(p)p.textContent=fmt(state.editing.amount);};el.querySelector('#txn16Note').oninput=e=>state.editing.note=e.target.value;const an=el.querySelector('#txn16AssetName');if(an)an.oninput=e=>state.editing.assetName=e.target.value;const aq=el.querySelector('#txn16AssetQty');if(aq)aq.oninput=e=>state.editing.assetQty=Number(String(e.target.value).replace(',','.'))||0;const au=el.querySelector('#txn16AssetUnit');if(au)au.oninput=e=>state.editing.assetUnit=e.target.value;const fee=el.querySelector('#txn16Fee');if(fee)fee.oninput=e=>state.editing.fee=Number(String(e.target.value).replace(/\D/g,''))||0;}
+  function bindEdit(el){el.onclick=e=>{const t=state.editing;if(e.target.closest('[data-edit-back]')){el.classList.remove('active');setTimeout(()=>el.remove(),330);return}if(e.target.closest('[data-edit-date]'))openCalendar(t.date,v=>{t.date=v;rerenderEdit()});if(e.target.closest('[data-edit-large]')){refreshCategories();openOptions('Loại giao dịch',categories.large.map(x=>({value:x,label:x})),t.large,v=>{t.large=v;t.type=typeFromLarge(v);const groups=categories.groups[v]||[];t.group=groups[0]||'';const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-group]')){refreshCategories();openOptions('Nhóm danh mục',(categories.groups[t.large]||[]).map(x=>({value:x,label:x})),t.group,v=>{t.group=v;const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-child]')){refreshCategories();openOptions('Hạng mục con',categoryChildren(t.large,t.group).map(x=>({value:x,label:x})),t.child,v=>{t.child=v;if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-asset-unit]')){const type=assetTypeOf(t);const options=assetUnitOptionsForType(type).map(value=>({value,label:value}));openOptions('Đơn vị',options,t.assetUnit||defaultAssetUnitForType(type)||'Chỉ',v=>{t.assetUnit=v;rerenderEdit()});}};el.querySelector('#txn16Amount').oninput=e=>{state.editing.amount=Number(String(e.target.value).replace(/\D/g,''))||0;const p=el.querySelector('.txn16-preview');if(p)p.textContent=fmt(state.editing.amount);};el.querySelector('#txn16Note').oninput=e=>state.editing.note=e.target.value;const an=el.querySelector('#txn16AssetName');if(an)an.oninput=e=>state.editing.assetName=e.target.value;const aq=el.querySelector('#txn16AssetQty');if(aq)aq.oninput=e=>state.editing.assetQty=Number(String(e.target.value).replace(',','.'))||0;const au=el.querySelector('#txn16AssetUnit');if(au)au.oninput=e=>state.editing.assetUnit=e.target.value;const fee=el.querySelector('#txn16Fee');if(fee)fee.oninput=e=>state.editing.fee=Number(String(e.target.value).replace(/\D/g,''))||0;}
   document.addEventListener('click',e=>{
     const del=e.target.closest('#txn16Delete');
     const save=e.target.closest('#txn16Save');
