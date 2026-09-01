@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=export-excel-20260829a" />
-<link rel="stylesheet" href="transaction.css?v=insurance-contract-sheet-style-20260831a" />
+<link rel="stylesheet" href="transaction.css?v=stock-fee-tax-20260902a" />
 <link rel="stylesheet" href="category.css?v=category-top-add-20260829a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
@@ -103,7 +103,7 @@
 .add39-month-grid,.add39-year-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important;padding:4px 0 2px!important;}
 .add39-month-pick,.add39-year-pick{height:42px!important;border:0!important;border-radius:13px!important;background:#f7fbff!important;color:#0f172a!important;font-size:12px!important;font-weight:680!important;cursor:pointer!important;}
 .add39-month-pick.selected,.add39-year-pick.selected{background:linear-gradient(135deg,var(--primary),var(--primary2))!important;color:#fff!important;}
-#screenTxnForm .add39-control[data-add39-date] span{font-weight:400!important;}
+#screenTxnForm .add39-control[data-add39-date] span{font-weight:500!important;}
 .txn16-saving-preview{display:grid;gap:4px;padding:1px 0 0;border:0;background:transparent;border-radius:0;color:#64748b;font-size:10.4px;font-weight:650;line-height:1.2;}
 .txn16-saving-preview span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .txn16-saving-preview b{color:#0f172a;font-size:10.6px;font-weight:780;}
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=insurance-detail-flow-toggle-color-20260901a">
+<link rel="stylesheet" href="asset.css?v=stock-detail-20260902b">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -268,7 +268,7 @@
   font-weight:520!important;
   letter-spacing:-.02em;
 }
-.asset52-icon svg{width:14px!important;height:14px!important;stroke-width:2.4;}
+.asset52-icon svg{width:17px!important;height:17px!important;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;}
 .asset52-info{min-width:0;display:grid;gap:3px;}
 .asset52-name{
   font-size:12.5px!important;
@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=detail-top-row-grid-20260830a">
+<link rel="stylesheet" href="report.css?v=year-delta-20260902a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -971,7 +971,7 @@
 .report72-asset-row{grid-template-columns:8px minmax(0,1fr) minmax(82px,auto)!important;gap:6px!important;}
 .report72-asset-row span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .report72-asset-row b{justify-self:end;max-width:96px;font-size:9.5px;text-align:right;overflow:visible;text-overflow:clip;}
-#screenTxnForm .add39-control[data-add39-date] span{font-weight:400!important;}
+#screenTxnForm .add39-control[data-add39-date] span{font-weight:500!important;}
 #screenTxnForm{padding:18px 18px 30px!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;}
 #screenTxnForm .slide-head{height:38px!important;margin-bottom:6px!important;}
 #screenTxnForm .slide-title{font-size:17px!important;font-weight:740!important;letter-spacing:-.02em!important;color:#0f172a!important;}
@@ -1421,12 +1421,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
 <script src="overview.js?v=insurance-touch-scroll-chevron-20260901o"></script>
-<script src="transaction.js?v=insurance-swipe-settlement-20260901c"></script>
+<script src="transaction.js?v=txn-sign-date-style-20260901a"></script>
 <script src="category.js?v=category-top-add-20260829a"></script>
 
-<script src="add-transaction.js?v=insurance-swipe-settlement-20260901c"></script>
-<script src="asset.js?v=insurance-detail-flow-toggle-color-20260901a"></script>
-<script src="report.js?v=detail-top-row-grid-20260830a"></script>
+<script src="add-transaction.js?v=stock-fee-tax-20260902a"></script>
+<script src="asset.js?v=stock-detail-20260902b"></script>
+<script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>

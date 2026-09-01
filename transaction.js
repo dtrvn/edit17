@@ -178,6 +178,21 @@
     }[finalColor]||'#f3edff';
     return {color:finalColor,soft};
   }
+  function assetIconKindForTx(t){
+    const type=assetTypeOf(t);
+    return {GOLD:'gold',INSURANCE:'insurance',LAND:'realestate',STOCK:'stock',SAVING:'saving'}[type]||'wallet';
+  }
+  function iconSvg(kind){
+    if(kind==='wallet'||kind==='cash')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 17.5Z"/><path d="M4 8h15.5"/><path d="M15 13.5h5v4h-5a2 2 0 0 1 0-4Z"/><path d="M17 15.5h.01"/></svg>';
+    if(kind==='gold')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8.5 7.5h7l2 5h-11Z"/><path d="M4.5 13h7l2 5h-11Z"/><path d="M12.5 13h7l2 5h-11Z"/></svg>';
+    if(kind==='saving')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9.5A5.5 5.5 0 0 1 11.5 4H18a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V9.5a2.5 2.5 0 0 1 2.5-2.5H18"/><path d="M9 9h6"/><path d="M9 13h4"/><path d="M16 17h.01"/></svg>';
+    if(kind==='insurance')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 19 6.5v5.2c0 4.2-2.7 7.5-7 9.3-4.3-1.8-7-5.1-7-9.3V6.5Z"/><path d="m9 12 2 2 4-5"/></svg>';
+    if(kind==='realestate')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10.5V20h11v-9.5"/><path d="M9.5 20v-5h5v5"/><path d="M16.5 7.5V5h2v4"/></svg>';
+    if(kind==='stock')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/><path d="m7 9 4-4 3 3 5-5"/></svg>';
+    if(kind==='income')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19V5"/><path d="m5 12 7 7 7-7"/></svg>';
+    if(kind==='expense')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="m5 12 7-7 7 7"/></svg>';
+    return kind;
+  }
   function goldQtyToChi(qty,unit){
     const n=Number(String(qty||'').replace(',','.'))||1;
     const text=plainText(unit);
@@ -266,9 +281,10 @@
   function isIncomeTx(t){return t.type==='INCOME'||t.type==='DIVEST'||t.large==='Thu nhập'||t.large==='Thu hồi tài sản'||t.large==='Thu hồi';}
   const signedAmount=t=>(isIncomeTx(t)?1:-1)*Number(t.amount||0);
   function meta(t){
-    if(isIncomeTx(t))return{cls:'txn16-in',icon:'↗',sign:'+'};
-    if(t.type==='INVEST'||t.large==='Đầu tư')return{cls:'txn16-invest',icon:'↗',sign:'-',...assetToneForTx(t)};
-    return{cls:'txn16-out',icon:'↘',sign:'-'};
+    if(isAssetTx(t)){const positive=isIncomeTx(t);return{cls:`txn16-invest ${positive?'txn16-positive':'txn16-negative'}`,icon:iconSvg(assetIconKindForTx(t)),sign:positive?'+':'-',...assetToneForTx(t)};}
+    if(isIncomeTx(t))return{cls:'txn16-in',icon:iconSvg('income'),sign:'+'};
+    if(t.type==='INVEST'||plainText(t.large).includes('dau tu'))return{cls:'txn16-invest',icon:iconSvg(assetIconKindForTx(t)),sign:'-',...assetToneForTx(t)};
+    return{cls:'txn16-out',icon:iconSvg('expense'),sign:'-'};
   }
   function init(){const screen=document.getElementById('screenTransactions');if(!screen)return;screen.innerHTML=`<div class="slide-head"><button class="slide-back" data-txn16-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Giao dịch</div></div><div class="slide-body"><div class="txn16-filter"><div class="txn16-row top"><input class="txn16-input" id="txn16Search" placeholder="Tìm giao dịch..."><button class="txn16-select" data-type-sheet><span id="txn16TypeText">Hiển thị tất cả</span>${chev()}</button></div><div class="txn16-row range"><button class="txn16-select" data-range-sheet><span id="txn16RangeText">1 tháng gần nhất</span>${chev()}</button><button class="txn16-clear" id="txn16Clear">Clear</button></div><div class="txn16-row dates" id="txn16Dates" style="display:none"><button class="txn16-date" data-date-field="from"><span id="txn16From">${toDMY(state.from)}</span>${cal()}</button><button class="txn16-date" data-date-field="to"><span id="txn16To">${toDMY(state.to)}</span>${cal()}</button></div><div class="txn16-error" id="txn16Error">Ngày kết thúc không được nhỏ hơn ngày bắt đầu.</div></div><div class="txn16-total neutral" id="txn16Total"><b>0 đ</b></div><div class="txn16-list" id="txn16List"></div></div>`;screen.addEventListener('click',onClick);document.getElementById('txn16Search').addEventListener('input',e=>{state.search=e.target.value;renderList()});document.getElementById('txn16Clear').onclick=()=>{const range=defaultRange();state.search='';state.type='ALL';state.range='1M';state.from=range.from;state.to=range.to;sync();const d=document.getElementById('txn16Dates');if(d)d.style.display='none';const e=document.getElementById('txn16Error');if(e)e.classList.remove('show');renderList();setTimeout(()=>{const d2=document.getElementById('txn16Dates');if(d2)d2.style.display='none';},0)};document.addEventListener('cat90:changed',()=>{refreshCategories();if(state.editing)rerenderEdit();});ensureSheet();sync();renderList();if(!window.FDB){document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));return;}window.FDB.subscribe(FIREBASE_COLLECTIONS.giaoDich,data=>{transactions=data.map(normalizeTx).filter(x=>x.id&&x.large&&x.group&&x.child);if(state.editing){const fresh=transactions.find(x=>x.id===state.editing.id);if(fresh)state.editing=JSON.parse(JSON.stringify(fresh));}document.dispatchEvent(new CustomEvent('txn16:changed',{detail:{transactions}}));renderList();},console.error);}
   function sync(){const custom=state.range==='CUSTOM';document.getElementById('screenTransactions')?.classList.toggle('is-custom-range',custom);document.getElementById('txn16Search').value=state.search;document.getElementById('txn16TypeText').textContent=typeLabels[state.type];document.getElementById('txn16RangeText').textContent=rangeLabels[state.range];document.getElementById('txn16Dates').style.display=custom?'grid':'none';document.getElementById('txn16From').textContent=toDMY(state.from);document.getElementById('txn16To').textContent=toDMY(state.to);validate()}

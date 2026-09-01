@@ -689,6 +689,20 @@
 .report72-month-delta.negative{color:#ef4444;}
 .report72-month-delta span{color:inherit;}
 .report72-month-delta b{font:inherit;}
+.report72-year-delta{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  margin:-2px 0 8px;
+  font-size:10.4px;
+  font-weight:760;
+  white-space:nowrap;
+}
+.report72-year-delta.positive{color:#16a34a;}
+.report72-year-delta.negative{color:#ef4444;}
+.report72-year-delta span{color:inherit;}
+.report72-year-delta b{font:inherit;}
 .report72-year-line{
   display:grid;
   grid-template-columns:minmax(68px,1fr) minmax(62px,auto) minmax(62px,auto) minmax(44px,1fr);

@@ -162,6 +162,7 @@
     if(rule.assetType==='SAVING')return 'Gửi tiết kiệm';
     const entered=String(firstValue(tx,['assetName','ten_tai_san','tenTaiSan'])||'').trim();
     if(rule.assetType==='INSURANCE')return entered||String(firstValue(tx,['note','ghi_chu','ghiChu','group','nhom_danh_muc'])||rule.group).trim();
+    if(rule.assetType==='STOCK')return entered||String(firstValue(tx,['child','hang_muc_con','group','nhom_danh_muc'])||rule.group).trim();
     if(entered&&plainText(entered)!==plainText(firstValue(tx,['child','hang_muc_con'])))return entered;
     if(rule.assetType==='GOLD')return entered||'Vàng 98%';
     return String(firstValue(tx,['group','nhom_danh_muc'])||rule.group).trim();
@@ -224,7 +225,8 @@
     const key=assetKey({loai_tai_san:type,ten_tai_san:name});
     const rows=displayAssetRows(visibleAssetRows(rawAssetRows))
       .filter(row=>row.id!==transactionAssetDocId(txnDocId)&&row.id!==formattedAssetDocId(type,{id:txnDocId,external_id:txnDocId})&&row.source_txn_doc_id!==txnDocId&&assetKey(row)===key)
-      .map(row=>normalizeDetail(row,key));
+      .map(row=>normalizeDetail(row,key))
+      .filter(row=>String(type||'').toUpperCase()!=='STOCK'||plainText(stockName(row))===plainText(name));
     const costed=applyCostBasis(rows,key);
     const qtyField=isGoldKey(key)?'qtyChi':'qtyRaw';
     const qtyBalance=costed.reduce((sum,row)=>sum+Number(row[qtyField]||0),0);
@@ -932,6 +934,7 @@
     if(typeof window.TXN_getTransactions!=='function')return;
     const states=rebuildAssetState(window.TXN_getTransactions());
     const rebuiltInsuranceKeys=new Set();
+    const rebuiltStockKeys=new Set();
     states.forEach(state=>{
       const row={id:state.id,loai_tai_san:state.type,ten_tai_san:state.name};
       const key=assetKey(row);
@@ -956,6 +959,19 @@
       }
       if(state.type==='INSURANCE'&&!rebuiltInsuranceKeys.has(key)){
         rebuiltInsuranceKeys.add(key);
+        detailData[key]=[];
+        groups[key].aggregateRows=0;
+        groups[key].aggregateValue=0;
+        groups[key].aggregateCost=0;
+        groups[key].aggregateProfit=0;
+        groups[key].aggregateRealized=0;
+        groups[key].aggregatePurchased=0;
+        groups[key].aggregateRecovered=0;
+        groups[key].aggregateQty=0;
+        groups[key].value=0;
+      }
+      if(state.type==='STOCK'&&!rebuiltStockKeys.has(key)){
+        rebuiltStockKeys.add(key);
         detailData[key]=[];
         groups[key].aggregateRows=0;
         groups[key].aggregateValue=0;
@@ -999,7 +1015,7 @@
       }
       if(!isGoldKey(key)&&state.type!=='SAVING'){
         const profitState=assetProfitState(state);
-        const append=state.type==='INSURANCE';
+        const append=state.type==='INSURANCE'||state.type==='STOCK';
         const settledInsurance=state.type==='INSURANCE'&&isInsuranceContractSettled(state.name);
         const currentValue=state.type==='INSURANCE'
           ? (settledInsurance?0:Math.max(0,Math.round(Number(state.totalCost||0))))
@@ -1014,7 +1030,7 @@
         groups[key].aggregateRecovered=append?Number(groups[key].aggregateRecovered||0)+Math.round(Number(state.recoveredTotal||0)):Math.round(Number(state.recoveredTotal||0));
         groups[key].aggregateCurrentPrice=Number(state.currentPrice||0);
         groups[key].aggregateQty=append?Number(groups[key].aggregateQty||0)+activeQty:activeQty;
-        groups[key].aggregateQtyText=formatAssetQty([{qtyRaw:activeQty,unit:state.unit}],key);
+        groups[key].aggregateQtyText=formatAssetQty([{qtyRaw:state.type==='STOCK'?groups[key].aggregateQty:activeQty,unit:state.unit}],key);
         groups[key].value=append?Number(groups[key].value||0)+currentValue:currentValue;
       }
       const transactionRows=state.transactions.map(item=>{
@@ -1053,7 +1069,7 @@
           ghi_chu:firstValue(tx,['note','ghi_chu','ghiChu'])
         },key);
       });
-      detailData[key]=state.type==='INSURANCE'
+      detailData[key]=state.type==='INSURANCE'||state.type==='STOCK'
         ? (detailData[key]||[]).concat(transactionRows)
         : transactionRows;
     });
@@ -1104,21 +1120,25 @@
 
   function iconForKey(key){
     const type=semanticAssetType(key,{});
-    if(key.includes('gold')||key.includes('vang'))return 'Au';
-    if(type==='cash')return '₫';
-    if(type==='stock')return 'trend';
-    if(type==='saving')return '%';
-    if(type==='insurance')return 'shield';
-    if(type==='realestate')return 'home';
-    return '₫';
+    if(key.includes('gold')||key.includes('vang'))return 'gold';
+    if(type==='cash')return 'wallet';
+    if(type==='stock')return 'chart';
+    if(type==='saving')return 'saving';
+    if(type==='insurance')return 'insurance';
+    if(type==='realestate')return 'realestate';
+    return 'wallet';
   }
 
   function iconSvg(kind){
-    if(kind==='trend') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>';
-    if(kind==='shield') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-5"/></svg>';
+    if(kind==='wallet'||kind==='cash') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 17.5Z"/><path d="M4 8h15.5"/><path d="M15 13.5h5v4h-5a2 2 0 0 1 0-4Z"/><path d="M17 15.5h.01"/></svg>';
+    if(kind==='bank') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 10h16"/><path d="M5 20h14"/><path d="M6 10v8"/><path d="M10 10v8"/><path d="M14 10v8"/><path d="M18 10v8"/><path d="M3.5 8 12 4l8.5 4"/></svg>';
+    if(kind==='gold') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8.5 7.5h7l2 5h-11Z"/><path d="M4.5 13h7l2 5h-11Z"/><path d="M12.5 13h7l2 5h-11Z"/></svg>';
+    if(kind==='saving') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9.5A5.5 5.5 0 0 1 11.5 4H18a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V9.5a2.5 2.5 0 0 1 2.5-2.5H18"/><path d="M9 9h6"/><path d="M9 13h4"/><path d="M16 17h.01"/></svg>';
+    if(kind==='insurance'||kind==='shield') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 19 6.5v5.2c0 4.2-2.7 7.5-7 9.3-4.3-1.8-7-5.1-7-9.3V6.5Z"/><path d="m9 12 2 2 4-5"/></svg>';
+    if(kind==='realestate'||kind==='home') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10.5V20h11v-9.5"/><path d="M9.5 20v-5h5v5"/><path d="M16.5 7.5V5h2v4"/></svg>';
+    if(kind==='stock'||kind==='chart'||kind==='trend') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/><path d="m7 9 4-4 3 3 5-5"/></svg>';
     if(kind==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 12 4 4 8-9"/></svg>';
     if(kind==='list') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>';
-    if(kind==='home') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 11.5 12 6l7 5.5"/><path d="M7.5 10.5V18h9v-7.5"/></svg>';
     return kind;
   }
 
@@ -1207,7 +1227,7 @@
             ghi_chu:firstValue(tx,['note','ghi_chu','ghiChu'])
           },state.id);
         }).map(row=>({...row,assetName:state.name,categoryKey:key})))
-      : items.flatMap(asset=>(detailData[asset.key]||[]).map(row=>({...row,assetName:asset.name,categoryKey:key})));
+      : items.flatMap(asset=>(detailData[asset.key]||[]).map(row=>({...row,assetName:cls==='stock'?stockName(row):asset.name,categoryKey:key})));
     const total=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).currentValue,0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
     const cost=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.totalCost||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateCost||0),0);
     const profit=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).totalProfit,0):items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0);
@@ -1279,7 +1299,7 @@
     };
     categoryAssets={};
     body.innerHTML=assets.length
-      ? `<div class="asset52-list" id="asset52List">${summaryHtml()}${sectionHtml('Tiền & ngân hàng',groups.cash)}${sectionHtml('Vàng',groups.gold)}${categorySectionHtml('Tài sản đầu tư',[{label:'Bảo hiểm tích lũy',cls:'insurance',icon:'shield',items:groups.insurance},{label:'Bất động sản',cls:'realestate',icon:'home',items:groups.realestate},{label:'Chứng khoán',cls:'stock',icon:'trend',items:groups.stock}])}${categorySectionHtml('Tiết kiệm',[{label:'Tiết kiệm',cls:'saving',icon:'%',items:groups.saving}])}${groups.other.length?sectionHtml('Tài sản khác',groups.other):''}</div>`
+      ? `<div class="asset52-list" id="asset52List">${summaryHtml()}${sectionHtml('Tiền & ngân hàng',groups.cash)}${sectionHtml('Vàng',groups.gold)}${categorySectionHtml('Tài sản đầu tư',[{label:'Bảo hiểm tích lũy',cls:'insurance',icon:'insurance',items:groups.insurance},{label:'Bất động sản',cls:'realestate',icon:'realestate',items:groups.realestate},{label:'Chứng khoán',cls:'stock',icon:'stock',items:groups.stock}])}${categorySectionHtml('Tiết kiệm',[{label:'Tiết kiệm',cls:'saving',icon:'saving',items:groups.saving}])}${groups.other.length?sectionHtml('Tài sản khác',groups.other):''}</div>`
       : '<div class="asset53-empty">Chưa có dữ liệu tài sản trong Firebase.</div>';
     document.dispatchEvent(new CustomEvent('asset52:changed',{detail:{assets,detailData}}));
   }
@@ -1477,6 +1497,112 @@
     </div>`;
   }
 
+  function stockName(row){
+    return String(row.assetName||row.name||row.ten_tai_san||row.groupName||row.movementName||'Chứng khoán').trim()||'Chứng khoán';
+  }
+
+  function stockHoldingGroups(rows){
+    const grouped=new Map();
+    (rows||[]).forEach(row=>{
+      const name=stockName(row);
+      const key=plainText(name);
+      (grouped.get(key)||grouped.set(key,{name,rows:[]}).get(key)).rows.push(row);
+    });
+    return Array.from(grouped.values()).map(group=>{
+      const costed=applyCostBasis(group.rows,'stock');
+      const sorted=costed.slice().sort((a,b)=>String(a.sortDate||a.date||'').localeCompare(String(b.sortDate||b.date||'')));
+      const buys=sorted.filter(row=>!isSellMovement(row));
+      const sells=sorted.filter(row=>isSellMovement(row));
+      const qty=Math.max(0,sorted.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0));
+      const cost=Math.max(0,sorted.reduce((sum,row)=>sum+Number(row.totalCost||0),0));
+      const purchased=buys.reduce((sum,row)=>sum+Math.abs(Number(row.totalCost||row.cost||row.current||0)),0);
+      const recovered=sells.reduce((sum,row)=>sum+Math.abs(Number(row.proceeds||0)),0);
+      const realized=sells.reduce((sum,row)=>sum+Number(row.realizedProfit||0),0);
+      const avgCost=qty?Math.round(cost/Math.max(qty,1)):0;
+      const priceRows=sorted.filter(row=>Number(row.price||0));
+      const currentPrice=Number(priceRows[priceRows.length-1]?.price||0)||avgCost;
+      const currentValue=Math.round(qty*currentPrice);
+      const totalProfit=Math.round(currentValue+recovered-purchased);
+      const firstBuy=buys[0]?.sortDate||buys[0]?.date||'';
+      const latest=sorted[sorted.length-1]?.sortDate||sorted[sorted.length-1]?.date||'';
+      const unit=String(sorted.find(row=>row.unit)?.unit||'đơn vị').trim()||'đơn vị';
+      return {...group,rows:costed,qty,cost,purchased,recovered,realized,avgCost,currentPrice,currentValue,totalProfit,startDate:firstBuy,latest,unit,closed:qty<=0};
+    }).sort((a,b)=>String(b.latest||'').localeCompare(String(a.latest||'')));
+  }
+
+  function stockHoldingCardHtml(item,options={}){
+    const header=options.header===true;
+    const finalClass=item.totalProfit<0?'loss':(item.totalProfit>0?'profit':'');
+    return `<div class="asset53-detail-row asset53-stock-holding-row ${item.closed?'settled':''} ${header?'asset53-insurance-header-card':''}">
+      <div class="asset53-stock-name">${item.name}</div>
+      <div class="asset53-stock-metrics">
+        <small>Số lượng còn lại</small>
+        <b>${Number(item.qty||0).toLocaleString('vi-VN')}</b>
+        <small>Giá vốn còn lại</small>
+        <b>${fmt(item.cost)}</b>
+        <small>Tổng lãi/lỗ</small>
+        <b class="${finalClass}">${fmtProfit(item.totalProfit)}</b>
+        <small>Giá vốn bình quân</small>
+        <b>${fmt(item.avgCost)}</b>
+      </div>
+    </div>`;
+  }
+
+  function stockHoldingTransactions(rows,name,kind='buy'){
+    const wanted=plainText(name);
+    const sell=kind==='sell';
+    const group=(rows||[]).filter(row=>plainText(stockName(row))===wanted);
+    return applyCostBasis(group,'stock')
+      .filter(row=>isSellMovement(row)===sell)
+      .sort((a,b)=>String(b.sortDate||b.date||'').localeCompare(String(a.sortDate||a.date||'')));
+  }
+
+  function stockHoldingDetailHtml(rows){
+    const stocks=stockHoldingGroups(rows);
+    const stock=stocks.find(item=>plainText(item.name)===plainText(detailState.stockDetail))||stocks[0];
+    if(!stock)return '<div class="asset53-empty">Chưa có chứng khoán.</div>';
+    const detailMode=detailState.stockDetailFlow==='sell'?'sell':'buy';
+    const isSell=detailMode==='sell';
+    const transactionRows=stockHoldingTransactions(rows,stock.name,detailMode);
+    return `<div class="asset53-overview asset53-insurance-detail-view asset53-stock-detail-view">
+      <div class="asset53-insurance-detail-header">
+        <div class="asset53-detail-card">${stockHoldingCardHtml(stock,{header:true})}</div>
+      </div>
+      <div class="asset53-insurance-detail-toolbar asset53-stock-detail-toolbar">
+        <button type="button" data-asset-stock-detail-back aria-label="Danh sách chứng khoán"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg><span>Danh sách chứng khoán</span></button>
+        <button class="asset53-insurance-detail-toggle ${isSell?'is-recovery':'is-invest'}" type="button" data-asset-stock-detail-flow="${isSell?'buy':'sell'}" aria-label="${isSell?'Giao dịch mua':'Giao dịch bán'}">${isSell?iconSvg('chart'):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 7 4-4 4 4"/><path d="M7 3v12a4 4 0 0 0 4 4h10"/></svg>'}<span>${isSell?'Giao dịch mua':'Giao dịch bán'}</span></button>
+      </div>
+      <div class="asset53-insurance-detail-list">
+        ${transactionRows.length
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list stock-flow-list">${transactionRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',detailState.key)).join('')}</div>`
+          : `<div class="asset53-empty">Chưa có giao dịch ${isSell?'bán':'mua'} chứng khoán.</div>`}
+      </div>
+    </div>`;
+  }
+
+  function stockOverviewHtml(rows){
+    if(detailState.stockDetail)return stockHoldingDetailHtml(rows);
+    const stocks=stockHoldingGroups(rows);
+    const list=stocks.length
+      ? `<div class="asset53-insurance-contract-list asset53-stock-holding-list">${stocks.map(item=>{
+        const encoded=encodeURIComponent(item.name);
+        return `<div class="asset53-insurance-contract-item asset53-stock-holding-item">
+          <div class="asset53-insurance-swipe asset53-stock-swipe">
+            <div class="asset53-insurance-swipe-track asset53-stock-swipe-track">
+              ${stockHoldingCardHtml(item)}
+              <div class="asset53-insurance-swipe-action asset53-stock-swipe-action">
+                <button class="asset53-insurance-swipe-btn detail asset53-stock-detail-btn" type="button" data-asset-stock-detail="${encoded}" title="Xem giao dịch chứng khoán" aria-label="Xem giao dịch chứng khoán">${iconSvg('list')}</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div>`
+      : '<div class="asset53-empty">Chưa có chứng khoán.</div>';
+    return `<div class="asset53-overview">
+      ${list}
+    </div>`;
+  }
+
   function currentInsuranceContract(name){
     const asset=assets.find(item=>item.key===detailState.key)||{key:detailState.key};
     const rows=detailData[detailState.key]||[];
@@ -1572,6 +1698,7 @@
       </div>`;
     }
     if(assetSection(asset)==='insurance')return insuranceOverviewHtml(rows);
+    if(assetSection(asset)==='stock')return stockOverviewHtml(rows);
     const hasAggregate=Number(asset?.aggregateRows||0)>0;
     const cost=hasAggregate?Number(asset.aggregateCost||0):remainingCost(rows,asset.key);
     const realized=hasAggregate?Number(asset.aggregateRealized||0):rows.reduce((sum,x)=>sum+Number(x.realizedProfit||0),0);
@@ -1745,9 +1872,9 @@
   function movementDateHyphen(item){
     const raw=String(item.sortDate||item.date||'');
     const iso=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(iso)return `${iso[3]}-${iso[2]}-${iso[1]}`;
+    if(iso)return `${iso[3]}/${iso[2]}/${iso[1]}`;
     const local=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if(local)return `${String(local[1]).padStart(2,'0')}-${String(local[2]).padStart(2,'0')}-${local[3]}`;
+    if(local)return `${String(local[1]).padStart(2,'0')}/${String(local[2]).padStart(2,'0')}/${local[3]}`;
     return raw;
   }
 
@@ -1859,6 +1986,41 @@
     return `<div class="asset53-movement-chart saving-flow-chart ${isSell?'sell':'buy'}">
       <div class="asset53-chart-meta"><span>${isSell?'Tổng bán':'Tổng mua'} ${year}</span><b>${moneyShort(total)}</b><button type="button" data-asset-flow="${isSell?'buy':'sell'}" aria-label="${isSell?'Xem mua bất động sản':'Xem bán bất động sản'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="${isSell?'m15 18-6-6 6-6':'m9 18 6-6-6-6'}"/></svg></button></div>
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Biểu đồ ${isSell?'bán':'mua'} bất động sản năm ${year}">
+        <path class="area" d="${chart.area}"></path>
+        <path class="grid" d="M20 34H360M20 66H360M20 98H360"></path>
+        <g class="guides">${chart.guides}</g>
+        <line class="baseline" x1="${pad}" y1="${height-pad}" x2="${width-pad}" y2="${height-pad}"></line>
+        <polyline class="line" points="${chart.polyline}"></polyline>
+        <g class="points">${chart.points}</g>
+      </svg>
+      <div class="asset53-chart-months">${Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('')}</div>
+    </div>`;
+  }
+
+  function stockQtyLabel(value){
+    return `${Math.max(0,Number(value||0)).toLocaleString('vi-VN')} đv`;
+  }
+
+  function stockYearProfitHtml(rows,year){
+    const cutoff=Number(year||new Date().getFullYear());
+    const profit=stockHoldingGroups((rows||[]).filter(row=>movementYear(row)<=cutoff)).reduce((sum,item)=>sum+Number(item.totalProfit||0),0);
+    return `<div class="asset53-year-ratio ${profit>=0?'positive':'negative'}"><span>Tổng lãi/lỗ: </span><b>${fmtProfit(profit)}</b></div>`;
+  }
+
+  function stockFlowChartHtml(rows,year,mode){
+    const isSell=mode==='sell';
+    const monthly=Array.from({length:12},()=>0);
+    (rows||[]).forEach(row=>{
+      const month=Math.max(1,Math.min(12,movementMonth(row)));
+      const value=isSell?Number(row.proceeds||0):Math.abs(Number(row.totalCost||row.cost||row.current||0));
+      monthly[month-1]+=Math.abs(value);
+    });
+    const width=380,height=132,pad=20;
+    const chart=chartGeometry(monthly,width,height,pad,moneyShort);
+    const total=monthly.reduce((sum,value)=>sum+value,0);
+    return `<div class="asset53-movement-chart saving-flow-chart stock-flow-chart ${isSell?'sell':'buy'}">
+      <div class="asset53-chart-meta"><span>${isSell?'Tổng bán':'Tổng mua'} ${year}</span><b>${moneyShort(total)}</b><button type="button" data-asset-flow="${isSell?'buy':'sell'}" aria-label="${isSell?'Xem mua chứng khoán':'Xem bán chứng khoán'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="${isSell?'m15 18-6-6 6-6':'m9 18 6-6-6-6'}"/></svg></button></div>
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Biểu đồ ${isSell?'bán':'mua'} chứng khoán năm ${year}">
         <path class="area" d="${chart.area}"></path>
         <path class="grid" d="M20 34H360M20 66H360M20 98H360"></path>
         <g class="guides">${chart.guides}</g>
@@ -2095,6 +2257,25 @@
           : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'bán':'mua'} bất động sản trong năm này.</div>`}
       </div>`;
     }
+    if(assetSection({key})==='stock'){
+      const year=Number(detailState.year||new Date().getFullYear());
+      const mode=detailState.flow==='sell'?'sell':'buy';
+      const anim=(detailState.flowAnim||detailState.yearAnim||detailState.tabAnim)?` ${detailState.flowAnim||detailState.yearAnim||detailState.tabAnim}`:'';
+      const movementRows=rows.filter(row=>(mode==='sell'?isSellMovement(row):!isSellMovement(row))&&movementYear(row)===year);
+      return `<div class="asset53-fixed-panel">
+        <div class="asset53-movement-pin">
+          ${goldMovementHeaderHtml(year,stockYearProfitHtml(rows,year))}
+          <div class="asset53-movement-stage${anim}">
+            ${stockFlowChartHtml(movementRows,year,mode)}
+          </div>
+        </div>
+      </div>
+      <div class="asset53-scroll-list">
+        ${movementRows.length
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list stock-flow-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
+          : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'bán':'mua'} chứng khoán trong năm này.</div>`}
+      </div>`;
+    }
     if(assetSection({key})==='insurance'){
       const year=Number(detailState.year||new Date().getFullYear());
       const mode=detailState.flow==='sell'?'sell':'buy';
@@ -2134,7 +2315,9 @@
     body.style.setProperty('--asset-detail-soft',`${color}18`);
     screen?.classList.toggle('asset53-insurance-movement',assetSection(asset)==='insurance'&&detailState.tab==='movement');
     screen?.classList.toggle('asset53-insurance-contract-detail-screen',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
+    screen?.classList.toggle('asset53-stock-detail-screen',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
     body.classList.toggle('asset53-insurance-contract-detail',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
+    body.classList.toggle('asset53-stock-detail',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
     body.classList.toggle('asset53-compact-ledger',['insurance','realestate','stock','saving'].includes(assetSection(asset)));
     body.classList.toggle('asset53-fixed-detail',cash||detailState.tab==='movement');
     if(cash){
@@ -2147,10 +2330,24 @@
     </div>${detailState.tab==='overview'?overviewHtml(asset,rows):movementsHtml(rows,color,key)}`;
   }
 
+  function scrollBankGroupIntoView(groupKey){
+    requestAnimationFrame(()=>{
+      const body=document.getElementById('asset53DetailBody');
+      const scroller=body?.querySelector('.asset53-scroll-list');
+      const list=scroller?.querySelector('.asset53-bank-list');
+      if(!scroller||!list)return;
+      const button=Array.from(list.querySelectorAll('[data-bank-group-toggle]')).find(item=>item.dataset.bankGroupToggle===groupKey);
+      const group=button?.closest('.asset53-bank-group');
+      if(!group)return;
+      const targetTop=group.offsetTop-list.offsetTop;
+      scroller.scrollTo({top:Math.max(0,targetTop),behavior:'smooth'});
+    });
+  }
+
   function openDetail(key){
     const screen=ensureDetailScreen();
     if(!screen)return;
-    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',insuranceContractDetail:'',insuranceContractFlow:'buy'};
+    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',insuranceContractDetail:'',insuranceContractFlow:'buy',stockDetail:'',stockDetailFlow:'buy'};
     renderDetail();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
@@ -2817,7 +3014,7 @@
     },console.error);
   }
   document.addEventListener('click',e=>{
-    const clickedInsuranceAction=e.target.closest('[data-asset-insurance-settle], [data-asset-insurance-unsettle], [data-asset-insurance-detail], [data-asset-insurance-detail-back], [data-asset-insurance-detail-flow]');
+    const clickedInsuranceAction=e.target.closest('[data-asset-insurance-settle], [data-asset-insurance-unsettle], [data-asset-insurance-detail], [data-asset-insurance-detail-back], [data-asset-insurance-detail-flow], [data-asset-stock-detail], [data-asset-stock-detail-back], [data-asset-stock-detail-flow]');
     if(!clickedInsuranceAction&&closeInsuranceSwipeActions()){
       e.preventDefault();
       e.stopPropagation();
@@ -2867,6 +3064,32 @@
       renderDetail();
       return;
     }
+    const stockDetail=e.target.closest('[data-asset-stock-detail]');
+    if(stockDetail){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.stockDetail=decodeURIComponent(stockDetail.dataset.assetStockDetail||'');
+      detailState.stockDetailFlow='buy';
+      renderDetail();
+      return;
+    }
+    const stockDetailFlow=e.target.closest('[data-asset-stock-detail-flow]');
+    if(stockDetailFlow){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.stockDetailFlow=stockDetailFlow.dataset.assetStockDetailFlow==='sell'?'sell':'buy';
+      renderDetail();
+      return;
+    }
+    const stockDetailBack=e.target.closest('[data-asset-stock-detail-back]');
+    if(stockDetailBack){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.stockDetail='';
+      detailState.stockDetailFlow='buy';
+      renderDetail();
+      return;
+    }
     const tab=e.target.closest('[data-asset-detail-tab]');
     if(tab){
       const nextTab=tab.dataset.assetDetailTab;
@@ -2874,6 +3097,8 @@
       detailState.tab=nextTab;
       detailState.insuranceContractDetail='';
       detailState.insuranceContractFlow='buy';
+      detailState.stockDetail='';
+      detailState.stockDetailFlow='buy';
       renderDetail();
       setTimeout(()=>{if(detailState.tabAnim){detailState.tabAnim='';}},260);
     }
@@ -2913,6 +3138,7 @@
       detailState.expandedGroup=detailState.expandedGroup===key?'':key;
       detailState.bankListAnim='group';
       renderDetail();
+      if(detailState.expandedGroup===key)scrollBankGroupIntoView(key);
     }
     if(e.target.closest('[data-asset-detail-back]'))closeDetail();
   },true);

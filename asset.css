@@ -106,7 +106,7 @@
   font-weight:520!important;
   letter-spacing:-.02em;
 }
-.asset52-icon svg{width:14px!important;height:14px!important;stroke-width:2.4;}
+.asset52-icon svg{width:17px!important;height:17px!important;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;}
 .asset52-info{min-width:0;display:grid;gap:3px;}
 .asset52-name{
   font-size:12.5px!important;
@@ -183,11 +183,13 @@
   padding-bottom:0!important;
 }
 .asset53-detail-screen .slide-body.asset53-fixed-detail .asset53-tabs,
-.asset53-detail-screen .slide-body.asset53-insurance-contract-detail .asset53-tabs{
+.asset53-detail-screen .slide-body.asset53-insurance-contract-detail .asset53-tabs,
+.asset53-detail-screen .slide-body.asset53-stock-detail .asset53-tabs{
   flex:0 0 38px;
   min-height:38px;
 }
-.asset53-detail-screen .slide-body.asset53-insurance-contract-detail{
+.asset53-detail-screen .slide-body.asset53-insurance-contract-detail,
+.asset53-detail-screen .slide-body.asset53-stock-detail{
   display:flex!important;
   flex-direction:column!important;
   gap:8px!important;
@@ -197,13 +199,15 @@
 .asset53-detail-screen.asset53-insurance-movement{
   padding-bottom:0!important;
 }
-.asset53-detail-screen.asset53-insurance-contract-detail-screen{
+.asset53-detail-screen.asset53-insurance-contract-detail-screen,
+.asset53-detail-screen.asset53-stock-detail-screen{
   padding-bottom:0!important;
 }
 .asset53-detail-screen.asset53-insurance-movement .slide-body{
   height:calc(100% - 64px)!important;
 }
-.asset53-detail-screen.asset53-insurance-contract-detail-screen .slide-body{
+.asset53-detail-screen.asset53-insurance-contract-detail-screen .slide-body,
+.asset53-detail-screen.asset53-stock-detail-screen .slide-body{
   height:calc(100% - 64px)!important;
 }
 .asset53-fixed-panel{
@@ -1511,6 +1515,103 @@
 .asset53-insurance-contract-row.settled{
   border-color:#bbf7d0!important;
   background:#f0fdf4!important;
+}
+.asset53-stock-holding-list{
+  gap:8px;
+}
+.asset53-stock-holding-item{
+  display:grid;
+  gap:0;
+  overflow:visible;
+}
+.asset53-stock-swipe.asset53-insurance-swipe .asset53-stock-swipe-track{
+  grid-template-columns:minmax(0,1fr) 52px;
+  width:calc(100% + 52px);
+}
+.asset53-stock-holding-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:7px!important;
+  min-height:0!important;
+  padding:9px 10px 10px!important;
+  border:1px solid rgba(187,247,208,.95)!important;
+  border-radius:13px!important;
+  background:#fff!important;
+  box-shadow:0 10px 18px rgba(15,23,42,.045)!important;
+  overflow:hidden!important;
+  scroll-snap-align:start;
+}
+.asset53-stock-swipe-action.asset53-insurance-swipe-action{
+  grid-template-columns:1fr;
+}
+.asset53-stock-name{
+  min-width:0;
+  color:#0f172a;
+  font-size:12.4px;
+  font-weight:800;
+  line-height:1.12;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.asset53-stock-metrics{
+  display:grid;
+  grid-template-columns:minmax(0,.92fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,1fr);
+  align-items:center;
+  gap:5px 6px;
+}
+.asset53-stock-metrics small{
+  min-width:0;
+  color:#64748b;
+  font-size:9.1px;
+  font-weight:680;
+  line-height:1.12;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.asset53-stock-metrics b{
+  min-width:0;
+  color:#0f172a;
+  font-size:10.7px;
+  font-weight:800;
+  line-height:1.12;
+  text-align:right;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.asset53-stock-metrics > :nth-child(2),
+.asset53-stock-metrics > :nth-child(6){
+  transform:translateX(-30px);
+}
+.asset53-stock-metrics > :nth-child(3),
+.asset53-stock-metrics > :nth-child(7){
+  transform:translateX(-30px);
+}
+.asset53-stock-metrics b.profit{
+  color:#16a34a;
+}
+.asset53-stock-metrics b.loss{
+  color:#ef4444;
+}
+.asset53-stock-swipe-action .asset53-stock-detail-btn.asset53-insurance-swipe-btn{
+  min-height:100%;
+  border-radius:0 13px 13px 0!important;
+  background:linear-gradient(180deg,#10b981,#047857)!important;
+  color:#fff!important;
+}
+.asset53-stock-swipe-action .asset53-stock-detail-btn svg{
+  width:18px;
+  height:18px;
+  stroke-width:2.7;
+}
+.asset53-stock-detail-toolbar button:first-child{
+  color:#064e3b;
+  border-color:rgba(16,185,129,.22);
+}
+.asset53-stock-detail-toolbar button:first-child svg{
+  color:#10b981;
 }
 .asset53-insurance-detail-view{
   flex:1 1 auto;

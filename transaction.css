@@ -67,6 +67,7 @@
 #screenTransactions .txn16-item{display:grid!important;grid-template-columns:33px minmax(0,1fr) auto!important;grid-template-rows:16px 16px!important;column-gap:8px!important;row-gap:1px!important;min-height:49px!important;width:100%!important;padding:6px 9px!important;border:0!important;border-bottom:1px solid #e7edf5!important;background:transparent!important;text-align:left!important;cursor:pointer!important;align-items:center!important;align-content:center!important;}
 #screenTransactions .txn16-item:last-child{border-bottom:0!important;}
 #screenTransactions .txn16-icon{grid-column:1!important;grid-row:1/3!important;align-self:center!important;width:27px!important;height:27px!important;border-radius:12px!important;display:grid!important;place-items:center!important;font-size:13px!important;font-weight:900!important;}
+#screenTransactions .txn16-icon svg{width:16px!important;height:16px!important;stroke-width:2.3!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
 #screenTransactions .txn16-item > span:nth-child(2){display:contents!important;}
 #screenTransactions .txn16-title{grid-column:2 / 4!important;grid-row:1!important;min-width:0!important;font-size:12.5px!important;font-weight:700!important;line-height:16px!important;height:16px!important;margin:0!important;letter-spacing:-.01em!important;color:#020617!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;align-self:end!important;}
 #screenTransactions .txn16-note{grid-column:2!important;grid-row:2!important;min-width:0!important;font-size:10.7px!important;font-weight:400!important;line-height:16px!important;height:16px!important;margin:0!important;letter-spacing:0!important;color:#5f6f8a!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;align-self:start!important;}
@@ -77,6 +78,10 @@
 #screenTransactions .txn16-in .txn16-amount{color:#009446!important;}
 #screenTransactions .txn16-out .txn16-amount{color:#ff2f37!important;}
 #screenTransactions .txn16-invest .txn16-amount{color:#ff2f37!important;}
+#screenTransactions .txn16-invest.txn16-positive .txn16-icon,
+#screenTransactions .txn16-invest.txn16-negative .txn16-icon{background:var(--txn-asset-soft,#f3edff)!important;color:var(--txn-asset-color,#7c4dff)!important;}
+#screenTransactions .txn16-positive .txn16-amount{color:#009446!important;}
+#screenTransactions .txn16-negative .txn16-amount{color:#ff2f37!important;}
 .txn16-edit{position:absolute!important;inset:0!important;z-index:70!important;background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%)!important;transform:translateX(100%)!important;transition:transform .32s cubic-bezier(.22,.61,.36,1), visibility .32s ease!important;visibility:hidden!important;pointer-events:none!important;overflow:hidden!important;padding:18px 18px 30px!important;}
 .txn16-edit.active{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;}
 .txn16-edit.closing-left-to-right{transform:translateX(100%)!important;visibility:visible!important;pointer-events:none!important;}
@@ -160,7 +165,7 @@
 }
 #screenTransactions .txn16-date span,
 .txn16-edit .txn16-control[data-edit-date]{
-  font-weight:400!important;
+  font-weight:500!important;
 }
 @media(max-width:430px){#screenTransactions,.txn16-edit{padding-left:17px!important;padding-right:17px!important;}.txn16-sheet{left:17px!important;right:17px!important;width:auto!important;padding-left:28px!important;padding-right:28px!important;}}
 
@@ -396,6 +401,17 @@
   color:#2457ff!important;
 }
 #screenTxnForm .add39-asset-block .full{grid-column:1/-1!important;}
+#screenTxnForm .add39-percent-field .add39-label-row{
+  min-width:0!important;
+  gap:5px!important;
+}
+#screenTxnForm .add39-percent-field .add39-money-preview{
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  font-size:9.6px!important;
+  text-align:right!important;
+}
 /* Bottom sheet combobox list for add screen */
 .add39-sheet .add39-sheet-title{color:#020617!important;font-size:13.4px!important;font-weight:760!important;letter-spacing:-.012em!important;}
 .add39-sheet .add39-option{height:50px!important;min-height:50px!important;grid-template-columns:minmax(0,1fr) 20px!important;padding-right:2px!important;color:var(--ux-sheet-text)!important;font-size:13.2px!important;font-weight:620!important;letter-spacing:-.006em!important;line-height:1.2!important;}
@@ -667,7 +683,7 @@
 /* calendar picker final overrides */
 #screenTransactions .txn16-date span,
 .txn16-edit .txn16-control[data-edit-date]{
-  font-weight:400!important;
+  font-weight:500!important;
 }
 .txn16-cal-title{
   width:auto!important;
@@ -896,6 +912,15 @@
 .txn16-sheet.txn16-insurance-name-sheet{
   padding-left:16px!important;
   padding-right:16px!important;
+}
+
+#screenTxnForm .add39-control[data-add39-date] span,
+.txn16-edit .txn16-control[data-edit-date]{
+  color:#0f172a!important;
+  font-size:12.5px!important;
+  font-weight:500!important;
+  line-height:1.25!important;
+  letter-spacing:-.006em!important;
 }
 .add39-sheet .add39-sheet-input,
 .txn16-sheet .txn16-sheet-input{

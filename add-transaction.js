@@ -1,5 +1,5 @@
 (function(){
-  const defaultState=()=>({date:new Date().toISOString().slice(0,10),type:'',group:'',child:'',amount:0,note:'',assetName:'',assetQty:'',assetUnit:'',assetPrice:'',fee:0,savingTerm:'1 tháng',assetInterest:'',savingBookId:'',assetHoldingId:'',newInsuranceContract:false});
+  const defaultState=()=>({date:new Date().toISOString().slice(0,10),type:'',group:'',child:'',amount:0,note:'',assetName:'',assetQty:'',assetUnit:'',assetPrice:'',fee:0,feePct:'',taxPct:'',tax:0,savingTerm:'1 tháng',assetInterest:'',savingBookId:'',assetHoldingId:'',newInsuranceContract:false});
   let state=defaultState();
   let catalog={types:[],groups:{},children:{}};
   let saving=false;
@@ -47,6 +47,9 @@
   };
   const isSavingState=()=>classifiedAssetType(state.type,state.group,state.child)==='SAVING';
   const isInsurancePremiumState=()=>txType(state.type)==='INVEST'&&classifiedAssetType(state.type,state.group,state.child)==='INSURANCE'&&normalizeDong(plainText(state.child)).includes('dong phi');
+  const isStockBuyState=()=>txType(state.type)==='INVEST'&&classifiedAssetType(state.type,state.group,state.child)==='STOCK'&&normalizeDong(plainText(state.child)).includes('mua co phieu');
+  const percentValue=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.]/g,''))||0;
+  const percentAmount=(amount,pct)=>Math.round(Number(amount||0)*percentValue(pct)/100);
   function classifiedAssetType(type,group,child){
     const g=normalizeDong(plainText(group)),c=normalizeDong(plainText(child));
     if(g.includes('vang'))return 'GOLD';
@@ -81,6 +84,13 @@
   function updateSavingPreview(){
     const maturity=document.getElementById('add39SavingMaturity');
     if(maturity)maturity.textContent=money(proratedInterest(state.amount,state.assetInterest,savingTermDays(state.savingTerm)));
+  }
+
+  function updateStockFeePreview(){
+    const fee=document.getElementById('add39FeePreview');
+    const tax=document.getElementById('add39TaxPreview');
+    if(fee)fee.textContent=money(percentAmount(state.amount,state.feePct));
+    if(tax)tax.textContent=money(percentAmount(state.amount,state.taxPct));
   }
 
   function savingBookOptions(){
@@ -385,6 +395,11 @@
     if(!groups.includes(state.group))state.group=groups[0]||'';
     const children=childOptions(state.type,state.group);
     if(!children.includes(state.child))state.child=children[0]||'';
+    if(isStockBuyState()){
+      if(!state.assetQty)state.assetQty='100';
+      if(state.feePct==='')state.feePct='0.15';
+      if(state.taxPct==='')state.taxPct='0.1';
+    }
   }
 
   function ensureSheet(){
@@ -556,7 +571,11 @@
     const hideInsuranceQtyUnit=currentAssetType==='INSURANCE'&&(premiumInsurance||txType(state.type)==='DIVEST');
     const qtyField=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div>`;
     const unitBlock=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div>`;
-    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}${unitBlock}<div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div></div>`;
+    const stockBuy=isStockBuyState();
+    const feeFields=stockBuy
+      ? `<div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Phí GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thuế</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(state.amount,state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div>`
+      : `<div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div>`;
+    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}${unitBlock}${feeFields}</div>`;
     const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):defaultAssetFields):'';
     form.innerHTML=`<div class="add39-field"><label class="add39-label">Ngày giao dịch</label><button class="add39-control" data-add39-date><span>${dmy(state.date)}</span>${calIcon}</button></div><div class="add39-field"><label class="add39-label">Loại giao dịch</label><button class="add39-control" data-add39-type><span>${state.type||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Nhóm danh mục</label><button class="add39-control" data-add39-group><span>${state.group||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Hạng mục con</label><button class="add39-control" data-add39-child><span>${state.child||emptyText}</span>${chev}</button></div><div class="add39-field full"><div class="add39-label-row"><label class="add39-label">${amountLabel}</label><span class="add39-money-preview" id="add39MoneyPreview">${money(state.amount)}</span></div><input class="add39-input" id="add39Amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${state.amount||''}"></div>${assetFields}<div class="add39-field full"><label class="add39-label">Ghi chú</label><textarea class="add39-note" id="add39Note" placeholder="Nhập ghi chú">${state.note||''}</textarea></div><div class="add39-actions"><button type="button" class="add39-cancel" data-close="screenTxnForm">Hủy</button><button type="button" class="add39-save" id="add39Save">Lưu giao dịch</button></div>`;
   }
@@ -609,7 +628,10 @@
     const now=new Date();
     const businessId='GD'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0')+String(now.getMilliseconds()).padStart(3,'0');
     const saveAsset=isSavingState();
-    const fee=Number(String(state.fee||0).replace(/\D/g,''))||0;
+    const stockBuy=isStockBuyState();
+    const fee=stockBuy?percentAmount(amount,state.feePct):(Number(String(state.fee||0).replace(/\D/g,''))||0);
+    const tax=stockBuy?percentAmount(amount,state.taxPct):0;
+    const transactionCost=fee+tax;
     if(divestManagedAsset&&managedHolding)applyManagedAssetPick(managedHolding,currentAssetType,{fillQty:!state.assetQty});
     const qty=(saveAsset||currentAssetType==='INSURANCE')?1:(Number(String(state.assetQty||'').replace(',','.'))||1);
     const unitForTx=saveAsset?'Sổ':(state.assetUnit||defaultAssetUnitForType(currentAssetType)||(currentAssetType==='GOLD'?'Chỉ':'Đơn vị'));
@@ -650,7 +672,11 @@
       don_gia:isAssetState()?price:0,
       don_vi:isAssetState()?unitForTx:'',
       loai_tai_san:isAssetState()?classifiedAssetType(state.type,state.group,state.child):'',
-      phi:fee,
+      phi:transactionCost,
+      phi_giao_dich:stockBuy?fee:0,
+      thue:tax,
+      phi_phan_tram:stockBuy?percentValue(state.feePct):0,
+      thue_phan_tram:stockBuy?percentValue(state.taxPct):0,
       so_luong:isAssetState()?qty:0,
       ten_tai_san:isAssetState()?(saveAsset?'Gửi tiết kiệm':((state.assetName||fallbackAssetName).trim())):'',
       tai_san_thu_hoi_id:divestManagedAsset&&['LAND','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
@@ -665,7 +691,7 @@
       lai_suat_theo_ky_han:maturityInterest
     };
     const savedDate=state.date;
-    const txForAsset={...txData,date:savedDate,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
+    const txForAsset={...txData,date:savedDate,amount,large:state.type,group:state.group,child:state.child,type:txType(state.type),note:state.note,assetQty:qty,assetUnit:txData.don_vi,assetPrice:price,fee:transactionCost,tradingFee:fee,tax,assetType:txData.loai_tai_san,assetName:txData.ten_tai_san,assetInterest:annualInterest,assetRate:annualInterest,savingBookId:txData.so_tiet_kiem_id,savingBookLabel:txData.so_tiet_kiem_label,settlementCost:txData.gia_von_tat_toan,savingTerm:txData.ky_han,savingTermDays:txData.so_ngay_ky_han,savingInterestAmount:txData.lai_suat_theo_ky_han};
     saving=true;
     const request=window.ASSET52_saveTransactionAtomic
       ? window.ASSET52_saveTransactionAtomic(txForAsset,businessId,txData,{mode:'create'})
@@ -761,6 +787,7 @@
       const preview=document.getElementById('add39MoneyPreview');
       if(preview)preview.textContent=money(state.amount);
       updateSavingPreview();
+      updateStockFeePreview();
     }
     if(e.target?.id==='add39Note')state.note=e.target.value;
     if(e.target?.id==='add39AssetName')state.assetName=e.target.value;
@@ -768,6 +795,8 @@
     if(e.target?.id==='add39AssetUnit')state.assetUnit=e.target.value;
     if(e.target?.id==='add39AssetInterest'){state.assetInterest=e.target.value;updateSavingPreview();}
     if(e.target?.id==='add39Fee')state.fee=Number(String(e.target.value||'').replace(/\D/g,''))||0;
+    if(e.target?.id==='add39FeePct'){state.feePct=e.target.value;updateStockFeePreview();}
+    if(e.target?.id==='add39TaxPct'){state.taxPct=e.target.value;updateStockFeePreview();}
   },true);
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',resetForm);else resetForm();
