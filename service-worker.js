@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260831-realestate-display-unit-a';
+const CACHE_NAME = 'qlct-pwa-v20260901-insurance-split-fixed-scroll-s';
 const APP_SHELL = [
   './',
   './index.html',

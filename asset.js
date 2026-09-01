@@ -105,6 +105,10 @@
       if(rawType==='DIVEST'||rawType==='SELL'||large.includes('thu hoi')||child.includes('ban')||child.includes('thu hoi'))return assetRules.find(rule=>rule.assetType==='LAND'&&rule.action==='SELL')||null;
       if(rawType==='INVEST'||rawType==='BUY'||large.includes('dau tu')||child.includes('mua'))return assetRules.find(rule=>rule.assetType==='LAND'&&rule.action==='BUY')||null;
     }
+    if(assetType==='INSURANCE'||group.includes('bao hiem')||child.includes('bao hiem')||child.includes('hop dong')){
+      if(rawType==='DIVEST'||rawType==='SELL'||large.includes('thu hoi')||child.includes('rut')||child.includes('thu hoi'))return assetRules.find(rule=>rule.assetType==='INSURANCE'&&rule.action==='SELL')||null;
+      if(rawType==='INVEST'||rawType==='BUY'||large.includes('dau tu')||child.includes('dong')||child.includes('mua'))return assetRules.find(rule=>rule.assetType==='INSURANCE'&&rule.action==='BUY')||null;
+    }
     if(group.includes('tiet kiem')||child.includes('tiet kiem')){
       if(rawType==='DIVEST'||rawType==='SELL'||large.includes('thu hoi')||child.includes('rut'))return assetRules.find(rule=>rule.assetType==='SAVING'&&rule.action==='SELL')||null;
       if(rawType==='INVEST'||rawType==='BUY'||large.includes('dau tu')||child.includes('gui'))return assetRules.find(rule=>rule.assetType==='SAVING'&&rule.action==='BUY')||null;
@@ -157,6 +161,7 @@
     if(!rule)return 'Tài sản';
     if(rule.assetType==='SAVING')return 'Gửi tiết kiệm';
     const entered=String(firstValue(tx,['assetName','ten_tai_san','tenTaiSan'])||'').trim();
+    if(rule.assetType==='INSURANCE')return entered||String(firstValue(tx,['note','ghi_chu','ghiChu','group','nhom_danh_muc'])||rule.group).trim();
     if(entered&&plainText(entered)!==plainText(firstValue(tx,['child','hang_muc_con'])))return entered;
     if(rule.assetType==='GOLD')return entered||'Vàng 98%';
     return String(firstValue(tx,['group','nhom_danh_muc'])||rule.group).trim();
@@ -328,6 +333,7 @@
   function assetDocIdFor(tx,rule){
     const detail=tx?.assetDetail||tx?.chi_tiet_tai_san;
     const name=transactionAssetName(tx);
+    if(rule.assetType==='INSURANCE')return stableAssetDocId(rule.assetType,name,tx);
     if(rule.assetType==='LAND'){
       const holdingId=String(firstValue(tx,['assetHoldingId','tai_san_thu_hoi_id','landHoldingId'])||detail?.tai_san_thu_hoi_id||detail?.assetHoldingId||'').trim();
       if(holdingId){
@@ -421,12 +427,17 @@
         }});
         return;
       }
-      const sellQty=Math.min(input.qty,state.qty);
+      const insuranceSell=rule.assetType==='INSURANCE';
+      const insuranceRemaining=Number(state.totalCost||0);
+      const insuranceProceeds=Math.round((amount||Math.round(input.qty*input.unitPrice))-input.fee);
+      const sellQty=insuranceSell
+        ? (insuranceRemaining&&insuranceProceeds>=insuranceRemaining?state.qty:Math.min(input.qty,state.qty))
+        : Math.min(input.qty,state.qty);
       const avgBefore=state.avgCost;
       const selectedCost=rule.assetType==='SAVING'&&Number(input.settlementCost||0)?Number(input.settlementCost||0):0;
-      const costSold=Math.round(selectedCost||sellQty*avgBefore);
+      const costSold=insuranceSell?Math.min(insuranceRemaining,insuranceProceeds):Math.round(selectedCost||sellQty*avgBefore);
       const gross=input.qty*input.unitPrice;
-      const proceeds=Math.round((amount||gross)-input.fee);
+      const proceeds=insuranceProceeds||Math.round(gross-input.fee);
       const realized=proceeds-costSold;
       state.qty=Math.max(0,state.qty-sellQty);
       state.totalCost=Math.max(0,state.totalCost-costSold);
@@ -690,6 +701,9 @@
     const rawSlug=slug(raw);
     if(['bank','cash','cash-bank','tien-mat','tien-gui','ngan-hang'].includes(raw)||['bank','cash','cash-bank','tien-mat','tien-gui','ngan-hang'].includes(rawSlug))return 'cash';
     if(isGoldRow(row,raw))return `gold-${slug(row.ten_tai_san||row.name||row.ten||row.external_id||row.id||'vang')}`;
+    if(rawSlug==='insurance'||rawSlug==='bao-hiem'||rawSlug==='bao-hiem-tich-luy'||rawSlug.includes('bao-hiem')){
+      return `insurance-${slug(row.ten_tai_san||row.name||row.ten||row.assetName||row.label||row.external_id||row.id||'hop-dong')}`;
+    }
     if(['asset','tai-san','other'].includes(rawSlug))return slug(row.ten_tai_san||row.name||row.ten||row.groupName||row.assetName||row.label||raw);
     return slug(raw);
   }
@@ -917,6 +931,7 @@
   function appendTransactionDetailData(groups){
     if(typeof window.TXN_getTransactions!=='function')return;
     const states=rebuildAssetState(window.TXN_getTransactions());
+    const rebuiltInsuranceKeys=new Set();
     states.forEach(state=>{
       const row={id:state.id,loai_tai_san:state.type,ten_tai_san:state.name};
       const key=assetKey(row);
@@ -938,6 +953,19 @@
           aggregateQty:0,
           aggregateRows:0
         };
+      }
+      if(state.type==='INSURANCE'&&!rebuiltInsuranceKeys.has(key)){
+        rebuiltInsuranceKeys.add(key);
+        detailData[key]=[];
+        groups[key].aggregateRows=0;
+        groups[key].aggregateValue=0;
+        groups[key].aggregateCost=0;
+        groups[key].aggregateProfit=0;
+        groups[key].aggregateRealized=0;
+        groups[key].aggregatePurchased=0;
+        groups[key].aggregateRecovered=0;
+        groups[key].aggregateQty=0;
+        groups[key].value=0;
       }
       if(isGoldKey(key)){
         const price=Number(existing?.aggregateCurrentPrice||groups[key].aggregateCurrentPrice||state.currentPrice||0);
@@ -971,19 +999,25 @@
       }
       if(!isGoldKey(key)&&state.type!=='SAVING'){
         const profitState=assetProfitState(state);
-        groups[key].aggregateRows=state.transactions.length;
-        groups[key].aggregateValue=profitState.currentValue;
-        groups[key].aggregateCost=Math.round(Number(state.totalCost||0));
-        groups[key].aggregateProfit=profitState.totalProfit;
-        groups[key].aggregateRealized=Math.round(Number(state.realizedProfit||0));
-        groups[key].aggregatePurchased=Math.round(Number(state.purchasedTotal||0));
-        groups[key].aggregateRecovered=Math.round(Number(state.recoveredTotal||0));
+        const append=state.type==='INSURANCE';
+        const settledInsurance=state.type==='INSURANCE'&&isInsuranceContractSettled(state.name);
+        const currentValue=state.type==='INSURANCE'
+          ? (settledInsurance?0:Math.max(0,Math.round(Number(state.totalCost||0))))
+          : profitState.currentValue;
+        const activeQty=settledInsurance?0:Number(state.qty||0);
+        groups[key].aggregateRows=append?Number(groups[key].aggregateRows||0)+state.transactions.length:state.transactions.length;
+        groups[key].aggregateValue=append?Number(groups[key].aggregateValue||0)+currentValue:currentValue;
+        groups[key].aggregateCost=append?Number(groups[key].aggregateCost||0)+Math.round(Number(state.totalCost||0)):Math.round(Number(state.totalCost||0));
+        groups[key].aggregateProfit=append?Number(groups[key].aggregateProfit||0)+profitState.totalProfit:profitState.totalProfit;
+        groups[key].aggregateRealized=append?Number(groups[key].aggregateRealized||0)+Math.round(Number(state.realizedProfit||0)):Math.round(Number(state.realizedProfit||0));
+        groups[key].aggregatePurchased=append?Number(groups[key].aggregatePurchased||0)+Math.round(Number(state.purchasedTotal||0)):Math.round(Number(state.purchasedTotal||0));
+        groups[key].aggregateRecovered=append?Number(groups[key].aggregateRecovered||0)+Math.round(Number(state.recoveredTotal||0)):Math.round(Number(state.recoveredTotal||0));
         groups[key].aggregateCurrentPrice=Number(state.currentPrice||0);
-        groups[key].aggregateQty=Number(state.qty||0);
-        groups[key].aggregateQtyText=formatAssetQty([{qtyRaw:Number(state.qty||0),unit:state.unit}],key);
-        groups[key].value=profitState.currentValue;
+        groups[key].aggregateQty=append?Number(groups[key].aggregateQty||0)+activeQty:activeQty;
+        groups[key].aggregateQtyText=formatAssetQty([{qtyRaw:activeQty,unit:state.unit}],key);
+        groups[key].value=append?Number(groups[key].value||0)+currentValue:currentValue;
       }
-      detailData[key]=state.transactions.map(item=>{
+      const transactionRows=state.transactions.map(item=>{
         const detail=item.detail;
         const tx=item.tx;
         const sign=detail.giao_dich_action==='SELL'?-1:1;
@@ -1019,6 +1053,9 @@
           ghi_chu:firstValue(tx,['note','ghi_chu','ghiChu'])
         },key);
       });
+      detailData[key]=state.type==='INSURANCE'
+        ? (detailData[key]||[]).concat(transactionRows)
+        : transactionRows;
     });
   }
 
@@ -1175,6 +1212,7 @@
     const profit=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).totalProfit,0):items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0);
     const realized=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.realizedProfit||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateRealized||0),0);
     const saving=cls==='saving';
+    const activeInsuranceCount=cls==='insurance'?items.filter(item=>!isInsuranceContractSettled(item.name)).length:0;
     const qty=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.qty||0),0):(saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):items.reduce((sum,x)=>sum+Number(x.aggregateQty||0),0));
     detailData[key]=rows;
     const asset={
@@ -1188,7 +1226,7 @@
       aggregateProfit:profit,
       aggregateRealized:realized,
       aggregateQty:qty,
-      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(cls==='realestate'?`${qty.toLocaleString('vi-VN')} tài sản`:(items.length?`${items.length} tài sản`:'-')),
+      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(cls==='realestate'?`${qty.toLocaleString('vi-VN')} tài sản`:(cls==='insurance'?`${activeInsuranceCount} hợp đồng`:(items.length?`${items.length} tài sản`:'-'))),
       isCategory:true
     };
     categoryAssets[key]=asset;
@@ -1200,7 +1238,13 @@
     const key=count?categoryDetailKey(cls):'';
     const detail=count?buildCategoryDetail(label,cls,items):null;
     const total=cls==='realestate'&&detail?Number(detail.value||0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
-    const subText=cls==='saving'?(detail?.qtyText||'Chưa có tài sản'):(cls==='realestate'?(detail?.qtyText||'0 tài sản'):(count?`${count} tài sản`:'Chưa có tài sản'));
+    const subText=cls==='saving'
+      ? (detail?.qtyText||'Chưa có tài sản')
+      : cls==='realestate'
+        ? (detail?.qtyText||'0 tài sản')
+        : cls==='insurance'
+          ? (detail?.qtyText||`${count} hợp đồng`)
+          : (count?`${count} tài sản`:'Chưa có tài sản');
     return `<button class="asset52-card ${cls} ${key?'':'is-static'}" type="button" ${key?`data-asset-key="${key}"`:''}>
       <span class="asset52-icon">${iconSvg(icon)}</span>
       <span class="asset52-info"><span class="asset52-name">${label}</span><span class="asset52-sub">${subText}</span></span>
@@ -1272,6 +1316,155 @@
     return String(key||'').startsWith('category-');
   }
 
+  function insuranceAmount(row){
+    if(isSellMovement(row))return Math.abs(Number(row.proceeds||row.so_tien||row.soTien||row.current||row.totalCost||row.cost||0));
+    return Math.abs(Number(row.totalCost||row.cost||row.current||row.proceeds||0));
+  }
+
+  function insuranceAssetRowForName(name){
+    const wanted=plainText(name);
+    if(!wanted)return null;
+    const targetId=stableAssetDocId('INSURANCE',name);
+    return rawAssetRows.find(row=>String(row.id||row._docId||'')===targetId)
+      ||rawAssetRows.find(row=>{
+        const type=String(row.loai_tai_san||row.loaiTaiSan||row.assetType||row.type||'').toUpperCase();
+        const rowName=plainText(row.ten_tai_san||row.name||row.ten||row.assetName);
+        return type==='INSURANCE'&&rowName===wanted;
+      })
+      ||null;
+  }
+
+  function isInsuranceContractSettled(name){
+    const row=insuranceAssetRowForName(name);
+    if(!row)return false;
+    const status=String(row.trang_thai_bao_hiem||row.insuranceStatus||'').toUpperCase();
+    return row.bao_hiem_da_tat_toan===true||row.insuranceSettled===true||row.settled===true||status==='SETTLED';
+  }
+
+  function insuranceContractGroups(rows){
+    const groups=new Map();
+    (rows||[]).forEach(row=>{
+      const name=String(row.assetName||row.name||'Hợp đồng bảo hiểm').trim()||'Hợp đồng bảo hiểm';
+      const nameKey=plainText(name);
+      const id=String(row.assetHoldingId||row.tai_san_thu_hoi_id||row.sourceTxnDocId||row.sourceTxnExternalId||row.id||'').trim();
+      const item=groups.get(nameKey)||{name,id:'',total:0,recovered:0,latest:''};
+      if(!item.id&&id&&!isSellMovement(row))item.id=id;
+      if(isSellMovement(row))item.recovered+=insuranceAmount(row);
+      else item.total+=insuranceAmount(row);
+      item.latest=String(item.latest||'')>String(row.sortDate||row.date||'')?item.latest:String(row.sortDate||row.date||'');
+      groups.set(nameKey,item);
+    });
+    return Array.from(groups.values())
+      .filter(item=>Number(item.total||0)>0)
+      .map(item=>{
+        const remaining=Math.max(0,Number(item.total||0)-Number(item.recovered||0));
+        return {...item,remaining,settled:isInsuranceContractSettled(item.name)};
+      })
+      .sort((a,b)=>String(b.latest||'').localeCompare(String(a.latest||'')));
+  }
+
+  function insuranceOverviewHtml(rows){
+    const contracts=insuranceContractGroups(rows);
+    const list=contracts.length
+      ? `<div class="asset53-insurance-contract-list">${contracts.map(item=>{
+        const encoded=encodeURIComponent(item.name);
+        const profitLoss=Number(item.recovered||0)-Number(item.total||0);
+        const finalLabel=item.settled?'Lãi/Lỗ':'Số tiền còn lại';
+        const finalClass=item.settled
+          ? (profitLoss>=0?'profit':'loss')
+          : (item.settled?'settled-amount':'');
+        const finalValue=item.settled
+          ? `${profitLoss>=0?'+':'-'}${fmt(Math.abs(profitLoss))}`
+          : fmt(item.remaining);
+        const action=item.settled
+          ? `<button class="asset53-insurance-swipe-btn redo" type="button" data-asset-insurance-unsettle="${encoded}" title="Hủy tất toán" aria-label="Hủy tất toán"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7v6h6"/><path d="M21 17a8 8 0 0 0-13.6-5.7L3 15"/></svg></button>`
+          : `<button class="asset53-insurance-swipe-btn settle" type="button" data-asset-insurance-settle="${encoded}" title="Tất toán" aria-label="Tất toán">${iconSvg('check')}</button>`;
+        return `<div class="asset53-insurance-contract-item">
+          <div class="asset53-insurance-swipe">
+            <div class="asset53-insurance-swipe-track">
+              <div class="asset53-detail-row asset53-insurance-contract-row ${item.settled?'settled':''}">
+                ${item.settled?`<i class="asset53-insurance-settled" title="Đã tất toán" aria-label="Đã tất toán">${iconSvg('check')}</i>`:''}
+                <div class="asset53-insurance-contract-name">
+                  <span>${item.name}</span>
+                </div>
+                <small>Tổng phí đã đóng</small>
+                <b>${fmt(item.total)}</b>
+                <small>Tổng số tiền đã thu hồi</small>
+                <b class="recovered">${fmt(item.recovered)}</b>
+                <small>${finalLabel}</small>
+                <b class="${finalClass}">${finalValue}</b>
+              </div>
+              <div class="asset53-insurance-swipe-action">${action}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div>`
+      : '<div class="asset53-empty">Chưa có hợp đồng bảo hiểm.</div>';
+    return `<div class="asset53-overview">
+      ${list}
+    </div>`;
+  }
+
+  function currentInsuranceContract(name){
+    const asset=assets.find(item=>item.key===detailState.key)||{key:detailState.key};
+    const rows=detailData[detailState.key]||[];
+    if(assetSection(asset)!=='insurance')return null;
+    return insuranceContractGroups(rows).find(item=>plainText(item.name)===plainText(name))||null;
+  }
+
+  function settleInsuranceContract(name){
+    const contract=currentInsuranceContract(name);
+    if(!contract||contract.settled||!window.FDB)return;
+    const assetId=stableAssetDocId('INSURANCE',contract.name);
+    const now=new Date();
+    const request=window.FDB.set(FIREBASE_COLLECTIONS.taiSan,assetId,{
+      loai_tai_san:'INSURANCE',
+      ten_tai_san:contract.name,
+      bao_hiem_da_tat_toan:true,
+      insuranceSettled:true,
+      trang_thai_bao_hiem:'SETTLED',
+      ngay_tat_toan_bao_hiem:now.toISOString(),
+      phi_da_dong_luc_tat_toan:Math.round(Number(contract.total||0)),
+      so_tien_da_thu_hoi_luc_tat_toan:Math.round(Number(contract.recovered||0)),
+      so_tien_con_lai_luc_tat_toan:Math.round(Number(contract.remaining||0))
+    },{merge:true});
+    window.QLCT_setBusy?.(true,'Đang cập nhật tất toán');
+    Promise.resolve(request).then(()=>{
+      renderDetail();
+    }).catch(error=>{
+      console.error('Settle insurance failed',error);
+      const message=error?.message||'Vui lòng thử lại.';
+      if(window.showAppMessage)window.showAppMessage('Không tất toán được bảo hiểm',message);
+      else window.alert?.(`Không tất toán được bảo hiểm: ${message}`);
+    }).finally(()=>window.QLCT_setBusy?.(false));
+  }
+
+  function unsettleInsuranceContract(name){
+    const contract=currentInsuranceContract(name);
+    if(!contract||!window.FDB)return;
+    const assetId=stableAssetDocId('INSURANCE',contract.name);
+    const request=window.FDB.set(FIREBASE_COLLECTIONS.taiSan,assetId,{
+      loai_tai_san:'INSURANCE',
+      ten_tai_san:contract.name,
+      bao_hiem_da_tat_toan:false,
+      insuranceSettled:false,
+      trang_thai_bao_hiem:'ACTIVE'
+    },{merge:true});
+    window.QLCT_setBusy?.(true,'Đang hủy tất toán');
+    Promise.resolve(request).then(()=>renderDetail()).catch(error=>{
+      console.error('Unsettle insurance failed',error);
+      const message=error?.message||'Vui lòng thử lại.';
+      if(window.showAppMessage)window.showAppMessage('Không hủy tất toán được bảo hiểm',message);
+      else window.alert?.(`Không hủy tất toán được bảo hiểm: ${message}`);
+    }).finally(()=>window.QLCT_setBusy?.(false));
+  }
+
+  function closeInsuranceSwipeActions(){
+    const open=Array.from(document.querySelectorAll('.asset53-insurance-swipe')).filter(item=>Number(item.scrollLeft||0)>4);
+    open.forEach(item=>item.scrollTo({left:0,behavior:'smooth'}));
+    return open.length>0;
+  }
+
   function overviewHtml(asset,rows){
     const cash=assetSection(asset)==='cash';
     const now=Number(asset?.value||0);
@@ -1306,6 +1499,7 @@
         </div>
       </div>`;
     }
+    if(assetSection(asset)==='insurance')return insuranceOverviewHtml(rows);
     const hasAggregate=Number(asset?.aggregateRows||0)>0;
     const cost=hasAggregate?Number(asset.aggregateCost||0):remainingCost(rows,asset.key);
     const realized=hasAggregate?Number(asset.aggregateRealized||0):rows.reduce((sum,x)=>sum+Number(x.realizedProfit||0),0);
@@ -1333,7 +1527,12 @@
     const unitPriceText=convertedUnitPriceText(item,key);
     const savingView=assetSection({key})==='saving';
     const realestateView=assetSection({key})==='realestate';
-    const amountPrefix=savingView?(sell?'Tất toán':'Số tiền gửi'):(sell?'Số tiền bán':'Số tiền mua');
+    const insuranceView=assetSection({key})==='insurance';
+    const amountPrefix=savingView
+      ? (sell?'Tất toán':'Số tiền gửi')
+      : insuranceView
+        ? (sell?'Giá trị rút':'Phí đóng')
+        : (sell?'Số tiền bán':'Số tiền mua');
     const amountValue=sell?Number(item.proceeds||0):Math.abs(Number(item.totalCost||item.cost||item.current||0));
     const categoryView=isCategoryKey(key);
     const interestValue=item.interestRate?String(item.interestRate).trim():'-';
@@ -1342,13 +1541,20 @@
     const leftTop=savingView
       ? `${movementDateHyphen(item)} (${interestText})${savingId?` - ${savingId}`:''}`
       : realestateView?movementDateWithRealestateName(item)
+      : insuranceView?[movementDateHyphen(item),item.assetName||item.name].filter(Boolean).join(' · ')
       : categoryView?[item.date,item.assetName||item.name].filter(Boolean).join(' · '):(item.date||'');
-    const recalled=(savingView&&!sell&&isSavingMovementRecalled(item))||(realestateView&&!sell&&isRealestateMovementRecalled(item));
-    const recallTitle=realestateView?'Bất động sản đã bán':'Sổ tiết kiệm đã tất toán';
+    const insuranceSettled=insuranceView&&!sell&&isInsuranceContractSettled(item.assetName||item.name);
+    const recalled=(savingView&&!sell&&isSavingMovementRecalled(item))||(realestateView&&!sell&&isRealestateMovementRecalled(item))||insuranceSettled;
+    const recallTitle=insuranceView?'Hợp đồng đã tất toán':(realestateView?'Bất động sản đã bán':'Sổ tiết kiệm đã tất toán');
     const recallIcon=recalled?`<span class="asset53-saving-recalled" title="${recallTitle}" aria-label="${recallTitle}"></span>`:'';
     const rightBottom=unitPriceText;
     const firstSpan=(savingView||realestateView)?`<span style="width:350px;max-width:none;display:block;overflow:visible;text-overflow:clip;white-space:nowrap">${leftTop}</span>`:`<span>${leftTop}</span>`;
-    const assetInfo=cashView?'':`<div class="asset53-flow-grid">
+    const noteText=String(item.note||'').trim();
+    const assetInfo=cashView?'':insuranceView?`<div class="asset53-flow-grid asset53-insurance-flow-grid ${sell?'sell':'buy'}">
+        ${firstSpan}
+        <span>${fmt(Math.abs(amountValue))}</span>
+        ${noteText?`<span class="asset53-insurance-note">${noteText}</span>`:''}
+      </div>`:`<div class="asset53-flow-grid">
         ${firstSpan}
         <span class="${sell?'minus':'plus'}">${movementQtyText(item,key)}</span>
         <span>${amountPrefix}: ${fmt(Math.abs(amountValue))}</span>
@@ -1592,6 +1798,30 @@
     </div>`;
   }
 
+  function insuranceFlowChartHtml(rows,year,mode){
+    const isSell=mode==='sell';
+    const monthly=Array.from({length:12},()=>0);
+    (rows||[]).forEach(row=>{
+      const month=Math.max(1,Math.min(12,movementMonth(row)));
+      monthly[month-1]+=insuranceAmount(row);
+    });
+    const width=380,height=132,pad=20;
+    const chart=chartGeometry(monthly,width,height,pad,moneyShort);
+    const total=monthly.reduce((sum,value)=>sum+value,0);
+    return `<div class="asset53-movement-chart saving-flow-chart ${isSell?'sell':'buy'}">
+      <div class="asset53-chart-meta"><span>${isSell?'Tổng thu hồi':'Tổng đóng'} ${year}</span><b>${moneyShort(total)}</b><button type="button" data-asset-flow="${isSell?'buy':'sell'}" aria-label="${isSell?'Xem đóng phí bảo hiểm':'Xem thu hồi bảo hiểm'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="${isSell?'m15 18-6-6 6-6':'m9 18 6-6-6-6'}"/></svg></button></div>
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Biểu đồ ${isSell?'thu hồi':'đóng phí'} bảo hiểm năm ${year}">
+        <path class="area" d="${chart.area}"></path>
+        <path class="grid" d="M20 34H360M20 66H360M20 98H360"></path>
+        <g class="guides">${chart.guides}</g>
+        <line class="baseline" x1="${pad}" y1="${height-pad}" x2="${width-pad}" y2="${height-pad}"></line>
+        <polyline class="line" points="${chart.polyline}"></polyline>
+        <g class="points">${chart.points}</g>
+      </svg>
+      <div class="asset53-chart-months">${Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('')}</div>
+    </div>`;
+  }
+
   function moneyShort(value){
     const n=Math.abs(Number(value||0));
     if(n>=1000000000){
@@ -1793,6 +2023,25 @@
           : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'bán':'mua'} bất động sản trong năm này.</div>`}
       </div>`;
     }
+    if(assetSection({key})==='insurance'){
+      const year=Number(detailState.year||new Date().getFullYear());
+      const mode=detailState.flow==='sell'?'sell':'buy';
+      const anim=(detailState.flowAnim||detailState.yearAnim||detailState.tabAnim)?` ${detailState.flowAnim||detailState.yearAnim||detailState.tabAnim}`:'';
+      const movementRows=rows.filter(row=>(mode==='sell'?isSellMovement(row):!isSellMovement(row))&&movementYear(row)===year);
+      return `<div class="asset53-fixed-panel">
+        <div class="asset53-movement-pin">
+          ${goldMovementHeaderHtml(year)}
+          <div class="asset53-movement-stage${anim}">
+            ${insuranceFlowChartHtml(movementRows,year,mode)}
+          </div>
+        </div>
+      </div>
+      <div class="asset53-scroll-list">
+        ${movementRows.length
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list insurance-flow-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
+          : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'thu hồi':'đóng phí'} bảo hiểm trong năm này.</div>`}
+      </div>`;
+    }
     return rows.length
       ? `<div class="asset53-detail-card">${rows.map(row=>detailRow(row,color,key)).join('')}</div>`
       : '<div class="asset53-empty">Chưa có dữ liệu biến động.</div>';
@@ -1811,6 +2060,7 @@
     if(!body)return;
     body.style.setProperty('--asset-detail-color',color);
     body.style.setProperty('--asset-detail-soft',`${color}18`);
+    screen?.classList.toggle('asset53-insurance-movement',assetSection(asset)==='insurance'&&detailState.tab==='movement');
     body.classList.toggle('asset53-compact-ledger',['insurance','realestate','stock','saving'].includes(assetSection(asset)));
     body.classList.toggle('asset53-fixed-detail',cash||detailState.tab==='movement');
     if(cash){
@@ -2071,13 +2321,18 @@
         migration_version:3
       }};
     }
-    if(rule.assetType!=='SAVING'&&input.qty>Number(next.qty||0))throw new Error('Không thể bán nhiều hơn số lượng tài sản đang có.');
+    if(rule.assetType!=='SAVING'&&rule.assetType!=='INSURANCE'&&input.qty>Number(next.qty||0))throw new Error('Không thể bán nhiều hơn số lượng tài sản đang có.');
     const avgBefore=Number(next.avgCost||0);
     const selectedCost=rule.assetType==='SAVING'&&Number(input.settlementCost||0)?Number(input.settlementCost||0):0;
-    const sellQty=rule.assetType==='SAVING'?Math.min(input.qty,Math.max(Number(next.qty||0),input.qty)):input.qty;
-    const costSold=Math.round(selectedCost||sellQty*avgBefore);
     const gross=Math.round(input.qty*input.unitPrice);
     const proceeds=Math.round((amount||gross)-input.fee);
+    const insuranceRemaining=Number(next.totalCost||0);
+    const sellQty=rule.assetType==='SAVING'
+      ? Math.min(input.qty,Math.max(Number(next.qty||0),input.qty))
+      : (rule.assetType==='INSURANCE'
+        ? (insuranceRemaining&&proceeds>=insuranceRemaining?Number(next.qty||0):Math.min(input.qty,Number(next.qty||0)))
+        : input.qty);
+    const costSold=rule.assetType==='INSURANCE'?Math.min(insuranceRemaining,proceeds):Math.round(selectedCost||sellQty*avgBefore);
     const realized=proceeds-costSold;
     next.qty=Math.max(0,Number(next.qty||0)-sellQty);
     next.totalCost=Math.max(0,Number(next.totalCost||0)-costSold);
@@ -2454,6 +2709,7 @@
   }
 
   window.ASSET52_renderAssets=renderAssets;
+  window.ASSET52_isInsuranceContractSettled=isInsuranceContractSettled;
   window.ASSET52_updateGoldPrice=updateGoldPriceFromGoldScreen;
   window.ASSET52_syncTransactionAsset=function(tx,txnDocId,options){
     if(!window.FDB||!txnDocId)return Promise.resolve();
@@ -2487,10 +2743,30 @@
     },console.error);
   }
   document.addEventListener('click',e=>{
+    const clickedInsuranceAction=e.target.closest('[data-asset-insurance-settle], [data-asset-insurance-unsettle]');
+    if(!clickedInsuranceAction&&closeInsuranceSwipeActions()){
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const nav=e.target.closest('.dock-content .nav-item');
     if(nav&&nav.textContent.trim()==='Tài sản')setTimeout(renderAssets,0);
     const asset=e.target.closest('[data-asset-key]');
     if(asset)openDetail(asset.dataset.assetKey);
+    const settleInsurance=e.target.closest('[data-asset-insurance-settle]');
+    if(settleInsurance){
+      e.preventDefault();
+      e.stopPropagation();
+      settleInsuranceContract(decodeURIComponent(settleInsurance.dataset.assetInsuranceSettle||''));
+      return;
+    }
+    const unsettleInsurance=e.target.closest('[data-asset-insurance-unsettle]');
+    if(unsettleInsurance){
+      e.preventDefault();
+      e.stopPropagation();
+      unsettleInsuranceContract(decodeURIComponent(unsettleInsurance.dataset.assetInsuranceUnsettle||''));
+      return;
+    }
     const tab=e.target.closest('[data-asset-detail-tab]');
     if(tab){
       const nextTab=tab.dataset.assetDetailTab;

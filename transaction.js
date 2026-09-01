@@ -74,6 +74,7 @@
   }
   const plainText=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');
   const normalizeDong=value=>String(value||'').replace(/[\u0111\u0110]/g,'d');
+  const escapeHtml=value=>String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   function savingTermDays(term,startIso){
     const n=Number(String(term||'').match(/\d+/)?.[0]||0);
     const text=normalizeDong(plainText(term));
@@ -116,6 +117,9 @@
     if(text.includes('saving')||text.includes('deposit')||text.includes('tiet kiem'))return 'SAVING';
     return '';
   }
+  function isInsurancePremiumTx(t){
+    return (t?.type==='INVEST'||typeFromLarge(t?.large)==='INVEST')&&assetTypeOf(t)==='INSURANCE'&&normalizeDong(plainText(t?.child)).includes('dong phi');
+  }
   function assetUnitOptionsForType(type){
     if(type==='LAND')return ['m2','Lô'];
     if(type==='STOCK')return ['Cổ'];
@@ -126,6 +130,32 @@
   function defaultAssetUnitForType(type){
     const options=assetUnitOptionsForType(type);
     return options[0]||'';
+  }
+  function insuranceContractOptions(currentTx=null){
+    const contracts=new Map();
+    (transactions||[]).forEach(tx=>{
+      if(assetTypeOf(tx)!=='INSURANCE')return;
+      const kind=tx.type||typeFromLarge(tx.large);
+      const name=String(tx.assetName||tx.note||tx.child||'Hợp đồng bảo hiểm').trim();
+      const id=String(tx.assetHoldingId||tx.id||tx.external_id||'').trim();
+      const key=plainText(name);
+      const existing=contracts.get(key)||{id,name,value:0,recovered:0,unit:defaultAssetUnitForType('INSURANCE'),label:name};
+      if(kind==='DIVEST')existing.recovered+=Number(tx.amount||0);
+      if(kind==='INVEST'){
+        existing.value+=Number(tx.amount||0);
+        existing.id=existing.id||id;
+        existing.label=existing.name;
+      }
+      contracts.set(key,existing);
+    });
+    const rows=Array.from(contracts.values())
+      .filter(row=>!(typeof window.ASSET52_isInsuranceContractSettled==='function'&&window.ASSET52_isInsuranceContractSettled(row.name)));
+    const currentName=String(currentTx?.assetName||'').trim();
+    if(currentName&&!rows.some(row=>plainText(row.name)===plainText(currentName))){
+      const value=Number(currentTx?.amount||0);
+      rows.unshift({id:String(currentTx?.assetHoldingId||currentTx?.id||''),name:currentName,value,unit:defaultAssetUnitForType('INSURANCE'),label:currentName});
+    }
+    return rows;
   }
   function assetToneForTx(t){
     const helper=window.ASSET52_colorForTransaction;
@@ -157,8 +187,8 @@
   }
   function assetUnitPriceForTx(t){
     if(!isAssetTx(t))return 0;
-    const qty=Number(t.assetQty||0)||1;
     const type=assetTypeOf(t);
+    const qty=type==='INSURANCE'?1:(Number(t.assetQty||0)||1);
     const unit=t.assetUnit||defaultAssetUnitForType(type)||(type==='GOLD'?'Chỉ':'Đơn vị');
     const priceQty=type==='GOLD'?goldQtyToChi(qty,unit):qty;
     return Math.round(Number(t.amount||0)/Math.max(priceQty,1));
@@ -196,7 +226,9 @@
     postingStatus:String(firstValue(x,['trang_thai_hach_toan','postingStatus'])||'')
   });
   function txToFirestore(t){
-    const saving=assetTypeOf(t)==='SAVING';
+    const assetType=assetTypeOf(t);
+    const saving=assetType==='SAVING';
+    const insurance=assetType==='INSURANCE';
     const termDays=saving?savingTermDays(t.savingTerm||'1 tháng',t.date):Number(t.savingTermDays||0);
     const rate=t.assetInterest||t.assetRate||'';
     const interestAmount=saving?proratedInterest(t.amount,rate,termDays):Number(t.savingInterestAmount||0);
@@ -208,10 +240,10 @@
       hang_muc_con:t.child,
       so_tien:Number(t.amount||0),
       ghi_chu:t.note||'',
-      loai_tai_san:isAssetTx(t)?(t.assetType||assetTypeOf(t)):'',
-      ten_tai_san:isAssetTx(t)?(saving?'Gửi tiết kiệm':(t.assetName||(assetTypeOf(t)==='GOLD'?'Vàng 98%':t.child||t.group||'Tài sản'))):'',
-      so_luong:isAssetTx(t)?(saving?1:(Number(t.assetQty||0)||1)):0,
-      don_vi:isAssetTx(t)?(saving?'Sổ':(t.assetUnit||defaultAssetUnitForType(assetTypeOf(t))||(assetTypeOf(t)==='GOLD'?'Chỉ':'Đơn vị'))):'',
+      loai_tai_san:isAssetTx(t)?(t.assetType||assetType):'',
+      ten_tai_san:isAssetTx(t)?(saving?'Gửi tiết kiệm':(t.assetName||(assetType==='GOLD'?'Vàng 98%':t.child||t.group||'Tài sản'))):'',
+      so_luong:isAssetTx(t)?(saving||insurance?1:(Number(t.assetQty||0)||1)):0,
+      don_vi:isAssetTx(t)?(saving?'Sổ':(insurance?'Hợp đồng':(t.assetUnit||defaultAssetUnitForType(assetType)||(assetType==='GOLD'?'Chỉ':'Đơn vị')))):'',
       don_gia:assetUnitPriceForTx(t),
       phi:isAssetTx(t)?Number(t.fee||0):0,
       updated_at:new Date().toISOString(),
@@ -328,7 +360,38 @@
 
   function onClick(e){if(e.target.closest('[data-txn16-back]')){closeScreen('screenTransactions');return}if(e.target.closest('[data-type-sheet]'))return openOptions('Loại lớn',Object.entries(typeLabels).map(([value,label])=>({value,label})),state.type,v=>{state.type=v;sync();renderList()});if(e.target.closest('[data-range-sheet]'))return openOptions('Khoảng thời gian',Object.entries(rangeLabels).map(([value,label])=>({value,label})),state.range,v=>{state.range=v;sync();renderList()});const date=e.target.closest('[data-date-field]');if(date)return openCalendar(state[date.dataset.dateField],v=>{state[date.dataset.dateField]=v;sync();renderList()});const edit=e.target.closest('[data-edit]');if(edit)return openEdit(edit.dataset.edit)}
   function ensureSheet(){const phone=document.getElementById('phone');if(!document.getElementById('txn16Backdrop'))phone.insertAdjacentHTML('beforeend','<div class="txn16-backdrop" id="txn16Backdrop"></div><div class="txn16-sheet" id="txn16Sheet"></div>')}
-  function openOptions(title,options,current,onPick){ensureSheet();const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-sheet-title">${title}</div>${options.map(o=>`<button class="txn16-option ${o.value===current?'active':''}" data-val="${o.value}"><span>${o.label}</span><span class="txn16-check">${o.value===current?'✓':''}</span></button>`).join('')}`;function close(){sheet.classList.remove('show');back.classList.remove('show')}sheet.onclick=e=>{const b=e.target.closest('[data-val]');if(!b)return;onPick(b.dataset.val);close()};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
+  function openOptions(title,options,current,onPick){ensureSheet();const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');sheet.classList.remove('txn16-insurance-name-sheet');sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-sheet-title">${title}</div>${options.map(o=>{const edit=o.value==='__edit_insurance_contract__';return `<button class="${edit?'txn16-create':'txn16-option'} ${o.value===current?'active':''}" data-val="${encodeURIComponent(o.value)}"><span>${o.label}</span>${edit?'':`<span class="txn16-check">${o.value===current?'✓':''}</span>`}</button>`}).join('')}`;function close(){sheet.classList.remove('show');back.classList.remove('show')}sheet.onclick=e=>{const b=e.target.closest('[data-val]');if(!b)return;onPick(decodeURIComponent(b.dataset.val||''));close()};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
+  function openEditInsuranceNameSheet(value=''){
+    ensureSheet();
+    const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');
+    if(!sheet||!back)return;
+    sheet.classList.add('txn16-insurance-name-sheet');
+    sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-sheet-title">Sửa tên hợp đồng bảo hiểm</div><input class="txn16-money-input txn16-sheet-input" id="txn16InsuranceContractName" value="${escapeHtml(value)}" placeholder="Nhập tên hợp đồng bảo hiểm"><div class="txn16-sheet-actions"><button class="txn16-btn cancel" type="button" data-txn16-contract-cancel>Hủy</button><button class="txn16-btn save" type="button" data-txn16-contract-save>Lưu</button></div>`;
+    function close(){
+      sheet.classList.remove('show','txn16-insurance-name-sheet');
+      back.classList.remove('show');
+      rerenderEdit();
+    }
+    sheet.onclick=e=>{
+      if(e.target.closest('[data-txn16-contract-cancel]')){close();return;}
+      if(e.target.closest('[data-txn16-contract-save]')){
+        const input=document.getElementById('txn16InsuranceContractName');
+        const name=String(input?.value||'').trim();
+        if(!name){input?.focus();return;}
+        const existing=insuranceContractOptions(state.editing).find(row=>plainText(row.name)===plainText(name));
+        state.editing.assetName=name;
+        state.editing.assetHoldingId=existing?.id||'';
+        state.editing.assetQty=1;
+        state.editing.assetUnit=defaultAssetUnitForType('INSURANCE');
+        state.editing.assetType='INSURANCE';
+        close();
+      }
+    };
+    back.onclick=close;
+    sheet.classList.add('show');
+    back.classList.add('show');
+    setTimeout(()=>document.getElementById('txn16InsuranceContractName')?.focus(),40);
+  }
   function openCalendar(current,onPick){ensureSheet();let [y,m]=String(current||new Date().toISOString().slice(0,10)).split('-').map(Number);const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');const monthNames=['Tháng 01','Tháng 02','Tháng 03','Tháng 04','Tháng 05','Tháng 06','Tháng 07','Tháng 08','Tháng 09','Tháng 10','Tháng 11','Tháng 12'];function drawDay(){const first=new Date(y,m-1,1);const offset=(first.getDay()+6)%7;const days=new Date(y,m,0).getDate();let cells=[];const pm=m===1?12:m-1,py=m===1?y-1:y,pdays=new Date(py,pm,0).getDate();for(let i=offset-1;i>=0;i--)cells.push({d:pdays-i,m:pm,y:py,muted:true});for(let d=1;d<=days;d++)cells.push({d,m,y});const nm=m===12?1:m+1,ny=m===12?y+1:y;while(cells.length<42)cells.push({d:cells.length-(offset+days)+1,m:nm,y:ny,muted:true});sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-prev>‹</button><button class="txn16-cal-title" data-title>Tháng ${pad(m)}/${y}</button><button data-next>›</button></div><div class="txn16-week"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div><div class="txn16-cal-grid">${cells.map(c=>{const v=`${c.y}-${pad(c.m)}-${pad(c.d)}`;return `<button class="txn16-day ${c.muted?'muted':''} ${v===current?'selected':''}" data-date="${v}">${c.d}</button>`}).join('')}</div>`}function drawMonth(){sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-year-prev>‹</button><button class="txn16-cal-title" data-year-title>${y}</button><button data-year-next>›</button></div><div class="txn16-month-grid">${monthNames.map((name,i)=>`<button class="txn16-month-pick ${i+1===m?'selected':''}" data-month="${i+1}">${name}</button>`).join('')}</div>`}function drawYear(){const start=Math.floor((y-6)/12)*12;sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-years-prev>‹</button><button class="txn16-cal-title">${start} - ${start+11}</button><button data-years-next>›</button></div><div class="txn16-year-grid">${Array.from({length:12},(_,i)=>start+i).map(year=>`<button class="txn16-year-pick ${year===y?'selected':''}" data-year="${year}">${year}</button>`).join('')}</div>`}function close(){sheet.classList.remove('show');back.classList.remove('show')}drawDay();sheet.onclick=e=>{if(e.target.closest('[data-title]')){drawMonth();return}if(e.target.closest('[data-year-title]')){drawYear();return}if(e.target.closest('[data-prev]')){m--;if(m<1){m=12;y--}drawDay();return}if(e.target.closest('[data-next]')){m++;if(m>12){m=1;y++}drawDay();return}if(e.target.closest('[data-year-prev]')){y--;drawMonth();return}if(e.target.closest('[data-year-next]')){y++;drawMonth();return}if(e.target.closest('[data-years-prev]')){y-=12;drawYear();return}if(e.target.closest('[data-years-next]')){y+=12;drawYear();return}const month=e.target.closest('[data-month]');if(month){m=Number(month.dataset.month);drawDay();return}const year=e.target.closest('[data-year]');if(year){y=Number(year.dataset.year);drawMonth();return}const d=e.target.closest('[data-date]');if(d){onPick(d.dataset.date);close()}};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
   function openEdit(id){const found=transactions.find(x=>x.id===id);if(!found)return;state.editing=JSON.parse(JSON.stringify(found));state.editOriginal=JSON.parse(JSON.stringify(found));document.getElementById('txn16Edit')?.remove();document.getElementById('phone').insertAdjacentHTML('beforeend',editHtml());const el=document.getElementById('txn16Edit');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el);requestAnimationFrame(()=>el.classList.add('active'))}
   function typeFromLarge(x){return x==='Thu nhập'?'INCOME':x==='Đầu tư'?'INVEST':(x==='Thu hồi tài sản'||x==='Thu hồi')?'DIVEST':'EXPENSE'}
@@ -346,6 +409,12 @@
     const unit=t.assetUnit||(defaultAssetUnitForType(type)||(isGold?'Chỉ':'Đơn vị'));
     const unitOptions=assetUnitOptionsForType(type);
     const unitField=unitOptions.length?`<button class="txn16-control" data-edit-asset-unit type="button"><span>${unit}</span>${chev()}</button>`:`<input class="txn16-money-input" id="txn16AssetUnit" value="${unit}">`;
+    if(isInsurancePremiumTx(t)){
+      const rows=insuranceContractOptions(t);
+      const current=rows.find(row=>plainText(row.name)===plainText(t.assetName));
+      const label=current?.label||assetName||'Tên hợp đồng bảo hiểm';
+      return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên hợp đồng bảo hiểm</label><button class="txn16-control" data-edit-insurance-contract type="button"><span>${label}</span>${chev()}</button></div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
+    }
     return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên tài sản</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field"><label class="txn16-label">Đơn vị</label>${unitField}</div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
   }
   function editHtml(){const t=state.editing;return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại giao dịch</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">Số tiền</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
@@ -388,6 +457,11 @@
   }
   function saveEditingTransaction(){
     if(!state.editing||state.saving)return Promise.resolve();
+    if(isInsurancePremiumTx(state.editing)){
+      state.editing.assetType='INSURANCE';
+      state.editing.assetQty=1;
+      state.editing.assetUnit=defaultAssetUnitForType('INSURANCE');
+    }
     state.saving=true;
     window.QLCT_setBusy?.(true,'Đang lưu thay đổi');
     const request=window.ASSET52_saveTransactionAtomic
@@ -457,7 +531,7 @@
     if(e.target?.id==='txn16AssetInterest'){state.editing.assetInterest=e.target.value;state.editing.assetRate=e.target.value;updateEditSavingPreview();}
     if(e.target?.id==='txn16Amount')setTimeout(updateEditSavingPreview,0);
   },true);
-  function bindEdit(el){el.onclick=e=>{const t=state.editing;if(e.target.closest('[data-edit-back]')){el.classList.remove('active');setTimeout(()=>el.remove(),330);return}if(e.target.closest('[data-edit-date]'))openCalendar(t.date,v=>{t.date=v;rerenderEdit()});if(e.target.closest('[data-edit-large]')){refreshCategories();openOptions('Loại giao dịch',categories.large.map(x=>({value:x,label:x})),t.large,v=>{t.large=v;t.type=typeFromLarge(v);const groups=categories.groups[v]||[];t.group=groups[0]||'';const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-group]')){refreshCategories();openOptions('Nhóm danh mục',(categories.groups[t.large]||[]).map(x=>({value:x,label:x})),t.group,v=>{t.group=v;const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-child]')){refreshCategories();openOptions('Hạng mục con',categoryChildren(t.large,t.group).map(x=>({value:x,label:x})),t.child,v=>{t.child=v;if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-asset-unit]')){const type=assetTypeOf(t);const options=assetUnitOptionsForType(type).map(value=>({value,label:value}));openOptions('Đơn vị',options,t.assetUnit||defaultAssetUnitForType(type)||'Chỉ',v=>{t.assetUnit=v;rerenderEdit()});}};el.querySelector('#txn16Amount').oninput=e=>{state.editing.amount=Number(String(e.target.value).replace(/\D/g,''))||0;const p=el.querySelector('.txn16-preview');if(p)p.textContent=fmt(state.editing.amount);};el.querySelector('#txn16Note').oninput=e=>state.editing.note=e.target.value;const an=el.querySelector('#txn16AssetName');if(an)an.oninput=e=>state.editing.assetName=e.target.value;const aq=el.querySelector('#txn16AssetQty');if(aq)aq.oninput=e=>state.editing.assetQty=Number(String(e.target.value).replace(',','.'))||0;const au=el.querySelector('#txn16AssetUnit');if(au)au.oninput=e=>state.editing.assetUnit=e.target.value;const fee=el.querySelector('#txn16Fee');if(fee)fee.oninput=e=>state.editing.fee=Number(String(e.target.value).replace(/\D/g,''))||0;}
+  function bindEdit(el){el.onclick=e=>{const t=state.editing;if(e.target.closest('[data-edit-back]')){el.classList.remove('active');setTimeout(()=>el.remove(),330);return}if(e.target.closest('[data-edit-date]'))openCalendar(t.date,v=>{t.date=v;rerenderEdit()});if(e.target.closest('[data-edit-large]')){refreshCategories();openOptions('Loại giao dịch',categories.large.map(x=>({value:x,label:x})),t.large,v=>{t.large=v;t.type=typeFromLarge(v);const groups=categories.groups[v]||[];t.group=groups[0]||'';const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-group]')){refreshCategories();openOptions('Nhóm danh mục',(categories.groups[t.large]||[]).map(x=>({value:x,label:x})),t.group,v=>{t.group=v;const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-child]')){refreshCategories();openOptions('Hạng mục con',categoryChildren(t.large,t.group).map(x=>({value:x,label:x})),t.child,v=>{t.child=v;if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-insurance-contract]')){const rows=insuranceContractOptions(t);const editValue='__edit_insurance_contract__';const currentIndex=rows.findIndex(row=>plainText(row.name)===plainText(t.assetName));const options=rows.map((row,index)=>({value:`pick:${index}`,label:row.label})).concat([{value:editValue,label:'Sửa tên hợp đồng bảo hiểm'}]);openOptions('Tên hợp đồng bảo hiểm',options,currentIndex>=0?`pick:${currentIndex}`:editValue,v=>{if(v===editValue){setTimeout(()=>openEditInsuranceNameSheet(t.assetName||''),0);return;}const index=Number(String(v).replace('pick:',''));const picked=rows[index];if(picked){t.assetName=picked.name;t.assetHoldingId=picked.id||'';t.assetType='INSURANCE';t.assetQty=1;t.assetUnit=defaultAssetUnitForType('INSURANCE');rerenderEdit();}});}if(e.target.closest('[data-edit-asset-unit]')){const type=assetTypeOf(t);const options=assetUnitOptionsForType(type).map(value=>({value,label:value}));openOptions('Đơn vị',options,t.assetUnit||defaultAssetUnitForType(type)||'Chỉ',v=>{t.assetUnit=v;rerenderEdit()});}};el.querySelector('#txn16Amount').oninput=e=>{state.editing.amount=Number(String(e.target.value).replace(/\D/g,''))||0;const p=el.querySelector('.txn16-preview');if(p)p.textContent=fmt(state.editing.amount);};el.querySelector('#txn16Note').oninput=e=>state.editing.note=e.target.value;const an=el.querySelector('#txn16AssetName');if(an)an.oninput=e=>state.editing.assetName=e.target.value;const aq=el.querySelector('#txn16AssetQty');if(aq)aq.oninput=e=>state.editing.assetQty=Number(String(e.target.value).replace(',','.'))||0;const au=el.querySelector('#txn16AssetUnit');if(au)au.oninput=e=>state.editing.assetUnit=e.target.value;const fee=el.querySelector('#txn16Fee');if(fee)fee.oninput=e=>state.editing.fee=Number(String(e.target.value).replace(/\D/g,''))||0;}
   document.addEventListener('click',e=>{
     const del=e.target.closest('#txn16Delete');
     const save=e.target.closest('#txn16Save');

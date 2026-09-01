@@ -875,3 +875,71 @@
   align-self:stretch!important;
   margin-top:8px!important;
 }
+
+/* insurance contract create/edit sheet controls */
+.add39-sheet .add39-create,
+.txn16-sheet .txn16-create{
+  width:100%!important;
+  height:42px!important;
+  border:1px dashed #bfd5ff!important;
+  border-radius:12px!important;
+  background:#f5f9ff!important;
+  color:#2459b2!important;
+  font-size:12px!important;
+  font-weight:760!important;
+  margin-top:6px!important;
+  cursor:pointer!important;
+  display:block!important;
+  text-align:center!important;
+}
+.add39-sheet.add39-insurance-name-sheet,
+.txn16-sheet.txn16-insurance-name-sheet{
+  padding-left:16px!important;
+  padding-right:16px!important;
+}
+.add39-sheet .add39-sheet-input,
+.txn16-sheet .txn16-sheet-input{
+  width:100%!important;
+  box-sizing:border-box!important;
+  height:42px!important;
+  border-radius:13px!important;
+  border:1px solid #d6e3f1!important;
+  background:#fff!important;
+  padding:0 11px!important;
+  font-size:13px!important;
+  font-weight:500!important;
+  color:#0b1320!important;
+  outline:none!important;
+}
+.add39-sheet .add39-sheet-actions,
+.txn16-sheet .txn16-sheet-actions{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  margin-top:8px!important;
+}
+.add39-sheet .add39-btn,
+.txn16-sheet .txn16-btn{
+  height:40px!important;
+  min-height:40px!important;
+  border-radius:14px!important;
+  border:0!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Arial,sans-serif!important;
+  font-size:12.5px!important;
+  font-weight:760!important;
+  line-height:40px!important;
+  padding:0 10px!important;
+  cursor:pointer!important;
+}
+.add39-sheet .add39-btn.cancel,
+.txn16-sheet .txn16-btn.cancel{
+  background:#eef5ff!important;
+  color:#2459b2!important;
+  border:1px solid #d6e3f1!important;
+}
+.add39-sheet .add39-btn.save,
+.txn16-sheet .txn16-btn.save{
+  background:linear-gradient(135deg,#2563eb,#3b82f6)!important;
+  color:#fff!important;
+  box-shadow:0 10px 20px rgba(37,99,235,.2)!important;
+}

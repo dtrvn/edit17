@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=export-excel-20260829a" />
-<link rel="stylesheet" href="transaction.css?v=asset-tone-20260829b" />
+<link rel="stylesheet" href="transaction.css?v=insurance-contract-sheet-style-20260831a" />
 <link rel="stylesheet" href="category.css?v=category-top-add-20260829a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=realestate-slate-20260829a">
+<link rel="stylesheet" href="asset.css?v=insurance-movement-bottom-20260901a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1098,6 +1098,8 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone .txn16-edit-body,
   #phone .cat90-editor-body,
   #phone .asset53-detail-screen .slide-body{height:calc(100% - 44px)!important;max-height:none!important;overflow-x:hidden!important;}
+  #phone .asset53-detail-screen.asset53-insurance-movement{padding-bottom:calc(20px + var(--safe-bottom))!important;}
+  #phone .asset53-detail-screen.asset53-insurance-movement .slide-body{height:calc(100% - 64px)!important;}
 }
 @supports (height:100lvh){
   @media(max-width:430px){
@@ -1416,17 +1418,17 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
-<script src="overview.js?v=export-excel-20260829b"></script>
-<script src="transaction.js?v=realestate-holding-id-20260831b"></script>
+<script src="overview.js?v=insurance-touch-scroll-chevron-20260901o"></script>
+<script src="transaction.js?v=insurance-swipe-settlement-20260901c"></script>
 <script src="category.js?v=category-top-add-20260829a"></script>
 
-<script src="add-transaction.js?v=realestate-holding-id-20260831b"></script>
-<script src="asset.js?v=realestate-display-unit-20260831a"></script>
+<script src="add-transaction.js?v=insurance-swipe-settlement-20260901c"></script>
+<script src="asset.js?v=insurance-movement-bottom-20260901a"></script>
 <script src="report.js?v=detail-top-row-grid-20260830a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260831l';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260901s';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1440,7 +1442,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=realestate-display-unit-20260831a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=insurance-split-fixed-scroll-20260901s')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

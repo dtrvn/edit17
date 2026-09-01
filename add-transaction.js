@@ -1,5 +1,5 @@
 (function(){
-  const defaultState=()=>({date:new Date().toISOString().slice(0,10),type:'',group:'',child:'',amount:0,note:'',assetName:'',assetQty:'',assetUnit:'',assetPrice:'',fee:0,savingTerm:'1 tháng',assetInterest:'',savingBookId:'',assetHoldingId:''});
+  const defaultState=()=>({date:new Date().toISOString().slice(0,10),type:'',group:'',child:'',amount:0,note:'',assetName:'',assetQty:'',assetUnit:'',assetPrice:'',fee:0,savingTerm:'1 tháng',assetInterest:'',savingBookId:'',assetHoldingId:'',newInsuranceContract:false});
   let state=defaultState();
   let catalog={types:[],groups:{},children:{}};
   let saving=false;
@@ -46,6 +46,7 @@
     return text.includes('dau tu')||text.includes('thu hoi')||isSavingState();
   };
   const isSavingState=()=>classifiedAssetType(state.type,state.group,state.child)==='SAVING';
+  const isInsurancePremiumState=()=>txType(state.type)==='INVEST'&&classifiedAssetType(state.type,state.group,state.child)==='INSURANCE'&&normalizeDong(plainText(state.child)).includes('dong phi');
   function classifiedAssetType(type,group,child){
     const g=normalizeDong(plainText(group)),c=normalizeDong(plainText(child));
     if(g.includes('vang'))return 'GOLD';
@@ -205,7 +206,7 @@
   function assetLabelForType(type){
     if(type==='LAND')return 'Tên bất động sản';
     if(type==='STOCK')return 'Mã cổ phiếu';
-    if(type==='INSURANCE')return 'Loại bảo hiểm';
+    if(type==='INSURANCE')return 'Tên hợp đồng bảo hiểm';
     return 'Tên tài sản';
   }
 
@@ -233,6 +234,34 @@
     state.assetHoldingId=picked.id||state.assetHoldingId||'';
     state.assetUnit=picked.unit||state.assetUnit||defaultAssetUnitForType(type);
     if(fillQty&&type==='LAND'&&Number(picked.qty||0)>0)state.assetQty=String(picked.qty);
+  }
+
+  function insuranceContractOptionsFromTransactions(){
+    const txns=typeof window.TXN_getTransactions==='function'?window.TXN_getTransactions():[];
+    const contracts=new Map();
+    (Array.isArray(txns)?txns:[]).forEach(tx=>{
+      const type=classifiedAssetType(tx.large||tx.loai_lon,tx.group||tx.nhom_danh_muc,tx.child||tx.hang_muc_con)||String(tx.assetType||tx.loai_tai_san||'').toUpperCase();
+      if(type!=='INSURANCE')return;
+      const rawKind=String(tx.type||tx.loai_giao_dich||'').toUpperCase();
+      const kind=rawKind==='INVEST'||rawKind==='BUY'?'INVEST':(rawKind==='DIVEST'||rawKind==='SELL'?'DIVEST':txType(tx.large||tx.loai_lon));
+      const name=String(tx.assetName||tx.ten_tai_san||tx.tenTaiSan||tx.note||tx.ghi_chu||'Hợp đồng bảo hiểm').trim();
+      const date=String(tx.date||tx.ngay||'').slice(0,10);
+      const amount=Number(tx.amount||tx.so_tien||tx.soTien||0)||0;
+      const id=String(tx.assetHoldingId||tx.tai_san_thu_hoi_id||tx.id||tx.external_id||`${date}-${name}-${contracts.size}`);
+      const key=plainText(name);
+      const existing=contracts.get(key)||{id,name,unit:defaultAssetUnitForType('INSURANCE'),qty:1,value:0,recovered:0,label:name,latest:''};
+      if(kind==='DIVEST')existing.recovered+=amount;
+      if(kind==='INVEST'){
+        existing.value+=amount;
+        existing.id=existing.id||id;
+        existing.label=name;
+      }
+      existing.latest=String(existing.latest||'')>date?existing.latest:date;
+      contracts.set(key,existing);
+    });
+    return Array.from(contracts.values())
+      .filter(row=>!(typeof window.ASSET52_isInsuranceContractSettled==='function'&&window.ASSET52_isInsuranceContractSettled(row.name)))
+      .sort((a,b)=>String(b.latest||'').localeCompare(String(a.latest||'')));
   }
 
   function realestateHoldingOptionsFromTransactions(){
@@ -275,6 +304,10 @@
       const realestateRows=realestateHoldingOptionsFromTransactions();
       if(realestateRows.length)return realestateRows;
     }
+    if(type==='INSURANCE'){
+      const insuranceRows=insuranceContractOptionsFromTransactions();
+      return insuranceRows;
+    }
     const cls=assetClassForType(type);
     if(!cls)return [];
     const snapshot=typeof window.ASSET52_getAssets==='function'?window.ASSET52_getAssets():null;
@@ -294,7 +327,7 @@
           name,
           unit:unitFromQtyText(type,qtyText),
           qty:Number(asset.aggregateQty||0),
-          label:[name,qtyText,value?money(value):''].filter(Boolean).join(' - ')
+          label:type==='INSURANCE'?name:[name,qtyText,value?money(value):''].filter(Boolean).join(' - ')
         };
       })
       .filter(row=>row.name);
@@ -362,7 +395,8 @@
   }
 
   function closeSheet(){
-    document.getElementById('add39Sheet')?.classList.remove('show');
+    const sheet=document.getElementById('add39Sheet');
+    sheet?.classList.remove('show','add39-insurance-name-sheet');
     document.getElementById('add39Backdrop')?.classList.remove('show');
   }
 
@@ -371,17 +405,57 @@
     const sheet=document.getElementById('add39Sheet');
     const back=document.getElementById('add39Backdrop');
     if(!sheet||!back)return;
-    sheet.innerHTML=`<div class="add39-handle"></div><div class="add39-sheet-title">${title}</div>${items.map(v=>`<button class="add39-option ${v===current?'active':''}" data-val="${v}"><span>${v}</span><span class="add39-check">${v===current?'✓':''}</span></button>`).join('')}`;
+    sheet.classList.remove('add39-insurance-name-sheet');
+    sheet.innerHTML=`<div class="add39-handle"></div><div class="add39-sheet-title">${title}</div>${items.map(v=>{
+      const create=String(v)==='Tạo hợp đồng mới';
+      return `<button class="${create?'add39-create':'add39-option'} ${v===current?'active':''}" data-val="${encodeURIComponent(v)}"><span>${v}</span>${create?'':`<span class="add39-check">${v===current?'✓':''}</span>`}</button>`;
+    }).join('')}`;
     sheet.onclick=e=>{
       const btn=e.target.closest('[data-val]');
       if(!btn)return;
-      onPick(btn.dataset.val);
+      onPick(decodeURIComponent(btn.dataset.val||''));
       closeSheet();
       renderForm();
     };
     back.onclick=closeSheet;
     sheet.classList.add('show');
     back.classList.add('show');
+  }
+
+  function openInsuranceContractNameSheet(value='',restoreState=null){
+    ensureSheet();
+    const sheet=document.getElementById('add39Sheet');
+    const back=document.getElementById('add39Backdrop');
+    if(!sheet||!back)return;
+    const escaped=String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    sheet.classList.add('add39-insurance-name-sheet');
+    sheet.innerHTML=`<div class="add39-handle"></div><div class="add39-sheet-title">Tạo hợp đồng bảo hiểm mới</div><input class="add39-input add39-sheet-input" id="add39InsuranceContractName" value="${escaped}" placeholder="Nhập tên hợp đồng bảo hiểm"><div class="add39-sheet-actions"><button type="button" class="add39-btn cancel" data-add39-contract-cancel>Hủy</button><button type="button" class="add39-btn save" data-add39-contract-save>Lưu</button></div>`;
+    function close(restore=false){
+      if(restore&&restoreState)Object.assign(state,restoreState);
+      sheet.classList.remove('show','add39-insurance-name-sheet');
+      back.classList.remove('show');
+      renderForm();
+    }
+    sheet.onclick=e=>{
+      if(e.target.closest('[data-add39-contract-cancel]')){
+        close(true);
+        return;
+      }
+      if(e.target.closest('[data-add39-contract-save]')){
+        const input=document.getElementById('add39InsuranceContractName');
+        const name=String(input?.value||'').trim();
+        if(!name){input?.focus();return;}
+        state.newInsuranceContract=true;
+        state.assetName=name;
+        state.assetHoldingId='';
+        state.assetUnit=defaultAssetUnitForType('INSURANCE');
+        close();
+      }
+    };
+    back.onclick=()=>close(true);
+    sheet.classList.add('show');
+    back.classList.add('show');
+    setTimeout(()=>document.getElementById('add39InsuranceContractName')?.focus(),40);
   }
 
   function openCalendar(current,onPick){
@@ -444,13 +518,18 @@
     const isGold=isGoldState();
     const divestGold=isDivestGoldState();
     const currentAssetType=classifiedAssetType(state.type,state.group,state.child);
+    const premiumInsurance=isInsurancePremiumState();
     const divestManagedAsset=txType(state.type)==='DIVEST'&&['LAND','STOCK','INSURANCE'].includes(currentAssetType);
     const managedRows=divestManagedAsset?assetHoldingOptions(currentAssetType):[];
     const selectedManaged=divestManagedAsset?selectedAssetHolding(currentAssetType):null;
+    const insuranceRows=premiumInsurance?assetHoldingOptions('INSURANCE'):[];
+    const selectedInsurance=insuranceRows.find(row=>plainText(row.name)===plainText(state.assetName))||null;
     const unitOptions=assetUnitOptionsForType(currentAssetType);
     const goldRows=goldHoldingOptions();
     if(divestGold&&goldRows.length&&!goldRows.some(row=>plainText(row.name)===plainText(state.assetName)))state.assetName=goldRows[0].name;
     if(divestManagedAsset&&managedRows.length&&!managedRows.some(row=>plainText(row.name)===plainText(state.assetName)))applyManagedAssetPick(managedRows[0],currentAssetType,{fillQty:true});
+    if(premiumInsurance&&insuranceRows.length&&!state.newInsuranceContract&&!selectedInsurance)applyManagedAssetPick(insuranceRows[0],'INSURANCE');
+    if(premiumInsurance&&!insuranceRows.length&&!state.assetName)state.newInsuranceContract=true;
     if(unitOptions.length&&!state.assetUnit)state.assetUnit=defaultAssetUnitForType(currentAssetType);
     const selectedGold=selectedGoldHolding();
     const assetNameValue=state.assetName||(isGold?'Vàng 98%':(divestManagedAsset?(selectedManaged?.name||''):state.child||''));
@@ -469,11 +548,15 @@
     const savingWithdrawFields=`<div class="add39-asset-block saving-mode"><div class="add39-field full"><label class="add39-label">Sổ tiết kiệm</label><button class="add39-control" data-add39-saving-book type="button"><span>${selectedBook?.label||'Chưa có sổ tiết kiệm'}</span>${chev}</button></div></div>`;
     const assetNameControl=divestGold
       ? `<button class="add39-control" data-add39-gold-asset type="button"><span>${selectedGold?.label||'Chưa có vàng để bán'}</span>${chev}</button>`
+      : premiumInsurance
+      ? `<button class="add39-control" data-add39-insurance-contract type="button"><span>${state.newInsuranceContract?(state.assetName||'Tạo hợp đồng mới'):(selectedInsurance?.label||state.assetName||'Tạo hợp đồng mới')}</span>${chev}</button>`
       : divestManagedAsset
       ? `<button class="add39-control" data-add39-asset-holding type="button"><span>${selectedManaged?.label||'Chưa có tài sản để thu hồi'}</span>${chev}</button>`
       : `<input class="add39-input" id="add39AssetName" value="${assetNameValue}" placeholder="${isGold?'Vàng 98%':'Tên tài sản'}">`;
-    const qtyField=currentAssetType==='INSURANCE'&&txType(state.type)==='DIVEST'?'':`<div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div>`;
-    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}<div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div><div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div></div>`;
+    const hideInsuranceQtyUnit=currentAssetType==='INSURANCE'&&(premiumInsurance||txType(state.type)==='DIVEST');
+    const qtyField=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div>`;
+    const unitBlock=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div>`;
+    const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}${unitBlock}<div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div></div>`;
     const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):defaultAssetFields):'';
     form.innerHTML=`<div class="add39-field"><label class="add39-label">Ngày giao dịch</label><button class="add39-control" data-add39-date><span>${dmy(state.date)}</span>${calIcon}</button></div><div class="add39-field"><label class="add39-label">Loại giao dịch</label><button class="add39-control" data-add39-type><span>${state.type||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Nhóm danh mục</label><button class="add39-control" data-add39-group><span>${state.group||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Hạng mục con</label><button class="add39-control" data-add39-child><span>${state.child||emptyText}</span>${chev}</button></div><div class="add39-field full"><div class="add39-label-row"><label class="add39-label">${amountLabel}</label><span class="add39-money-preview" id="add39MoneyPreview">${money(state.amount)}</span></div><input class="add39-input" id="add39Amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${state.amount||''}"></div>${assetFields}<div class="add39-field full"><label class="add39-label">Ghi chú</label><textarea class="add39-note" id="add39Note" placeholder="Nhập ghi chú">${state.note||''}</textarea></div><div class="add39-actions"><button type="button" class="add39-cancel" data-close="screenTxnForm">Hủy</button><button type="button" class="add39-save" id="add39Save">Lưu giao dịch</button></div>`;
   }
@@ -496,6 +579,7 @@
     const amount=Number(state.amount||0);
     if(!state.type||!state.group||!state.child)return;
     const currentAssetType=classifiedAssetType(state.type,state.group,state.child);
+    const premiumInsurance=isInsurancePremiumState();
     const divestSaving=isSavingState()&&txType(state.type)==='DIVEST';
     const divestManagedAsset=txType(state.type)==='DIVEST'&&['LAND','STOCK','INSURANCE'].includes(currentAssetType);
     const managedHolding=divestManagedAsset?selectedAssetHolding(currentAssetType):null;
@@ -514,6 +598,10 @@
       document.getElementById('add39Amount')?.focus();
       return;
     }
+    if(premiumInsurance&&state.newInsuranceContract&&!String(state.assetName||'').trim()){
+      document.querySelector('[data-add39-insurance-contract]')?.focus();
+      return;
+    }
     if(!window.FDB){
       console.error('Firebase chưa sẵn sàng, không thể lưu giao dịch.', window.FIREBASE_STATUS);
       return;
@@ -523,7 +611,7 @@
     const saveAsset=isSavingState();
     const fee=Number(String(state.fee||0).replace(/\D/g,''))||0;
     if(divestManagedAsset&&managedHolding)applyManagedAssetPick(managedHolding,currentAssetType,{fillQty:!state.assetQty});
-    const qty=(saveAsset||(divestManagedAsset&&currentAssetType==='INSURANCE'))?1:(Number(String(state.assetQty||'').replace(',','.'))||1);
+    const qty=(saveAsset||currentAssetType==='INSURANCE')?1:(Number(String(state.assetQty||'').replace(',','.'))||1);
     const unitForTx=saveAsset?'Sổ':(state.assetUnit||defaultAssetUnitForType(currentAssetType)||(currentAssetType==='GOLD'?'Chỉ':'Đơn vị'));
     const priceQty=currentAssetType==='GOLD'?goldQtyToChi(qty,unitForTx):qty;
     if(isDivestGoldState()){
@@ -565,8 +653,8 @@
       phi:fee,
       so_luong:isAssetState()?qty:0,
       ten_tai_san:isAssetState()?(saveAsset?'Gửi tiết kiệm':((state.assetName||fallbackAssetName).trim())):'',
-      tai_san_thu_hoi_id:divestManagedAsset&&currentAssetType==='LAND'?state.assetHoldingId:'',
-      assetHoldingId:divestManagedAsset&&currentAssetType==='LAND'?state.assetHoldingId:'',
+      tai_san_thu_hoi_id:divestManagedAsset&&['LAND','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
+      assetHoldingId:divestManagedAsset&&['LAND','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
       so_tiet_kiem_id:savingBookId,
       so_tiet_kiem_label:savingBookLabel,
       gia_von_tat_toan:book?.cost||0,
@@ -606,9 +694,9 @@
     }
     if(e.target.closest('.add-btn'))setTimeout(resetForm,20);
     if(e.target.closest('[data-add39-date]'))openCalendar(state.date,v=>state.date=v);
-    if(e.target.closest('[data-add39-type]'))openOptions('Loại giao dịch',catalog.types,state.type,v=>{state.type=v;state.group=(catalog.groups[v]||[])[0]||'';state.child=childOptions(state.type,state.group)[0]||'';state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';});
-    if(e.target.closest('[data-add39-group]'))openOptions('Nhóm danh mục',catalog.groups[state.type]||[],state.group,v=>{state.group=v;state.child=childOptions(state.type,state.group)[0]||'';state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';});
-    if(e.target.closest('[data-add39-child]'))openOptions('Hạng mục con',childOptions(state.type,state.group),state.child,v=>{state.child=v;state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';});
+    if(e.target.closest('[data-add39-type]'))openOptions('Loại giao dịch',catalog.types,state.type,v=>{state.type=v;state.group=(catalog.groups[v]||[])[0]||'';state.child=childOptions(state.type,state.group)[0]||'';state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';state.newInsuranceContract=false;});
+    if(e.target.closest('[data-add39-group]'))openOptions('Nhóm danh mục',catalog.groups[state.type]||[],state.group,v=>{state.group=v;state.child=childOptions(state.type,state.group)[0]||'';state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';state.newInsuranceContract=false;});
+    if(e.target.closest('[data-add39-child]'))openOptions('Hạng mục con',childOptions(state.type,state.group),state.child,v=>{state.child=v;state.assetName='';state.assetQty='';state.assetUnit='';state.savingBookId='';state.assetHoldingId='';state.newInsuranceContract=false;});
     if(e.target.closest('[data-add39-asset-unit]')){
       const type=classifiedAssetType(state.type,state.group,state.child);
       const options=assetUnitOptionsForType(type);
@@ -628,6 +716,25 @@
       openOptions(assetLabelForType(type),rows.length?rows.map(row=>row.label):['Chưa có tài sản để thu hồi'],current?.label||'Chưa có tài sản để thu hồi',label=>{
         const picked=rows.find(row=>row.label===label);
         applyManagedAssetPick(picked,type,{fillQty:true});
+      });
+    }
+    if(e.target.closest('[data-add39-insurance-contract]')){
+      const rows=assetHoldingOptions('INSURANCE');
+      const createLabel='Tạo hợp đồng mới';
+      const current=state.newInsuranceContract?createLabel:(rows.find(row=>plainText(row.name)===plainText(state.assetName))?.label||createLabel);
+      const restoreState={assetName:state.assetName,assetHoldingId:state.assetHoldingId,assetUnit:state.assetUnit,newInsuranceContract:state.newInsuranceContract};
+      openOptions('Tên hợp đồng bảo hiểm',[...rows.map(row=>row.label),createLabel],current,label=>{
+        if(label===createLabel){
+          state.newInsuranceContract=true;
+          state.assetName='';
+          state.assetHoldingId='';
+          state.assetUnit=defaultAssetUnitForType('INSURANCE');
+          setTimeout(()=>openInsuranceContractNameSheet('',restoreState),0);
+          return;
+        }
+        const picked=rows.find(row=>row.label===label);
+        state.newInsuranceContract=false;
+        applyManagedAssetPick(picked,'INSURANCE');
       });
     }
     if(e.target.closest('[data-add39-saving-term]'))openOptions('Kỳ hạn',SAVING_TERMS,state.savingTerm||'1 tháng',v=>state.savingTerm=v);

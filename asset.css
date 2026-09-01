@@ -171,6 +171,9 @@
 .asset53-detail-screen .slide-body{
   padding-left:10px!important;
   padding-right:10px!important;
+  overflow-y:auto!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch;
 }
 .asset53-detail-screen .slide-body.asset53-fixed-detail{
   display:flex!important;
@@ -178,6 +181,16 @@
   gap:8px!important;
   overflow:hidden!important;
   padding-bottom:0!important;
+}
+.asset53-detail-screen .slide-body.asset53-fixed-detail .asset53-tabs{
+  flex:0 0 38px;
+  min-height:38px;
+}
+.asset53-detail-screen.asset53-insurance-movement{
+  padding-bottom:20px!important;
+}
+.asset53-detail-screen.asset53-insurance-movement .slide-body{
+  height:calc(100% - 64px)!important;
 }
 .asset53-fixed-panel{
   position:relative;
@@ -199,6 +212,9 @@
   scrollbar-width:none;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
+}
+.asset53-detail-screen.asset53-insurance-movement .asset53-scroll-list{
+  padding-bottom:20px;
 }
 .asset53-scroll-list::-webkit-scrollbar{display:none;}
 .asset53-detail-card{
@@ -1320,6 +1336,166 @@
 .asset53-bank-group.tone-4,.asset53-bank-child.tone-4{--bank-tone:#ec4899;--bank-tone-soft:rgba(236,72,153,.1);}
 .asset53-bank-group.tone-5,.asset53-bank-child.tone-5{--bank-tone:#8b5cf6;--bank-tone-soft:rgba(139,92,246,.1);}
 .asset53-bank-group.tone-6,.asset53-bank-child.tone-6{--bank-tone:#22c55e;--bank-tone-soft:rgba(34,197,94,.1);}
+.asset53-insurance-contract-list{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+}
+.asset53-insurance-contract-item{
+  display:grid;
+  gap:0;
+  overflow:visible;
+}
+.asset53-insurance-swipe{
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  touch-action:pan-x;
+  scroll-snap-type:x mandatory;
+  border-radius:13px;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.asset53-insurance-swipe::-webkit-scrollbar{
+  display:none;
+}
+.asset53-insurance-swipe-track{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 48px;
+  width:calc(100% + 48px);
+  align-items:stretch;
+}
+.asset53-insurance-contract-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:end!important;
+  gap:2px 10px!important;
+  min-height:0!important;
+  padding:8px 10px 24px!important;
+  border:1px solid rgba(226,232,240,.92)!important;
+  border-radius:13px 0 0 13px!important;
+  background:#fff!important;
+  box-shadow:0 10px 18px rgba(15,23,42,.045)!important;
+  overflow:hidden!important;
+  scroll-snap-align:start;
+}
+.asset53-insurance-contract-name{
+  grid-column:1/-1;
+  display:block;
+  margin-bottom:1px;
+  padding-right:28px;
+}
+.asset53-insurance-contract-name > span{
+  color:#0f172a;
+  font-size:12px;
+  font-weight:760;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  display:block;
+}
+.asset53-insurance-swipe-action{
+  display:grid;
+  place-items:stretch;
+  scroll-snap-align:end;
+}
+.asset53-insurance-swipe-btn{
+  border:0;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  min-height:100%;
+  border-radius:0 13px 13px 0;
+  background:#0891b2;
+  color:#fff;
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.22);
+}
+.asset53-insurance-swipe-btn.redo{
+  background:#0f766e;
+}
+.asset53-insurance-swipe-btn svg{
+  width:18px;
+  height:18px;
+  stroke-width:2.7;
+}
+.asset53-insurance-swipe-btn:active{
+  transform:translateY(1px);
+}
+.asset53-insurance-settled{
+  position:absolute;
+  right:8px;
+  top:7px;
+  width:19px;
+  height:19px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#dcfce7;
+  color:#16a34a;
+}
+.asset53-insurance-settled svg{
+  width:12px;
+  height:12px;
+  stroke-width:3;
+}
+.asset53-insurance-contract-row small{
+  grid-column:1;
+  color:#64748b;
+  font-size:9.4px;
+  font-weight:650;
+  line-height:1.08;
+}
+.asset53-insurance-contract-row b{
+  grid-column:2;
+  text-align:right;
+  color:#06b6d4;
+  font-size:11.4px;
+  font-weight:800;
+  line-height:1.08;
+  white-space:nowrap;
+}
+.asset53-insurance-contract-row b.recovered{
+  color:#16a34a;
+}
+.asset53-insurance-contract-row b.profit,
+.asset53-insurance-contract-row b.settled-amount{
+  color:#16a34a;
+}
+.asset53-insurance-contract-row b.loss{
+  color:#ef4444;
+}
+.asset53-insurance-contract-row.settled{
+  border-color:#bbf7d0!important;
+  background:#f0fdf4!important;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid{
+  grid-template-columns:minmax(0,1fr) auto!important;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid span{
+  font-size:12.6px!important;
+  font-weight:780!important;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid span:nth-child(2){
+  justify-self:end;
+  color:#06b6d4;
+  font-weight:780;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid.sell span:nth-child(2){
+  color:#ef4444;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid.buy span:nth-child(2){
+  color:#16a34a;
+}
+.asset53-flow-grid.asset53-insurance-flow-grid .asset53-insurance-note{
+  grid-column:1/-1;
+  justify-self:start!important;
+  color:#64748b!important;
+  font-size:11.4px!important;
+  font-weight:600!important;
+  line-height:1.25!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
 @keyframes asset53BankBar{
   from{transform:scaleX(0);opacity:.45;}
   to{transform:scaleX(1);opacity:1;}
@@ -1405,3 +1581,19 @@
 .asset53-detail-screen .asset53-bank-group button small{font-size:10.8px!important;}
 .asset53-detail-screen .asset53-bank-child span{font-size:12.1px!important;}
 .asset53-detail-screen .asset53-bank-child b{font-size:11.8px!important;}
+
+.asset53-detail-screen .asset53-flow-grid.asset53-insurance-flow-grid span{
+  font-size:12.6px!important;
+  font-weight:780!important;
+}
+.asset53-detail-screen .asset53-flow-grid.asset53-insurance-flow-grid span:nth-child(2){
+  justify-self:end!important;
+}
+.asset53-detail-screen .asset53-flow-grid.asset53-insurance-flow-grid .asset53-insurance-note{
+  grid-column:1/-1;
+  justify-self:start!important;
+  color:#64748b!important;
+  font-size:11.4px!important;
+  font-weight:600!important;
+  line-height:1.25!important;
+}
