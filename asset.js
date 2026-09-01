@@ -1117,6 +1117,7 @@
     if(kind==='trend') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>';
     if(kind==='shield') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-5"/></svg>';
     if(kind==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 12 4 4 8-9"/></svg>';
+    if(kind==='list') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>';
     if(kind==='home') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 11.5 12 6l7 5.5"/><path d="M7.5 10.5V18h9v-7.5"/></svg>';
     return kind;
   }
@@ -1392,39 +1393,80 @@
     return end?`${start} ~ ${end}`:`Ngày bắt đầu: ${start}`;
   }
 
+  function insuranceContractCardHtml(item,options={}){
+    const header=options.header===true;
+    const encoded=encodeURIComponent(item.name);
+    const profitLoss=Number(item.recovered||0)-Number(item.total||0);
+    const finalLabel=item.settled?'Lãi/Lỗ':'Số tiền còn lại';
+    const finalClass=item.settled
+      ? (profitLoss>=0?'profit':'loss')
+      : (item.settled?'settled-amount':'');
+    const finalValue=item.settled
+      ? `${profitLoss>=0?'+':'-'}${fmt(Math.abs(profitLoss))}`
+      : fmt(item.remaining);
+    const dateText=insuranceDateRangeText(item);
+    return `<div class="asset53-detail-row asset53-insurance-contract-row ${item.settled?'settled':''} ${header?'asset53-insurance-header-card':''}">
+      <div class="asset53-insurance-contract-name">
+        <span>${item.name}</span>
+        <span class="asset53-insurance-contract-dates">${dateText}${item.settled?`<i class="asset53-insurance-settled" title="Đã tất toán" aria-label="Đã tất toán">${iconSvg('check')}</i>`:''}</span>
+      </div>
+      <small>Tổng phí đã đóng</small>
+      <b>${fmt(item.total)}</b>
+      <small>Tổng số tiền đã thu hồi</small>
+      <b class="recovered">${fmt(item.recovered)}</b>
+      <small>${finalLabel}</small>
+      <b class="${finalClass}">${finalValue}</b>
+    </div>`;
+  }
+
+  function insuranceContractTransactions(rows,name,kind='buy'){
+    const wanted=plainText(name);
+    const sell=kind==='sell';
+    return (rows||[])
+      .filter(row=>isSellMovement(row)===sell&&plainText(row.assetName||row.name||'Hợp đồng bảo hiểm')===wanted)
+      .sort((a,b)=>String(b.sortDate||b.date||'').localeCompare(String(a.sortDate||a.date||'')));
+  }
+
+  function insuranceContractDetailHtml(rows){
+    const contracts=insuranceContractGroups(rows);
+    const contract=contracts.find(item=>plainText(item.name)===plainText(detailState.insuranceContractDetail))||contracts[0];
+    if(!contract)return '<div class="asset53-empty">Chưa có hợp đồng bảo hiểm.</div>';
+    const detailMode=detailState.insuranceContractFlow==='sell'?'sell':'buy';
+    const isRecovery=detailMode==='sell';
+    const transactionRows=insuranceContractTransactions(rows,contract.name,detailMode);
+    return `<div class="asset53-overview asset53-insurance-detail-view">
+      <div class="asset53-insurance-detail-header">
+        <div class="asset53-detail-card">${insuranceContractCardHtml(contract,{header:true})}</div>
+      </div>
+      <div class="asset53-insurance-detail-toolbar">
+        <button type="button" data-asset-insurance-detail-back aria-label="Danh sách bảo hiểm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg><span>Danh sách bảo hiểm</span></button>
+        <button class="asset53-insurance-detail-toggle ${isRecovery?'is-recovery':'is-invest'}" type="button" data-asset-insurance-detail-flow="${isRecovery?'buy':'sell'}" aria-label="${isRecovery?'Giao dịch đầu tư':'Giao dịch thu hồi'}">${isRecovery?iconSvg('trend'):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 7 4-4 4 4"/><path d="M7 3v12a4 4 0 0 0 4 4h10"/></svg>'}<span>${isRecovery?'Giao dịch đầu tư':'Giao dịch thu hồi'}</span></button>
+      </div>
+      <div class="asset53-insurance-detail-list">
+        ${transactionRows.length
+          ? `<div class="asset53-detail-card gold-buy-list saving-book-list insurance-flow-list">${transactionRows.map(row=>detailRow(row,isRecovery?'#ef4444':'#16a34a',detailState.key)).join('')}</div>`
+          : `<div class="asset53-empty">Chưa có giao dịch ${isRecovery?'thu hồi':'đóng bảo hiểm'}.</div>`}
+      </div>
+    </div>`;
+  }
+
   function insuranceOverviewHtml(rows){
+    if(detailState.insuranceContractDetail)return insuranceContractDetailHtml(rows);
     const contracts=insuranceContractGroups(rows);
     const list=contracts.length
       ? `<div class="asset53-insurance-contract-list">${contracts.map(item=>{
         const encoded=encodeURIComponent(item.name);
-        const profitLoss=Number(item.recovered||0)-Number(item.total||0);
-        const finalLabel=item.settled?'Lãi/Lỗ':'Số tiền còn lại';
-        const finalClass=item.settled
-          ? (profitLoss>=0?'profit':'loss')
-          : (item.settled?'settled-amount':'');
-        const finalValue=item.settled
-          ? `${profitLoss>=0?'+':'-'}${fmt(Math.abs(profitLoss))}`
-          : fmt(item.remaining);
-        const dateText=insuranceDateRangeText(item);
         const action=item.settled
           ? `<button class="asset53-insurance-swipe-btn redo" type="button" data-asset-insurance-unsettle="${encoded}" title="Hủy tất toán" aria-label="Hủy tất toán"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7v6h6"/><path d="M21 17a8 8 0 0 0-13.6-5.7L3 15"/></svg></button>`
           : `<button class="asset53-insurance-swipe-btn settle" type="button" data-asset-insurance-settle="${encoded}" title="Tất toán" aria-label="Tất toán">${iconSvg('check')}</button>`;
         return `<div class="asset53-insurance-contract-item">
           <div class="asset53-insurance-swipe">
             <div class="asset53-insurance-swipe-track">
-              <div class="asset53-detail-row asset53-insurance-contract-row ${item.settled?'settled':''}">
-                <div class="asset53-insurance-contract-name">
-                  <span>${item.name}</span>
-                  <span class="asset53-insurance-contract-dates">${dateText}${item.settled?`<i class="asset53-insurance-settled" title="Đã tất toán" aria-label="Đã tất toán">${iconSvg('check')}</i>`:''}</span>
-                </div>
-                <small>Tổng phí đã đóng</small>
-                <b>${fmt(item.total)}</b>
-                <small>Tổng số tiền đã thu hồi</small>
-                <b class="recovered">${fmt(item.recovered)}</b>
-                <small>${finalLabel}</small>
-                <b class="${finalClass}">${finalValue}</b>
+              ${insuranceContractCardHtml(item)}
+              <div class="asset53-insurance-swipe-action">
+                <button class="asset53-insurance-swipe-btn detail" type="button" data-asset-insurance-detail="${encoded}" title="Xem giao dịch đóng bảo hiểm" aria-label="Xem giao dịch đóng bảo hiểm">${iconSvg('list')}</button>
+                ${action}
               </div>
-              <div class="asset53-insurance-swipe-action">${action}</div>
             </div>
           </div>
         </div>`;
@@ -2091,6 +2133,8 @@
     body.style.setProperty('--asset-detail-color',color);
     body.style.setProperty('--asset-detail-soft',`${color}18`);
     screen?.classList.toggle('asset53-insurance-movement',assetSection(asset)==='insurance'&&detailState.tab==='movement');
+    screen?.classList.toggle('asset53-insurance-contract-detail-screen',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
+    body.classList.toggle('asset53-insurance-contract-detail',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
     body.classList.toggle('asset53-compact-ledger',['insurance','realestate','stock','saving'].includes(assetSection(asset)));
     body.classList.toggle('asset53-fixed-detail',cash||detailState.tab==='movement');
     if(cash){
@@ -2106,7 +2150,7 @@
   function openDetail(key){
     const screen=ensureDetailScreen();
     if(!screen)return;
-    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income'};
+    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',insuranceContractDetail:'',insuranceContractFlow:'buy'};
     renderDetail();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
@@ -2773,7 +2817,7 @@
     },console.error);
   }
   document.addEventListener('click',e=>{
-    const clickedInsuranceAction=e.target.closest('[data-asset-insurance-settle], [data-asset-insurance-unsettle]');
+    const clickedInsuranceAction=e.target.closest('[data-asset-insurance-settle], [data-asset-insurance-unsettle], [data-asset-insurance-detail], [data-asset-insurance-detail-back], [data-asset-insurance-detail-flow]');
     if(!clickedInsuranceAction&&closeInsuranceSwipeActions()){
       e.preventDefault();
       e.stopPropagation();
@@ -2797,11 +2841,39 @@
       unsettleInsuranceContract(decodeURIComponent(unsettleInsurance.dataset.assetInsuranceUnsettle||''));
       return;
     }
+    const insuranceDetail=e.target.closest('[data-asset-insurance-detail]');
+    if(insuranceDetail){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.insuranceContractDetail=decodeURIComponent(insuranceDetail.dataset.assetInsuranceDetail||'');
+      detailState.insuranceContractFlow='buy';
+      renderDetail();
+      return;
+    }
+    const insuranceDetailFlow=e.target.closest('[data-asset-insurance-detail-flow]');
+    if(insuranceDetailFlow){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.insuranceContractFlow=insuranceDetailFlow.dataset.assetInsuranceDetailFlow==='sell'?'sell':'buy';
+      renderDetail();
+      return;
+    }
+    const insuranceDetailBack=e.target.closest('[data-asset-insurance-detail-back]');
+    if(insuranceDetailBack){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.insuranceContractDetail='';
+      detailState.insuranceContractFlow='buy';
+      renderDetail();
+      return;
+    }
     const tab=e.target.closest('[data-asset-detail-tab]');
     if(tab){
       const nextTab=tab.dataset.assetDetailTab;
       detailState.tabAnim=nextTab==='movement'?'slide-left':'';
       detailState.tab=nextTab;
+      detailState.insuranceContractDetail='';
+      detailState.insuranceContractFlow='buy';
       renderDetail();
       setTimeout(()=>{if(detailState.tabAnim){detailState.tabAnim='';}},260);
     }

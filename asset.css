@@ -182,14 +182,28 @@
   overflow:hidden!important;
   padding-bottom:0!important;
 }
-.asset53-detail-screen .slide-body.asset53-fixed-detail .asset53-tabs{
+.asset53-detail-screen .slide-body.asset53-fixed-detail .asset53-tabs,
+.asset53-detail-screen .slide-body.asset53-insurance-contract-detail .asset53-tabs{
   flex:0 0 38px;
   min-height:38px;
+}
+.asset53-detail-screen .slide-body.asset53-insurance-contract-detail{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:8px!important;
+  overflow:hidden!important;
+  padding-bottom:0!important;
 }
 .asset53-detail-screen.asset53-insurance-movement{
   padding-bottom:0!important;
 }
+.asset53-detail-screen.asset53-insurance-contract-detail-screen{
+  padding-bottom:0!important;
+}
 .asset53-detail-screen.asset53-insurance-movement .slide-body{
+  height:calc(100% - 64px)!important;
+}
+.asset53-detail-screen.asset53-insurance-contract-detail-screen .slide-body{
   height:calc(100% - 64px)!important;
 }
 .asset53-fixed-panel{
@@ -1360,8 +1374,8 @@
 }
 .asset53-insurance-swipe-track{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 48px;
-  width:calc(100% + 48px);
+  grid-template-columns:minmax(0,1fr) 96px;
+  width:calc(100% + 96px);
   align-items:stretch;
 }
 .asset53-insurance-contract-row{
@@ -1413,6 +1427,7 @@
 }
 .asset53-insurance-swipe-action{
   display:grid;
+  grid-template-columns:1fr 1fr;
   place-items:stretch;
   scroll-snap-align:end;
 }
@@ -1422,21 +1437,35 @@
   display:grid;
   place-items:center;
   min-height:100%;
-  border-radius:0 13px 13px 0;
-  background:#0891b2;
+  border-radius:0;
+  background:linear-gradient(180deg,#1d4ed8,#1e40af);
   color:#fff;
-  box-shadow:inset 1px 0 0 rgba(255,255,255,.22);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.26);
+  transition:filter .16s ease,transform .16s ease;
+}
+.asset53-insurance-swipe-btn:last-child{
+  border-radius:0 13px 13px 0;
+}
+.asset53-insurance-swipe-btn.detail{
+  background:linear-gradient(180deg,#0ea5e9,#0369a1);
+}
+.asset53-insurance-swipe-btn.settle{
+  background:linear-gradient(180deg,#22c55e,#15803d);
 }
 .asset53-insurance-swipe-btn.redo{
-  background:#0f766e;
+  background:linear-gradient(180deg,#8b5cf6,#6d28d9);
 }
 .asset53-insurance-swipe-btn svg{
   width:18px;
   height:18px;
   stroke-width:2.7;
 }
+.asset53-insurance-swipe-btn:hover{
+  filter:brightness(1.04) saturate(1.05);
+}
 .asset53-insurance-swipe-btn:active{
-  transform:translateY(1px);
+  transform:scale(.96);
+  filter:brightness(.96);
 }
 .asset53-insurance-settled{
   width:19px;
@@ -1482,6 +1511,99 @@
 .asset53-insurance-contract-row.settled{
   border-color:#bbf7d0!important;
   background:#f0fdf4!important;
+}
+.asset53-insurance-detail-view{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex!important;
+  flex-direction:column;
+  gap:8px;
+  overflow:hidden;
+}
+.asset53-insurance-detail-header{
+  position:relative;
+  z-index:5;
+  flex:0 0 auto;
+  background:#eef5fb;
+  box-shadow:0 14px 18px rgba(238,245,251,.98);
+}
+.asset53-insurance-header-card{
+  border-bottom:0!important;
+}
+.asset53-insurance-detail-toolbar{
+  position:relative;
+  z-index:4;
+  flex:0 0 auto;
+  background:#eef5fb;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:2px 0 3px;
+}
+.asset53-insurance-detail-toolbar button{
+  width:auto;
+  min-width:0;
+  height:36px;
+  border:0;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:0 13px 0 10px;
+  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  color:#0f3d65;
+  border:1px solid rgba(14,165,233,.18);
+  box-shadow:0 10px 22px rgba(15,23,42,.075),inset 0 1px 0 rgba(255,255,255,.9);
+  cursor:pointer;
+  font-size:12px;
+  font-weight:740;
+  line-height:1;
+  white-space:nowrap;
+  transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.asset53-insurance-detail-toolbar .asset53-insurance-detail-toggle{
+  padding:0 12px;
+  color:#7f1d1d;
+  border-color:rgba(239,68,68,.2);
+  background:linear-gradient(180deg,#fff1f2,#ffe4e6);
+  box-shadow:0 10px 22px rgba(239,68,68,.11),inset 0 1px 0 rgba(255,255,255,.85);
+}
+.asset53-insurance-detail-toolbar .asset53-insurance-detail-toggle.is-recovery{
+  color:#064e3b;
+  border-color:rgba(34,197,94,.2);
+  background:linear-gradient(180deg,#ecfdf5,#d1fae5);
+  box-shadow:0 10px 22px rgba(22,163,74,.11),inset 0 1px 0 rgba(255,255,255,.85);
+}
+.asset53-insurance-detail-toolbar svg{
+  width:17px;
+  height:17px;
+  stroke-width:2.65;
+  color:#0284c7;
+}
+.asset53-insurance-detail-toolbar .asset53-insurance-detail-toggle svg{
+  color:currentColor;
+}
+.asset53-insurance-detail-toolbar button:active{
+  transform:scale(.98);
+  box-shadow:0 6px 14px rgba(15,23,42,.065),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.asset53-insurance-detail-list{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  margin-left:-10px;
+  margin-right:-10px;
+  padding-left:10px;
+  padding-right:10px;
+  padding-bottom:0;
+  scrollbar-width:none;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.asset53-insurance-detail-list::-webkit-scrollbar{
+  display:none;
 }
 .asset53-flow-grid.asset53-insurance-flow-grid{
   grid-template-columns:minmax(0,1fr) auto!important;
