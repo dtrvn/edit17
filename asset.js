@@ -1341,26 +1341,55 @@
     return row.bao_hiem_da_tat_toan===true||row.insuranceSettled===true||row.settled===true||status==='SETTLED';
   }
 
+  function insuranceSettledDate(name){
+    const row=insuranceAssetRowForName(name);
+    if(!row)return '';
+    return String(row.ngay_tat_toan_bao_hiem||row.insuranceSettledAt||row.settledAt||'');
+  }
+
   function insuranceContractGroups(rows){
     const groups=new Map();
     (rows||[]).forEach(row=>{
       const name=String(row.assetName||row.name||'Hợp đồng bảo hiểm').trim()||'Hợp đồng bảo hiểm';
       const nameKey=plainText(name);
       const id=String(row.assetHoldingId||row.tai_san_thu_hoi_id||row.sourceTxnDocId||row.sourceTxnExternalId||row.id||'').trim();
-      const item=groups.get(nameKey)||{name,id:'',total:0,recovered:0,latest:''};
+      const rowDate=String(row.sortDate||row.date||'');
+      const item=groups.get(nameKey)||{name,id:'',total:0,recovered:0,latest:'',startDate:'',endDate:''};
       if(!item.id&&id&&!isSellMovement(row))item.id=id;
-      if(isSellMovement(row))item.recovered+=insuranceAmount(row);
-      else item.total+=insuranceAmount(row);
-      item.latest=String(item.latest||'')>String(row.sortDate||row.date||'')?item.latest:String(row.sortDate||row.date||'');
+      if(isSellMovement(row)){
+        item.recovered+=insuranceAmount(row);
+        item.endDate=String(item.endDate||'')>rowDate?item.endDate:rowDate;
+      }else{
+        item.total+=insuranceAmount(row);
+        item.startDate=!item.startDate||rowDate<String(item.startDate)?rowDate:item.startDate;
+      }
+      item.latest=String(item.latest||'')>rowDate?item.latest:rowDate;
       groups.set(nameKey,item);
     });
     return Array.from(groups.values())
       .filter(item=>Number(item.total||0)>0)
       .map(item=>{
         const remaining=Math.max(0,Number(item.total||0)-Number(item.recovered||0));
-        return {...item,remaining,settled:isInsuranceContractSettled(item.name)};
+        const settled=isInsuranceContractSettled(item.name);
+        return {...item,remaining,settled,endDate:settled?(item.endDate||insuranceSettledDate(item.name)):''};
       })
       .sort((a,b)=>String(b.latest||'').localeCompare(String(a.latest||'')));
+  }
+
+  function insuranceDateSlash(value){
+    const raw=String(value||'').trim();
+    const iso=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(iso)return `${iso[3]}/${iso[2]}/${iso[1]}`;
+    const local=raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+    if(local)return `${String(local[1]).padStart(2,'0')}/${String(local[2]).padStart(2,'0')}/${local[3]}`;
+    return raw;
+  }
+
+  function insuranceDateRangeText(item){
+    const start=insuranceDateSlash(item.startDate);
+    if(!start)return '';
+    const end=item.settled?insuranceDateSlash(item.endDate):'';
+    return end?`${start} ~ ${end}`:`Ngày bắt đầu: ${start}`;
   }
 
   function insuranceOverviewHtml(rows){
@@ -1376,6 +1405,7 @@
         const finalValue=item.settled
           ? `${profitLoss>=0?'+':'-'}${fmt(Math.abs(profitLoss))}`
           : fmt(item.remaining);
+        const dateText=insuranceDateRangeText(item);
         const action=item.settled
           ? `<button class="asset53-insurance-swipe-btn redo" type="button" data-asset-insurance-unsettle="${encoded}" title="Hủy tất toán" aria-label="Hủy tất toán"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7v6h6"/><path d="M21 17a8 8 0 0 0-13.6-5.7L3 15"/></svg></button>`
           : `<button class="asset53-insurance-swipe-btn settle" type="button" data-asset-insurance-settle="${encoded}" title="Tất toán" aria-label="Tất toán">${iconSvg('check')}</button>`;
@@ -1383,9 +1413,9 @@
           <div class="asset53-insurance-swipe">
             <div class="asset53-insurance-swipe-track">
               <div class="asset53-detail-row asset53-insurance-contract-row ${item.settled?'settled':''}">
-                ${item.settled?`<i class="asset53-insurance-settled" title="Đã tất toán" aria-label="Đã tất toán">${iconSvg('check')}</i>`:''}
                 <div class="asset53-insurance-contract-name">
                   <span>${item.name}</span>
+                  <span class="asset53-insurance-contract-dates">${dateText}${item.settled?`<i class="asset53-insurance-settled" title="Đã tất toán" aria-label="Đã tất toán">${iconSvg('check')}</i>`:''}</span>
                 </div>
                 <small>Tổng phí đã đóng</small>
                 <b>${fmt(item.total)}</b>

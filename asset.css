@@ -187,7 +187,7 @@
   min-height:38px;
 }
 .asset53-detail-screen.asset53-insurance-movement{
-  padding-bottom:20px!important;
+  padding-bottom:0!important;
 }
 .asset53-detail-screen.asset53-insurance-movement .slide-body{
   height:calc(100% - 64px)!important;
@@ -214,7 +214,7 @@
   -webkit-overflow-scrolling:touch;
 }
 .asset53-detail-screen.asset53-insurance-movement .asset53-scroll-list{
-  padding-bottom:20px;
+  padding-bottom:0;
 }
 .asset53-scroll-list::-webkit-scrollbar{display:none;}
 .asset53-detail-card{
@@ -1379,12 +1379,12 @@
   scroll-snap-align:start;
 }
 .asset53-insurance-contract-name{
-  grid-column:1/-1;
-  display:block;
-  margin-bottom:1px;
-  padding-right:28px;
+  display:contents;
 }
-.asset53-insurance-contract-name > span{
+.asset53-insurance-contract-name > span:first-child{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
   color:#0f172a;
   font-size:12px;
   font-weight:760;
@@ -1392,6 +1392,24 @@
   text-overflow:ellipsis;
   white-space:nowrap;
   display:block;
+}
+.asset53-insurance-contract-dates{
+  grid-column:2!important;
+  grid-row:1!important;
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:flex-end;
+  justify-self:end;
+  align-self:center;
+  gap:5px;
+  min-width:max-content!important;
+  margin-left:auto;
+  color:#64748b!important;
+  font-size:9.6px!important;
+  font-weight:680!important;
+  line-height:1.1!important;
+  text-align:right!important;
+  overflow:visible!important;
 }
 .asset53-insurance-swipe-action{
   display:grid;
@@ -1421,11 +1439,9 @@
   transform:translateY(1px);
 }
 .asset53-insurance-settled{
-  position:absolute;
-  right:8px;
-  top:7px;
   width:19px;
   height:19px;
+  flex:0 0 19px;
   border-radius:999px;
   display:grid;
   place-items:center;
