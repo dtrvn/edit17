@@ -259,6 +259,350 @@
   -webkit-font-smoothing:antialiased!important;
   text-rendering:auto!important;
 }
+
+/* Stock trade form refinements */
+.txn16-edit .txn16-control[data-edit-stock-holding]{
+  padding-left:8px!important;
+  padding-right:7px!important;
+}
+.txn16-edit .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:10.4px!important;
+  font-weight:500!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:scaleX(.9)!important;
+  transform-origin:left center!important;
+}
+.add39-sheet.add39-stock-holding-sheet{
+  padding-top:6px!important;
+}
+.add39-sheet.add39-stock-holding-sheet .add39-option{
+  height:36px!important;
+  min-height:36px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  color:#0f172a!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Arial,sans-serif!important;
+  font-size:12.6px!important;
+  font-weight:720!important;
+  line-height:1.1!important;
+  letter-spacing:0!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:optimizeLegibility!important;
+}
+.add39-sheet.add39-stock-holding-sheet .add39-option span:first-child{
+  color:#0f172a!important;
+  font-weight:720!important;
+  line-height:1.15!important;
+}
+
+/* Stock sell overrides after shared stock rules */
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  padding:9px!important;
+  box-sizing:border-box!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-field{
+  min-width:0!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control,
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-money-input{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:12.2px!important;
+  line-height:1.2!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding]{
+  justify-content:flex-start!important;
+  text-align:left!important;
+  gap:6px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:12.2px!important;
+  font-weight:500!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:none!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-label-row{
+  min-width:0!important;
+  gap:4px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-preview{
+  min-width:0!important;
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:9.8px!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option{
+  height:34px!important;
+  min-height:34px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  font-size:12.4px!important;
+  font-weight:680!important;
+  line-height:1.08!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option span:first-child{
+  line-height:1.08!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Stock sell overrides after shared stock rules */
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  padding:9px!important;
+  box-sizing:border-box!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-field{
+  min-width:0!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control,
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-money-input{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:12.2px!important;
+  line-height:1.2!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding]{
+  justify-content:flex-start!important;
+  text-align:left!important;
+  gap:6px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:12.2px!important;
+  font-weight:500!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:none!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-label-row{
+  min-width:0!important;
+  gap:4px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-preview{
+  min-width:0!important;
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:9.8px!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option{
+  height:34px!important;
+  min-height:34px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  font-size:12.4px!important;
+  font-weight:680!important;
+  line-height:1.08!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option span:first-child{
+  line-height:1.08!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Final edit-stock sell fit */
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  padding:9px!important;
+  box-sizing:border-box!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-field{
+  min-width:0!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control,
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-money-input{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:12.2px!important;
+  line-height:1.2!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding]{
+  justify-content:flex-start!important;
+  text-align:left!important;
+  gap:6px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:12.2px!important;
+  font-weight:500!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:none!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-label-row{
+  min-width:0!important;
+  gap:4px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-preview{
+  min-width:0!important;
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:9.8px!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option{
+  height:34px!important;
+  min-height:34px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  font-size:12.4px!important;
+  font-weight:680!important;
+  line-height:1.08!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option span:first-child{
+  line-height:1.08!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+#phone .txn16-edit .txn16-asset-block.txn16-stock-buy{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  padding:9px!important;
+  box-sizing:border-box!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-buy .txn16-field{
+  min-width:0!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-buy .txn16-money-input{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:12.2px!important;
+  line-height:1.2!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-buy .txn16-label-row{
+  min-width:0!important;
+  gap:4px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-buy .txn16-preview{
+  min-width:0!important;
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:9.8px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  padding:9px!important;
+  box-sizing:border-box!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-field{
+  min-width:0!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control,
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-money-input{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:12.2px!important;
+  line-height:1.2!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding]{
+  justify-content:flex-start!important;
+  text-align:left!important;
+  gap:6px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:12.2px!important;
+  font-weight:500!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:none!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-label-row{
+  min-width:0!important;
+  gap:4px!important;
+}
+#phone .txn16-edit .txn16-asset-block.txn16-stock-sell .txn16-preview{
+  min-width:0!important;
+  max-width:76px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:9.8px!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option{
+  height:36px!important;
+  min-height:36px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  font-size:12.6px!important;
+  font-weight:680!important;
+  line-height:1.12!important;
+}
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option span:first-child{
+  line-height:1.12!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
 #screenTransactions .slide-title{
   font-size:17px!important;
   font-weight:740!important;
@@ -967,4 +1311,46 @@
   background:linear-gradient(135deg,#2563eb,#3b82f6)!important;
   color:#fff!important;
   box-shadow:0 10px 20px rgba(37,99,235,.2)!important;
+}
+
+/* Final stock-specific overrides */
+.txn16-edit .txn16-control[data-edit-stock-holding]{
+  padding-left:8px!important;
+  padding-right:7px!important;
+}
+.txn16-edit .txn16-control[data-edit-stock-holding] span{
+  min-width:0!important;
+  max-width:none!important;
+  flex:1 1 auto!important;
+  color:#0f172a!important;
+  font-size:12.2px!important;
+  font-weight:500!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  transform:none!important;
+  transform-origin:left center!important;
+}
+.add39-sheet.add39-stock-holding-sheet .add39-option,
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option{
+  height:36px!important;
+  min-height:36px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  color:#0f172a!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Arial,sans-serif!important;
+  font-size:12.6px!important;
+  font-weight:720!important;
+  line-height:1.1!important;
+  letter-spacing:0!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:optimizeLegibility!important;
+}
+.add39-sheet.add39-stock-holding-sheet .add39-option span:first-child,
+.txn16-sheet.txn16-stock-holding-sheet .txn16-option span:first-child{
+  color:#0f172a!important;
+  font-weight:720!important;
+  line-height:1.15!important;
 }

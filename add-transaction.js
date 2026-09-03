@@ -48,6 +48,7 @@
   const isSavingState=()=>classifiedAssetType(state.type,state.group,state.child)==='SAVING';
   const isInsurancePremiumState=()=>txType(state.type)==='INVEST'&&classifiedAssetType(state.type,state.group,state.child)==='INSURANCE'&&normalizeDong(plainText(state.child)).includes('dong phi');
   const isStockBuyState=()=>txType(state.type)==='INVEST'&&classifiedAssetType(state.type,state.group,state.child)==='STOCK'&&normalizeDong(plainText(state.child)).includes('mua co phieu');
+  const isStockSellState=()=>txType(state.type)==='DIVEST'&&classifiedAssetType(state.type,state.group,state.child)==='STOCK'&&normalizeDong(plainText(state.child)).includes('ban co phieu');
   const percentValue=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.]/g,''))||0;
   const percentAmount=(amount,pct)=>Math.round(Number(amount||0)*percentValue(pct)/100);
   function classifiedAssetType(type,group,child){
@@ -243,7 +244,7 @@
     state.assetName=picked.name||state.assetName;
     state.assetHoldingId=picked.id||state.assetHoldingId||'';
     state.assetUnit=picked.unit||state.assetUnit||defaultAssetUnitForType(type);
-    if(fillQty&&type==='LAND'&&Number(picked.qty||0)>0)state.assetQty=String(picked.qty);
+    if(fillQty&&(type==='LAND'||type==='STOCK')&&Number(picked.qty||0)>0)state.assetQty=String(picked.qty);
   }
 
   function insuranceContractOptionsFromTransactions(){
@@ -309,6 +310,34 @@
     return buys;
   }
 
+  function stockHoldingOptionsFromTransactions(){
+    const txns=typeof window.TXN_getTransactions==='function'?window.TXN_getTransactions():[];
+    const holdings=new Map();
+    (Array.isArray(txns)?txns:[]).forEach(tx=>{
+      const type=classifiedAssetType(tx.large||tx.loai_lon,tx.group||tx.nhom_danh_muc,tx.child||tx.hang_muc_con)||String(tx.assetType||tx.loai_tai_san||'').toUpperCase();
+      if(type!=='STOCK')return;
+      const rawKind=String(tx.type||tx.loai_giao_dich||'').toUpperCase();
+      const kind=rawKind==='INVEST'||rawKind==='BUY'?'INVEST':(rawKind==='DIVEST'||rawKind==='SELL'?'DIVEST':txType(tx.large||tx.loai_lon));
+      const name=String(tx.assetName||tx.ten_tai_san||tx.tenTaiSan||tx.note||tx.ghi_chu||tx.child||tx.hang_muc_con||'').trim();
+      if(!name)return;
+      const qty=Number(String(tx.assetQty||tx.so_luong||tx.soLuong||tx.quantity||tx.qty||0).replace(',','.'))||0;
+      const id=String(tx.assetHoldingId||tx.tai_san_thu_hoi_id||tx.id||tx.external_id||'').trim();
+      const key=plainText(name);
+      const row=holdings.get(key)||{id,name,qty:0,unit:defaultAssetUnitForType('STOCK')};
+      if(kind==='INVEST')row.qty+=qty;
+      if(kind==='DIVEST')row.qty-=qty;
+      if(!row.id&&id)row.id=id;
+      holdings.set(key,row);
+    });
+    return Array.from(holdings.values())
+      .filter(row=>Number(row.qty||0)>0)
+      .sort((a,b)=>a.name.localeCompare(b.name,'vi'))
+      .map(row=>({
+        ...row,
+        label:[row.name,`${Number(row.qty||0).toLocaleString('vi-VN')} ${row.unit}`].filter(Boolean).join(' - ')
+      }));
+  }
+
   function assetHoldingOptions(type){
     if(type==='LAND'){
       const realestateRows=realestateHoldingOptionsFromTransactions();
@@ -317,6 +346,10 @@
     if(type==='INSURANCE'){
       const insuranceRows=insuranceContractOptionsFromTransactions();
       return insuranceRows;
+    }
+    if(type==='STOCK'){
+      const stockRows=stockHoldingOptionsFromTransactions();
+      if(stockRows.length)return stockRows;
     }
     const cls=assetClassForType(type);
     if(!cls)return [];
@@ -337,7 +370,7 @@
           name,
           unit:unitFromQtyText(type,qtyText),
           qty:Number(asset.aggregateQty||0),
-          label:type==='INSURANCE'?name:[name,qtyText,value?money(value):''].filter(Boolean).join(' - ')
+          label:type==='INSURANCE'?name:(type==='STOCK'?[name,qtyText].filter(Boolean).join(' - '):[name,qtyText,value?money(value):''].filter(Boolean).join(' - '))
         };
       })
       .filter(row=>row.name);
@@ -395,9 +428,11 @@
     if(!groups.includes(state.group))state.group=groups[0]||'';
     const children=childOptions(state.type,state.group);
     if(!children.includes(state.child))state.child=children[0]||'';
-    if(isStockBuyState()){
+    if(isStockBuyState()||isStockSellState()){
       if(!state.assetQty)state.assetQty='100';
       if(state.feePct==='')state.feePct='0.15';
+    }
+    if(isStockSellState()){
       if(state.taxPct==='')state.taxPct='0.1';
     }
   }
@@ -411,7 +446,7 @@
 
   function closeSheet(){
     const sheet=document.getElementById('add39Sheet');
-    sheet?.classList.remove('show','add39-insurance-name-sheet');
+    sheet?.classList.remove('show','add39-insurance-name-sheet','add39-stock-holding-sheet');
     document.getElementById('add39Backdrop')?.classList.remove('show');
   }
 
@@ -420,7 +455,8 @@
     const sheet=document.getElementById('add39Sheet');
     const back=document.getElementById('add39Backdrop');
     if(!sheet||!back)return;
-    sheet.classList.remove('add39-insurance-name-sheet');
+    sheet.classList.remove('add39-insurance-name-sheet','add39-stock-holding-sheet');
+    if(normalizeDong(plainText(title)).includes('ma co phieu'))sheet.classList.add('add39-stock-holding-sheet');
     sheet.innerHTML=`<div class="add39-handle"></div><div class="add39-sheet-title">${title}</div>${items.map(v=>{
       const create=String(v)==='Tạo hợp đồng mới';
       return `<button class="${create?'add39-create':'add39-option'} ${v===current?'active':''}" data-val="${encodeURIComponent(v)}"><span>${v}</span>${create?'':`<span class="add39-check">${v===current?'✓':''}</span>`}</button>`;
@@ -537,6 +573,8 @@
     const divestManagedAsset=txType(state.type)==='DIVEST'&&['LAND','STOCK','INSURANCE'].includes(currentAssetType);
     const managedRows=divestManagedAsset?assetHoldingOptions(currentAssetType):[];
     const selectedManaged=divestManagedAsset?selectedAssetHolding(currentAssetType):null;
+    const stockBuy=isStockBuyState();
+    const stockSell=isStockSellState();
     const insuranceRows=premiumInsurance?assetHoldingOptions('INSURANCE'):[];
     const selectedInsurance=insuranceRows.find(row=>plainText(row.name)===plainText(state.assetName))||null;
     const unitOptions=assetUnitOptionsForType(currentAssetType);
@@ -571,12 +609,14 @@
     const hideInsuranceQtyUnit=currentAssetType==='INSURANCE'&&(premiumInsurance||txType(state.type)==='DIVEST');
     const qtyField=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Số lượng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="1"></div>`;
     const unitBlock=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div>`;
-    const stockBuy=isStockBuyState();
-    const feeFields=stockBuy
+    const stockBuyLayout=false;
+    const feeFields=stockBuyLayout
       ? `<div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Phí GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thuế</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(state.amount,state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div>`
       : `<div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div>`;
+    const stockBuyFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div></div>`;
+    const stockSellFields=`<div class="add39-asset-block"><div class="add39-field"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thu&#7871;</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(state.amount,state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div></div>`;
     const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}${unitBlock}${feeFields}</div>`;
-    const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):defaultAssetFields):'';
+    const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):(stockBuy?stockBuyFields:(stockSell?stockSellFields:defaultAssetFields))):'';
     form.innerHTML=`<div class="add39-field"><label class="add39-label">Ngày giao dịch</label><button class="add39-control" data-add39-date><span>${dmy(state.date)}</span>${calIcon}</button></div><div class="add39-field"><label class="add39-label">Loại giao dịch</label><button class="add39-control" data-add39-type><span>${state.type||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Nhóm danh mục</label><button class="add39-control" data-add39-group><span>${state.group||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Hạng mục con</label><button class="add39-control" data-add39-child><span>${state.child||emptyText}</span>${chev}</button></div><div class="add39-field full"><div class="add39-label-row"><label class="add39-label">${amountLabel}</label><span class="add39-money-preview" id="add39MoneyPreview">${money(state.amount)}</span></div><input class="add39-input" id="add39Amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${state.amount||''}"></div>${assetFields}<div class="add39-field full"><label class="add39-label">Ghi chú</label><textarea class="add39-note" id="add39Note" placeholder="Nhập ghi chú">${state.note||''}</textarea></div><div class="add39-actions"><button type="button" class="add39-cancel" data-close="screenTxnForm">Hủy</button><button type="button" class="add39-save" id="add39Save">Lưu giao dịch</button></div>`;
   }
 
@@ -629,12 +669,14 @@
     const businessId='GD'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0')+String(now.getMilliseconds()).padStart(3,'0');
     const saveAsset=isSavingState();
     const stockBuy=isStockBuyState();
-    const fee=stockBuy?percentAmount(amount,state.feePct):(Number(String(state.fee||0).replace(/\D/g,''))||0);
-    const tax=stockBuy?percentAmount(amount,state.taxPct):0;
+    const stockSell=isStockSellState();
+    const stockTrade=stockBuy||stockSell;
+    const fee=stockTrade?percentAmount(amount,state.feePct):(Number(String(state.fee||0).replace(/\D/g,''))||0);
+    const tax=stockSell?percentAmount(amount,state.taxPct):0;
     const transactionCost=fee+tax;
     if(divestManagedAsset&&managedHolding)applyManagedAssetPick(managedHolding,currentAssetType,{fillQty:!state.assetQty});
     const qty=(saveAsset||currentAssetType==='INSURANCE')?1:(Number(String(state.assetQty||'').replace(',','.'))||1);
-    const unitForTx=saveAsset?'Sổ':(state.assetUnit||defaultAssetUnitForType(currentAssetType)||(currentAssetType==='GOLD'?'Chỉ':'Đơn vị'));
+    const unitForTx=saveAsset?'Sổ':(currentAssetType==='STOCK'?defaultAssetUnitForType('STOCK'):(state.assetUnit||defaultAssetUnitForType(currentAssetType)||(currentAssetType==='GOLD'?'Chỉ':'Đơn vị')));
     const priceQty=currentAssetType==='GOLD'?goldQtyToChi(qty,unitForTx):qty;
     if(isDivestGoldState()){
       const holding=selectedGoldHolding();
@@ -673,14 +715,14 @@
       don_vi:isAssetState()?unitForTx:'',
       loai_tai_san:isAssetState()?classifiedAssetType(state.type,state.group,state.child):'',
       phi:transactionCost,
-      phi_giao_dich:stockBuy?fee:0,
+      phi_giao_dich:stockTrade?fee:0,
       thue:tax,
-      phi_phan_tram:stockBuy?percentValue(state.feePct):0,
-      thue_phan_tram:stockBuy?percentValue(state.taxPct):0,
+      phi_phan_tram:stockTrade?percentValue(state.feePct):0,
+      thue_phan_tram:stockSell?percentValue(state.taxPct):0,
       so_luong:isAssetState()?qty:0,
       ten_tai_san:isAssetState()?(saveAsset?'Gửi tiết kiệm':((state.assetName||fallbackAssetName).trim())):'',
-      tai_san_thu_hoi_id:divestManagedAsset&&['LAND','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
-      assetHoldingId:divestManagedAsset&&['LAND','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
+      tai_san_thu_hoi_id:divestManagedAsset&&['LAND','STOCK','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
+      assetHoldingId:divestManagedAsset&&['LAND','STOCK','INSURANCE'].includes(currentAssetType)?state.assetHoldingId:'',
       so_tiet_kiem_id:savingBookId,
       so_tiet_kiem_label:savingBookLabel,
       gia_von_tat_toan:book?.cost||0,

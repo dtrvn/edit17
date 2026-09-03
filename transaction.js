@@ -120,6 +120,14 @@
   function isInsurancePremiumTx(t){
     return (t?.type==='INVEST'||typeFromLarge(t?.large)==='INVEST')&&assetTypeOf(t)==='INSURANCE'&&normalizeDong(plainText(t?.child)).includes('dong phi');
   }
+  function isStockBuyTx(t){
+    return (t?.type==='INVEST'||typeFromLarge(t?.large)==='INVEST')&&assetTypeOf(t)==='STOCK'&&normalizeDong(plainText(t?.child)).includes('mua co phieu');
+  }
+  function isStockSellTx(t){
+    return (t?.type==='DIVEST'||typeFromLarge(t?.large)==='DIVEST')&&assetTypeOf(t)==='STOCK'&&normalizeDong(plainText(t?.child)).includes('ban co phieu');
+  }
+  const percentValue=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.]/g,''))||0;
+  const percentAmount=(amount,pct)=>Math.round(Number(amount||0)*percentValue(pct)/100);
   function assetUnitOptionsForType(type){
     if(type==='LAND')return ['m2','Lô'];
     if(type==='STOCK')return ['Cổ'];
@@ -156,6 +164,31 @@
       rows.unshift({id:String(currentTx?.assetHoldingId||currentTx?.id||''),name:currentName,value,unit:defaultAssetUnitForType('INSURANCE'),label:currentName});
     }
     return rows;
+  }
+  function stockHoldingOptions(currentTx=null){
+    const holdings=new Map();
+    (transactions||[]).forEach(tx=>{
+      if(assetTypeOf(tx)!=='STOCK')return;
+      const kind=tx.type||typeFromLarge(tx.large);
+      const name=String(tx.assetName||tx.note||tx.child||'').trim();
+      if(!name)return;
+      const qty=Number(tx.assetQty||0)||0;
+      const id=String(tx.assetHoldingId||tx.id||tx.external_id||'').trim();
+      const key=plainText(name);
+      const row=holdings.get(key)||{id,name,qty:0,unit:defaultAssetUnitForType('STOCK')};
+      if(kind==='INVEST')row.qty+=qty;
+      if(kind==='DIVEST'&&String(tx.id)!==String(currentTx?.id))row.qty-=qty;
+      if(!row.id&&id)row.id=id;
+      holdings.set(key,row);
+    });
+    const currentName=String(currentTx?.assetName||'').trim();
+    if(currentName&&!holdings.has(plainText(currentName))){
+      holdings.set(plainText(currentName),{id:String(currentTx?.assetHoldingId||currentTx?.id||''),name:currentName,qty:Number(currentTx?.assetQty||0)||0,unit:defaultAssetUnitForType('STOCK')});
+    }
+    return Array.from(holdings.values())
+      .filter(row=>Number(row.qty||0)>0)
+      .sort((a,b)=>a.name.localeCompare(b.name,'vi'))
+      .map(row=>({...row,label:[row.name,`${Number(row.qty||0).toLocaleString('vi-VN')} ${row.unit}`].filter(Boolean).join(' - ')}));
   }
   function assetToneForTx(t){
     const helper=window.ASSET52_colorForTransaction;
@@ -226,6 +259,10 @@
     assetUnit:String(firstValue(x,['assetUnit','don_vi','donVi'])||''),
     assetPrice:parseAmount(firstValue(x,['assetPrice','don_gia','donGia','price','gia_hien_tai'])),
     fee:parseAmount(firstValue(x,['fee','phi','phí'])),
+    tradingFee:parseAmount(firstValue(x,['tradingFee','phi_giao_dich'])),
+    tax:parseAmount(firstValue(x,['tax','thue'])),
+    feePct:String(firstValue(x,['feePct','phi_phan_tram'])||''),
+    taxPct:String(firstValue(x,['taxPct','thue_phan_tram'])||''),
     assetInterest:String(firstValue(x,['assetInterest','assetRate','lai_suat','laiSuat','interestRate','interest_rate','rate'])||x.chi_tiet_tai_san?.lai_suat||x.assetDetail?.lai_suat||''),
     assetRate:String(firstValue(x,['assetRate','assetInterest','lai_suat','laiSuat','interestRate','interest_rate','rate'])||x.chi_tiet_tai_san?.lai_suat||x.assetDetail?.lai_suat||''),
     savingTerm:String(firstValue(x,['savingTerm','ky_han','kyHan'])||''),
@@ -247,6 +284,12 @@
     const termDays=saving?savingTermDays(t.savingTerm||'1 tháng',t.date):Number(t.savingTermDays||0);
     const rate=t.assetInterest||t.assetRate||'';
     const interestAmount=saving?proratedInterest(t.amount,rate,termDays):Number(t.savingInterestAmount||0);
+    const stockBuy=isStockBuyTx(t);
+    const stockSell=isStockSellTx(t);
+    const stockTrade=stockBuy||stockSell;
+    const tradingFee=stockTrade?percentAmount(t.amount,t.feePct):(Number(t.fee||0)||0);
+    const tax=stockSell?percentAmount(t.amount,t.taxPct):0;
+    const transactionFee=stockTrade?tradingFee+tax:Number(t.fee||0);
     const data={
       ngay:t.date,
       loai_giao_dich:t.type||typeFromLarge(t.large),
@@ -258,9 +301,13 @@
       loai_tai_san:isAssetTx(t)?(t.assetType||assetType):'',
       ten_tai_san:isAssetTx(t)?(saving?'Gửi tiết kiệm':(t.assetName||(assetType==='GOLD'?'Vàng 98%':t.child||t.group||'Tài sản'))):'',
       so_luong:isAssetTx(t)?(saving||insurance?1:(Number(t.assetQty||0)||1)):0,
-      don_vi:isAssetTx(t)?(saving?'Sổ':(insurance?'Hợp đồng':(t.assetUnit||defaultAssetUnitForType(assetType)||(assetType==='GOLD'?'Chỉ':'Đơn vị')))):'',
+      don_vi:isAssetTx(t)?(saving?'Sổ':(insurance?'Hợp đồng':(assetType==='STOCK'?defaultAssetUnitForType('STOCK'):(t.assetUnit||defaultAssetUnitForType(assetType)||(assetType==='GOLD'?'Chỉ':'Đơn vị'))))):'',
       don_gia:assetUnitPriceForTx(t),
-      phi:isAssetTx(t)?Number(t.fee||0):0,
+      phi:isAssetTx(t)?transactionFee:0,
+      phi_giao_dich:stockTrade?tradingFee:0,
+      thue:tax,
+      phi_phan_tram:stockTrade?percentValue(t.feePct):0,
+      thue_phan_tram:stockSell?percentValue(t.taxPct):0,
       updated_at:new Date().toISOString(),
       lai_suat:rate,
       lai_suat_nam:rate,
@@ -376,7 +423,7 @@
 
   function onClick(e){if(e.target.closest('[data-txn16-back]')){closeScreen('screenTransactions');return}if(e.target.closest('[data-type-sheet]'))return openOptions('Loại lớn',Object.entries(typeLabels).map(([value,label])=>({value,label})),state.type,v=>{state.type=v;sync();renderList()});if(e.target.closest('[data-range-sheet]'))return openOptions('Khoảng thời gian',Object.entries(rangeLabels).map(([value,label])=>({value,label})),state.range,v=>{state.range=v;sync();renderList()});const date=e.target.closest('[data-date-field]');if(date)return openCalendar(state[date.dataset.dateField],v=>{state[date.dataset.dateField]=v;sync();renderList()});const edit=e.target.closest('[data-edit]');if(edit)return openEdit(edit.dataset.edit)}
   function ensureSheet(){const phone=document.getElementById('phone');if(!document.getElementById('txn16Backdrop'))phone.insertAdjacentHTML('beforeend','<div class="txn16-backdrop" id="txn16Backdrop"></div><div class="txn16-sheet" id="txn16Sheet"></div>')}
-  function openOptions(title,options,current,onPick){ensureSheet();const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');sheet.classList.remove('txn16-insurance-name-sheet');sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-sheet-title">${title}</div>${options.map(o=>{const edit=o.value==='__edit_insurance_contract__';return `<button class="${edit?'txn16-create':'txn16-option'} ${o.value===current?'active':''}" data-val="${encodeURIComponent(o.value)}"><span>${o.label}</span>${edit?'':`<span class="txn16-check">${o.value===current?'✓':''}</span>`}</button>`}).join('')}`;function close(){sheet.classList.remove('show');back.classList.remove('show')}sheet.onclick=e=>{const b=e.target.closest('[data-val]');if(!b)return;onPick(decodeURIComponent(b.dataset.val||''));close()};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
+  function openOptions(title,options,current,onPick){ensureSheet();const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');sheet.classList.remove('txn16-insurance-name-sheet','txn16-stock-holding-sheet');if(normalizeDong(plainText(title)).includes('ma co phieu'))sheet.classList.add('txn16-stock-holding-sheet');sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-sheet-title">${title}</div>${options.map(o=>{const edit=o.value==='__edit_insurance_contract__';return `<button class="${edit?'txn16-create':'txn16-option'} ${o.value===current?'active':''}" data-val="${encodeURIComponent(o.value)}"><span>${o.label}</span>${edit?'':`<span class="txn16-check">${o.value===current?'✓':''}</span>`}</button>`}).join('')}`;function close(){sheet.classList.remove('show','txn16-stock-holding-sheet');back.classList.remove('show')}sheet.onclick=e=>{const b=e.target.closest('[data-val]');if(!b)return;onPick(decodeURIComponent(b.dataset.val||''));close()};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
   function openEditInsuranceNameSheet(value=''){
     ensureSheet();
     const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');
@@ -431,6 +478,25 @@
       const label=current?.label||assetName||'Tên hợp đồng bảo hiểm';
       return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên hợp đồng bảo hiểm</label><button class="txn16-control" data-edit-insurance-contract type="button"><span>${label}</span>${chev()}</button></div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
     }
+    if(isStockBuyTx(t)){
+      t.assetType='STOCK';
+      t.assetUnit=defaultAssetUnitForType('STOCK');
+      if(!t.assetQty)t.assetQty=100;
+      if(t.feePct==='')t.feePct='0.15';
+      return `<div class="txn16-asset-block txn16-stock-buy"><div class="txn16-field full"><label class="txn16-label">Mã cổ phiếu</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(t.amount,t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div></div>`;
+    }
+    if(isStockSellTx(t)){
+      t.assetType='STOCK';
+      t.assetUnit=defaultAssetUnitForType('STOCK');
+      if(!t.assetQty)t.assetQty=100;
+      if(t.feePct==='')t.feePct='0.15';
+      if(t.taxPct==='')t.taxPct='0.1';
+      const rows=stockHoldingOptions(t);
+      const current=rows.find(row=>plainText(row.name)===plainText(t.assetName))||rows[0]||null;
+      if(current&&!t.assetName)t.assetName=current.name;
+      const label=current?.label||assetName||'Chưa có cổ phiếu để bán';
+      return `<div class="txn16-asset-block txn16-stock-sell"><div class="txn16-field"><label class="txn16-label">Mã cổ phiếu</label><button class="txn16-control" data-edit-stock-holding type="button"><span>${label}</span>${chev()}</button></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(t.amount,t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Thuế</label><span class="txn16-preview" id="txn16TaxPreview">${fmt(percentAmount(t.amount,t.taxPct))}</span></div><input class="txn16-money-input" id="txn16TaxPct" inputmode="decimal" value="${t.taxPct}" placeholder="0.1"></div></div>`;
+    }
     return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên tài sản</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field"><label class="txn16-label">Đơn vị</label>${unitField}</div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
   }
   function editHtml(){const t=state.editing;return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại giao dịch</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">Số tiền</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
@@ -477,6 +543,13 @@
       state.editing.assetType='INSURANCE';
       state.editing.assetQty=1;
       state.editing.assetUnit=defaultAssetUnitForType('INSURANCE');
+    }
+    if(isStockBuyTx(state.editing)||isStockSellTx(state.editing)){
+      state.editing.assetType='STOCK';
+      state.editing.assetUnit=defaultAssetUnitForType('STOCK');
+      if(!state.editing.assetQty)state.editing.assetQty=100;
+      if(state.editing.feePct==='')state.editing.feePct='0.15';
+      if(isStockSellTx(state.editing)&&state.editing.taxPct==='')state.editing.taxPct='0.1';
     }
     state.saving=true;
     window.QLCT_setBusy?.(true,'Đang lưu thay đổi');
@@ -534,6 +607,14 @@
     t.savingInterestAmount=proratedInterest(t.amount,rate,t.savingTermDays);
     el.textContent=fmt(t.savingInterestAmount);
   }
+  function updateEditStockFeePreview(){
+    const t=state.editing;
+    if(!t)return;
+    const fee=document.getElementById('txn16FeePreview');
+    const tax=document.getElementById('txn16TaxPreview');
+    if(fee)fee.textContent=fmt(percentAmount(t.amount,t.feePct));
+    if(tax)tax.textContent=fmt(percentAmount(t.amount,t.taxPct));
+  }
   document.addEventListener('click',e=>{
     if(!state.editing||!document.getElementById('txn16Edit')?.classList.contains('active'))return;
     const term=e.target.closest('[data-edit-saving-term]');
@@ -542,10 +623,32 @@
     e.stopImmediatePropagation();
     openOptions('Kỳ hạn',savingTermOptions,state.editing.savingTerm||'1 tháng',v=>{state.editing.savingTerm=v;rerenderEdit();});
   },true);
+  document.addEventListener('click',e=>{
+    if(!state.editing||!document.getElementById('txn16Edit')?.classList.contains('active'))return;
+    const stock=e.target.closest('[data-edit-stock-holding]');
+    if(!stock)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const rows=stockHoldingOptions(state.editing);
+    const current=rows.find(row=>plainText(row.name)===plainText(state.editing.assetName))||rows[0]||null;
+    openOptions('Mã cổ phiếu',rows.length?rows.map((row,index)=>({value:`pick:${index}`,label:row.label})):[{value:'',label:'Chưa có cổ phiếu để bán'}],current?`pick:${rows.indexOf(current)}`:'',v=>{
+      const index=Number(String(v).replace('pick:',''));
+      const picked=rows[index];
+      if(!picked)return;
+      state.editing.assetName=picked.name;
+      state.editing.assetHoldingId=picked.id||'';
+      state.editing.assetType='STOCK';
+      state.editing.assetUnit=defaultAssetUnitForType('STOCK');
+      state.editing.assetQty=Number(picked.qty||0)||100;
+      rerenderEdit();
+    });
+  },true);
   document.addEventListener('input',e=>{
     if(!state.editing||!document.getElementById('txn16Edit')?.classList.contains('active'))return;
     if(e.target?.id==='txn16AssetInterest'){state.editing.assetInterest=e.target.value;state.editing.assetRate=e.target.value;updateEditSavingPreview();}
-    if(e.target?.id==='txn16Amount')setTimeout(updateEditSavingPreview,0);
+    if(e.target?.id==='txn16Amount'){setTimeout(updateEditSavingPreview,0);setTimeout(updateEditStockFeePreview,0);}
+    if(e.target?.id==='txn16FeePct'){state.editing.feePct=e.target.value;updateEditStockFeePreview();}
+    if(e.target?.id==='txn16TaxPct'){state.editing.taxPct=e.target.value;updateEditStockFeePreview();}
   },true);
   function bindEdit(el){el.onclick=e=>{const t=state.editing;if(e.target.closest('[data-edit-back]')){el.classList.remove('active');setTimeout(()=>el.remove(),330);return}if(e.target.closest('[data-edit-date]'))openCalendar(t.date,v=>{t.date=v;rerenderEdit()});if(e.target.closest('[data-edit-large]')){refreshCategories();openOptions('Loại giao dịch',categories.large.map(x=>({value:x,label:x})),t.large,v=>{t.large=v;t.type=typeFromLarge(v);const groups=categories.groups[v]||[];t.group=groups[0]||'';const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-group]')){refreshCategories();openOptions('Nhóm danh mục',(categories.groups[t.large]||[]).map(x=>({value:x,label:x})),t.group,v=>{t.group=v;const children=categoryChildren(t.large,t.group);t.child=children[0]||'';if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-child]')){refreshCategories();openOptions('Hạng mục con',categoryChildren(t.large,t.group).map(x=>({value:x,label:x})),t.child,v=>{t.child=v;if(!isAssetTx(t))clearAssetFields(t);rerenderEdit()});}if(e.target.closest('[data-edit-insurance-contract]')){const rows=insuranceContractOptions(t);const editValue='__edit_insurance_contract__';const currentIndex=rows.findIndex(row=>plainText(row.name)===plainText(t.assetName));const options=rows.map((row,index)=>({value:`pick:${index}`,label:row.label})).concat([{value:editValue,label:'Sửa tên hợp đồng bảo hiểm'}]);openOptions('Tên hợp đồng bảo hiểm',options,currentIndex>=0?`pick:${currentIndex}`:editValue,v=>{if(v===editValue){setTimeout(()=>openEditInsuranceNameSheet(t.assetName||''),0);return;}const index=Number(String(v).replace('pick:',''));const picked=rows[index];if(picked){t.assetName=picked.name;t.assetHoldingId=picked.id||'';t.assetType='INSURANCE';t.assetQty=1;t.assetUnit=defaultAssetUnitForType('INSURANCE');rerenderEdit();}});}if(e.target.closest('[data-edit-asset-unit]')){const type=assetTypeOf(t);const options=assetUnitOptionsForType(type).map(value=>({value,label:value}));openOptions('Đơn vị',options,t.assetUnit||defaultAssetUnitForType(type)||'Chỉ',v=>{t.assetUnit=v;rerenderEdit()});}};el.querySelector('#txn16Amount').oninput=e=>{state.editing.amount=Number(String(e.target.value).replace(/\D/g,''))||0;const p=el.querySelector('.txn16-preview');if(p)p.textContent=fmt(state.editing.amount);};el.querySelector('#txn16Note').oninput=e=>state.editing.note=e.target.value;const an=el.querySelector('#txn16AssetName');if(an)an.oninput=e=>state.editing.assetName=e.target.value;const aq=el.querySelector('#txn16AssetQty');if(aq)aq.oninput=e=>state.editing.assetQty=Number(String(e.target.value).replace(',','.'))||0;const au=el.querySelector('#txn16AssetUnit');if(au)au.oninput=e=>state.editing.assetUnit=e.target.value;const fee=el.querySelector('#txn16Fee');if(fee)fee.oninput=e=>state.editing.fee=Number(String(e.target.value).replace(/\D/g,''))||0;}
   document.addEventListener('click',e=>{

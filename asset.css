@@ -1556,25 +1556,25 @@
 }
 .asset53-stock-metrics{
   display:grid;
-  grid-template-columns:minmax(0,.92fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,1fr);
+  grid-template-columns:minmax(74px,.95fr) minmax(68px,.86fr) minmax(84px,1.08fr) minmax(0,.78fr);
   align-items:center;
   gap:5px 6px;
 }
 .asset53-stock-metrics small{
   min-width:0;
   color:#64748b;
-  font-size:9.1px;
-  font-weight:680;
-  line-height:1.12;
+  font-size:8.6px;
+  font-weight:700;
+  line-height:1.08;
   overflow:hidden;
-  text-overflow:ellipsis;
+  text-overflow:clip;
   white-space:nowrap;
 }
 .asset53-stock-metrics b{
   min-width:0;
   color:#0f172a;
   font-size:10.7px;
-  font-weight:800;
+  font-weight:500;
   line-height:1.12;
   text-align:right;
   white-space:nowrap;
@@ -1583,11 +1583,11 @@
 }
 .asset53-stock-metrics > :nth-child(2),
 .asset53-stock-metrics > :nth-child(6){
-  transform:translateX(-30px);
+  transform:translateX(20px);
 }
 .asset53-stock-metrics > :nth-child(3),
 .asset53-stock-metrics > :nth-child(7){
-  transform:translateX(-30px);
+  transform:translateX(20px);
 }
 .asset53-stock-metrics b.profit{
   color:#16a34a;

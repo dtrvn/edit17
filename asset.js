@@ -1228,13 +1228,14 @@
           },state.id);
         }).map(row=>({...row,assetName:state.name,categoryKey:key})))
       : items.flatMap(asset=>(detailData[asset.key]||[]).map(row=>({...row,assetName:cls==='stock'?stockName(row):asset.name,categoryKey:key})));
-    const total=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).currentValue,0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
-    const cost=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.totalCost||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateCost||0),0);
-    const profit=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).totalProfit,0):items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0);
-    const realized=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.realizedProfit||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateRealized||0),0);
+    const activeStocks=cls==='stock'?stockHoldingGroups(rows).filter(stock=>Number(stock.qty||0)>0):null;
+    const total=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).currentValue,0):(activeStocks?activeStocks.reduce((sum,stock)=>sum+Number(stock.currentValue||0),0):items.reduce((sum,x)=>sum+Number(x.value||0),0));
+    const cost=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.totalCost||0),0):(activeStocks?activeStocks.reduce((sum,stock)=>sum+Number(stock.cost||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateCost||0),0));
+    const profit=realestateStates?realestateStates.reduce((sum,state)=>sum+assetProfitState(state).totalProfit,0):(activeStocks?activeStocks.reduce((sum,stock)=>sum+Number(stock.totalProfit||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateProfit||0),0));
+    const realized=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.realizedProfit||0),0):(activeStocks?activeStocks.reduce((sum,stock)=>sum+Number(stock.realized||0),0):items.reduce((sum,x)=>sum+Number(x.aggregateRealized||0),0));
     const saving=cls==='saving';
     const activeInsuranceCount=cls==='insurance'?items.filter(item=>!isInsuranceContractSettled(item.name)).length:0;
-    const qty=realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.qty||0),0):(saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):items.reduce((sum,x)=>sum+Number(x.aggregateQty||0),0));
+    const qty=activeStocks?activeStocks.length:(realestateStates?realestateStates.reduce((sum,state)=>sum+Number(state.qty||0),0):(saving?Math.max(0,rows.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0)):items.reduce((sum,x)=>sum+Number(x.aggregateQty||0),0)));
     detailData[key]=rows;
     const asset={
       key,
@@ -1247,7 +1248,7 @@
       aggregateProfit:profit,
       aggregateRealized:realized,
       aggregateQty:qty,
-      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(cls==='realestate'?`${qty.toLocaleString('vi-VN')} tài sản`:(cls==='insurance'?`${activeInsuranceCount} hợp đồng`:(items.length?`${items.length} tài sản`:'-'))),
+      qtyText:saving?`${qty.toLocaleString('vi-VN')} Sổ tiết kiệm`:(cls==='realestate'?`${qty.toLocaleString('vi-VN')} tài sản`:(cls==='insurance'?`${activeInsuranceCount} hợp đồng`:(cls==='stock'?`${qty.toLocaleString('vi-VN')} mã chứng khoán`:(items.length?`${items.length} tài sản`:'-')))),
       isCategory:true
     };
     categoryAssets[key]=asset;
@@ -1258,14 +1259,16 @@
     const count=items.length;
     const key=count?categoryDetailKey(cls):'';
     const detail=count?buildCategoryDetail(label,cls,items):null;
-    const total=cls==='realestate'&&detail?Number(detail.value||0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
+    const total=(cls==='realestate'||cls==='stock')&&detail?Number(detail.value||0):items.reduce((sum,x)=>sum+Number(x.value||0),0);
     const subText=cls==='saving'
       ? (detail?.qtyText||'Chưa có tài sản')
       : cls==='realestate'
         ? (detail?.qtyText||'0 tài sản')
         : cls==='insurance'
           ? (detail?.qtyText||`${count} hợp đồng`)
-          : (count?`${count} tài sản`:'Chưa có tài sản');
+          : cls==='stock'
+            ? (detail?.qtyText||'0 mã chứng khoán')
+            : (count?`${count} tài sản`:'Chưa có tài sản');
     return `<button class="asset52-card ${cls} ${key?'':'is-static'}" type="button" ${key?`data-asset-key="${key}"`:''}>
       <span class="asset52-icon">${iconSvg(icon)}</span>
       <span class="asset52-info"><span class="asset52-name">${label}</span><span class="asset52-sub">${subText}</span></span>
@@ -1275,7 +1278,13 @@
   }
 
   function categorySectionHtml(title,categories){
-    const total=categories.reduce((sum,category)=>sum+category.items.reduce((part,item)=>part+Number(item.value||0),0),0);
+    const total=categories.reduce((sum,category)=>{
+      if(category.cls==='stock'&&category.items.length){
+        const detail=buildCategoryDetail(category.label,category.cls,category.items);
+        return sum+Number(detail?.value||0);
+      }
+      return sum+category.items.reduce((part,item)=>part+Number(item.value||0),0);
+    },0);
     return `<section class="asset52-section">
       <div class="asset52-section-head"><span>${title}</span><b>${fmt(total)}</b></div>
       <div class="asset52-section-list">${categories.map(categoryCard).join('')}</div>
