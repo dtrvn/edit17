@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260901-insurance-split-fixed-scroll-s';
+const CACHE_NAME = 'qlct-pwa-v20260904-stock-tab-height-sync-a';
 const APP_SHELL = [
   './',
   './index.html',

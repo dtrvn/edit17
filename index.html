@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=stock-card-summary-20260902b">
+<link rel="stylesheet" href="asset.css?v=stock-tab-height-sync-20260904a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1425,12 +1425,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=stock-card-summary-20260902b"></script>
+<script src="asset.js?v=stock-tab-height-sync-20260904a"></script>
 <script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260901s';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-stock-tab-height-sync-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1444,7 +1444,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=insurance-split-fixed-scroll-20260901s')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=stock-tab-height-sync-20260904a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

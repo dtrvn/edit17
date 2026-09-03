@@ -14,6 +14,7 @@
   const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#475569',other:'#06b6d4'};
   const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const fmtProfit=n=>Number(n||0)===0?'0 đ':(Number(n)>0?'+':'')+fmt(n);
+  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
   function slug(v){
     return String(v||'').trim().toLowerCase().normalize('NFD')
@@ -1325,7 +1326,7 @@
     return document.getElementById('screenAssetDetail');
   }
 
-  let detailState={key:'',tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income'};
+  let detailState={key:'',tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',stockSearch:'',stockOverviewFilter:'all',stockMovementView:'chart',stockTradeFilter:'all',stockTradeSearch:''};
 
   function pairFor(item){
     if(!item?.sourceTxnDocId)return null;
@@ -1536,14 +1537,18 @@
       const latest=sorted[sorted.length-1]?.sortDate||sorted[sorted.length-1]?.date||'';
       const unit=String(sorted.find(row=>row.unit)?.unit||'đơn vị').trim()||'đơn vị';
       return {...group,rows:costed,qty,cost,purchased,recovered,realized,avgCost,currentPrice,currentValue,totalProfit,startDate:firstBuy,latest,unit,closed:qty<=0};
-    }).sort((a,b)=>String(b.latest||'').localeCompare(String(a.latest||'')));
+    }).sort((a,b)=>{
+      if(a.closed!==b.closed)return a.closed?1:-1;
+      return String(b.latest||'').localeCompare(String(a.latest||''));
+    });
   }
 
   function stockHoldingCardHtml(item,options={}){
     const header=options.header===true;
     const finalClass=item.totalProfit<0?'loss':(item.totalProfit>0?'profit':'');
+    const closedIcon=item.closed?`<i class="asset53-stock-sold-tick" title="Đã bán hết" aria-label="Đã bán hết">${iconSvg('check')}</i>`:'';
     return `<div class="asset53-detail-row asset53-stock-holding-row ${item.closed?'settled':''} ${header?'asset53-insurance-header-card':''}">
-      <div class="asset53-stock-name">${item.name}</div>
+      <div class="asset53-stock-name"><span>${item.name}</span>${closedIcon}</div>
       <div class="asset53-stock-metrics">
         <small>Số lượng còn lại</small>
         <b>${Number(item.qty||0).toLocaleString('vi-VN')}</b>
@@ -1591,9 +1596,22 @@
 
   function stockOverviewHtml(rows){
     if(detailState.stockDetail)return stockHoldingDetailHtml(rows);
+    const query=String(detailState.stockSearch||'').trim();
+    const normalizedQuery=plainText(query);
+    const filter=detailState.stockOverviewFilter==='holding'||detailState.stockOverviewFilter==='sold'?detailState.stockOverviewFilter:'all';
+    const labels={all:'Hiển thị tất cả',holding:'Đang nắm giữ',sold:'Đã bán hết'};
     const stocks=stockHoldingGroups(rows);
-    const list=stocks.length
-      ? `<div class="asset53-insurance-contract-list asset53-stock-holding-list">${stocks.map(item=>{
+    const visibleStocks=stocks.filter(item=>{
+      if(filter==='holding'&&item.closed)return false;
+      if(filter==='sold'&&!item.closed)return false;
+      return !normalizedQuery||plainText(item.name).includes(normalizedQuery);
+    });
+    const search=`<div class="asset53-stock-search">
+      <button type="button" class="asset53-stock-filter-btn" data-asset-stock-overview-filter-sheet><span>${labels[filter]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg></button>
+      <input type="search" data-asset-stock-search placeholder="Tìm mã chứng khoán" value="${escapeHtml(query)}" autocomplete="off" />
+    </div>`;
+    const list=visibleStocks.length
+      ? `<div class="asset53-insurance-contract-list asset53-stock-holding-list">${visibleStocks.map(item=>{
         const encoded=encodeURIComponent(item.name);
         return `<div class="asset53-insurance-contract-item asset53-stock-holding-item">
           <div class="asset53-insurance-swipe asset53-stock-swipe">
@@ -1606,9 +1624,10 @@
           </div>
         </div>`;
       }).join('')}</div>`
-      : '<div class="asset53-empty">Chưa có chứng khoán.</div>';
-    return `<div class="asset53-overview">
-      ${list}
+      : `<div class="asset53-empty">${stocks.length?'Không tìm thấy mã chứng khoán.':'Chưa có chứng khoán.'}</div>`;
+    return `<div class="asset53-overview asset53-stock-overview-wrap">
+      ${search}
+      <div class="asset53-stock-overview-list">${list}</div>
     </div>`;
   }
 
@@ -2007,7 +2026,7 @@
   }
 
   function stockQtyLabel(value){
-    return `${Math.max(0,Number(value||0)).toLocaleString('vi-VN')} đv`;
+    return Math.max(0,Number(value||0)).toLocaleString('vi-VN');
   }
 
   function stockYearProfitHtml(rows,year){
@@ -2039,6 +2058,187 @@
       </svg>
       <div class="asset53-chart-months">${Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('')}</div>
     </div>`;
+  }
+
+  function stockYearCloseStats(rows,year){
+    const byStock=new Map();
+    (rows||[]).forEach(row=>{
+      const name=stockName(row);
+      const key=plainText(name);
+      const current=byStock.get(key)||{name,rows:[],profit:0,count:0};
+      current.rows.push(row);
+      byStock.set(key,current);
+    });
+    byStock.forEach(item=>{
+      applyCostBasis(item.rows,'stock')
+        .filter(row=>isSellMovement(row)&&movementYear(row)===Number(year))
+        .forEach(row=>{
+          item.profit+=Math.round(Number(row.realizedProfit||0));
+          item.count+=1;
+        });
+    });
+    const items=Array.from(byStock.values()).filter(item=>item.count>0);
+    const totalGain=items.reduce((sum,item)=>sum+(item.profit>0?item.profit:0),0);
+    const totalLoss=items.reduce((sum,item)=>sum+(item.profit<0?Math.abs(item.profit):0),0);
+    return {
+      totalGain,
+      totalLoss,
+      topGain:items.filter(item=>item.profit>0).sort((a,b)=>b.profit-a.profit).slice(0,6),
+      topLoss:items.filter(item=>item.profit<0).sort((a,b)=>a.profit-b.profit).slice(0,6)
+    };
+  }
+
+  function stockProfitBarsHtml(items,type){
+    const label=type==='gain'?'Top mã chốt lãi':'Top mã chốt lỗ';
+    const max=Math.max(...items.map(item=>Math.abs(Number(item.profit||0))),1);
+    const rows=items.length
+      ? items.map(item=>{
+        const pct=Math.max(4,Math.round(Math.abs(Number(item.profit||0))*100/max));
+        const scale=(pct/100).toFixed(2);
+        return `<div class="asset53-stock-top-row">
+          <span>${item.name}</span>
+          <div><i style="--bar:${scale}"></i></div>
+          <b>${fmtProfit(item.profit)}</b>
+        </div>`;
+      }).join('')
+      : '<div class="asset53-stock-top-empty">Chưa có mã phù hợp</div>';
+    return `<div class="asset53-stock-top-card ${type}">
+      <div class="asset53-stock-analysis-title">${label}</div>
+      ${rows}
+    </div>`;
+  }
+
+  function stockProfitAnalysisHtml(rows,year){
+    const stats=stockYearCloseStats(rows,year);
+    const total=stats.totalGain+stats.totalLoss;
+    const gainPct=total?Math.round(stats.totalGain*100/total):0;
+    const lossPct=total?100-gainPct:0;
+    return `<div class="asset53-stock-analysis ${total?'':'is-empty'}">
+      <div class="asset53-stock-donut-card">
+        <div class="asset53-stock-analysis-title">Tỉ lệ lãi/lỗ đã chốt ${year}</div>
+        <div class="asset53-stock-donut-wrap">
+          <div class="asset53-stock-donut">
+            <svg viewBox="0 0 80 80" aria-hidden="true">
+              <circle class="gain-glow" cx="40" cy="40" r="30" pathLength="100" style="--dash:${gainPct};--gap:${lossPct};--offset:0;"></circle>
+              <circle class="loss-glow" cx="40" cy="40" r="30" pathLength="100" style="--dash:${lossPct};--gap:${gainPct};--offset:${-gainPct};"></circle>
+              <circle class="track" cx="40" cy="40" r="30" pathLength="100"></circle>
+              <circle class="gain-ring" cx="40" cy="40" r="30" pathLength="100" style="--dash:${gainPct};--gap:${lossPct};--offset:0;"></circle>
+              <circle class="loss-ring" cx="40" cy="40" r="30" pathLength="100" style="--dash:${lossPct};--gap:${gainPct};--offset:${-gainPct};"></circle>
+            </svg>
+            <span><b>${gainPct}%</b><small>${lossPct}%</small></span>
+          </div>
+          <div class="asset53-stock-donut-legend">
+            <span><i class="gain"></i>Lãi ${gainPct}% <b>${fmt(stats.totalGain)}</b></span>
+            <span><i class="loss"></i>Lỗ ${lossPct}% <b>${fmt(stats.totalLoss)}</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="asset53-stock-top-grid">
+        ${stockProfitBarsHtml(stats.topLoss,'loss')}
+        ${stockProfitBarsHtml(stats.topGain,'gain')}
+      </div>
+    </div>`;
+  }
+
+  function stockTradeTableHtml(rows){
+    const filter=detailState.stockTradeFilter==='buy'||detailState.stockTradeFilter==='sell'?detailState.stockTradeFilter:'all';
+    const query=plainText(detailState.stockTradeSearch||'');
+    const costed=applyCostBasis(rows||[],'stock');
+    const filtered=costed.filter(row=>{
+      if(filter==='buy'&&isSellMovement(row))return false;
+      if(filter==='sell'&&!isSellMovement(row))return false;
+      return !query||plainText(stockName(row)).includes(query);
+    });
+    const sorted=filtered
+      .sort((a,b)=>String(b.sortDate||b.date||'').localeCompare(String(a.sortDate||a.date||'')));
+    const groups=new Map();
+    sorted.forEach(row=>{
+      const day=movementDateHyphen(row);
+      (groups.get(day)||groups.set(day,[]).get(day)).push(row);
+    });
+    return Array.from(groups.entries()).map(([day,items])=>`<div class="asset53-stock-trade-day">
+      <div class="asset53-stock-trade-date">${day}</div>
+      <div class="asset53-stock-trade-day-card">
+      ${items.map(row=>{
+        const sell=isSellMovement(row);
+        const cost=Math.abs(Number(row.totalCost||row.cost||row.current||0));
+        const sale=sell?Math.abs(Number(row.proceeds||0)):0;
+        const profit=sell?Number(row.realizedProfit||0):0;
+        return `<div class="asset53-stock-trade-row ${sell?'sell':'buy'}">
+          <div class="asset53-stock-trade-code">${stockName(row)}</div>
+          <div class="asset53-stock-trade-cell"><b>${sell?'Bán':'Mua'}</b><span>${stockQtyLabel(Math.abs(Number(row.qtyRaw||0)))}</span></div>
+          <div class="asset53-stock-trade-cell"><b>${fmt(cost)}</b><span>${sell?fmt(sale):'-'}</span></div>
+          <div class="asset53-stock-trade-profit ${profit<0?'loss':(profit>0?'gain':'')}">${sell?fmtProfit(profit):'-'}</div>
+        </div>`;
+      }).join('')}
+      </div>
+    </div>`).join('')||'<div class="asset53-empty">Không tìm thấy giao dịch phù hợp.</div>';
+  }
+
+  function stockTradeHeaderHtml(){
+    return `<div class="asset53-stock-trade-head">
+        <div>Mã chứng khoán</div>
+        <div><b>Sự kiện</b><span>Số lượng</span></div>
+        <div><b>Giá vốn</b><span>Giá bán</span></div>
+        <div>Lãi/lỗ</div>
+    </div>`;
+  }
+
+  function stockMovementToolsHtml(detailMode){
+    const filter=detailState.stockTradeFilter==='buy'||detailState.stockTradeFilter==='sell'?detailState.stockTradeFilter:'all';
+    const labels={all:'Hiển thị tất cả',buy:'Giao dịch mua',sell:'Giao dịch bán'};
+    const search=String(detailState.stockTradeSearch||'');
+    return `<div class="asset53-stock-movement-tools ${detailMode?'detail':'chart'}">
+      <button type="button" class="asset53-stock-view-toggle" data-asset-stock-view="${detailMode?'chart':'detail'}">
+        ${detailMode?iconSvg('chart'):iconSvg('list')}<span>${detailMode?'Biểu đồ':'Chi tiết giao dịch'}</span>
+      </button>
+      ${detailMode?`<div class="asset53-stock-trade-filters">
+        <button type="button" class="asset53-stock-filter-btn" data-asset-stock-trade-filter-sheet><span>${labels[filter]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg></button>
+        <input type="search" data-asset-stock-trade-search placeholder="Tìm mã chứng khoán" value="${escapeHtml(search)}" autocomplete="off" />
+      </div>`:''}
+    </div>`;
+  }
+
+  function ensureAssetStockSheet(){
+    const phone=document.getElementById('phone');
+    if(!phone)return {};
+    if(!document.getElementById('asset53StockBackdrop')){
+      phone.insertAdjacentHTML('beforeend','<div class="asset53-stock-backdrop" id="asset53StockBackdrop"></div><div class="asset53-stock-sheet" id="asset53StockSheet"></div>');
+    }
+    return {sheet:document.getElementById('asset53StockSheet'),backdrop:document.getElementById('asset53StockBackdrop')};
+  }
+
+  function closeAssetStockSheet(){
+    const sheet=document.getElementById('asset53StockSheet');
+    const backdrop=document.getElementById('asset53StockBackdrop');
+    sheet?.classList.remove('show');
+    backdrop?.classList.remove('show');
+  }
+
+  function openStockFilterSheet(kind='trade'){
+    const {sheet,backdrop}=ensureAssetStockSheet();
+    if(!sheet||!backdrop)return;
+    const overview=kind==='overview';
+    const current=overview
+      ? (detailState.stockOverviewFilter==='holding'||detailState.stockOverviewFilter==='sold'?detailState.stockOverviewFilter:'all')
+      : (detailState.stockTradeFilter==='buy'||detailState.stockTradeFilter==='sell'?detailState.stockTradeFilter:'all');
+    const options=overview
+      ? [{value:'all',label:'Hiển thị tất cả'},{value:'holding',label:'Đang nắm giữ'},{value:'sold',label:'Đã bán hết'}]
+      : [{value:'all',label:'Hiển thị tất cả'},{value:'buy',label:'Giao dịch mua'},{value:'sell',label:'Giao dịch bán'}];
+    sheet.innerHTML=`<div class="asset53-stock-sheet-handle"></div>
+      ${options.map(option=>`<button type="button" class="asset53-stock-sheet-option ${option.value===current?'active':''}" data-asset-stock-filter="${option.value}"><span>${option.label}</span>${option.value===current?iconSvg('check'):''}</button>`).join('')}`;
+    sheet.onclick=e=>{
+      const option=e.target.closest('[data-asset-stock-filter]');
+      if(!option)return;
+      const value=option.dataset.assetStockFilter||'all';
+      if(overview)detailState.stockOverviewFilter=value==='holding'||value==='sold'?value:'all';
+      else detailState.stockTradeFilter=value==='buy'||value==='sell'?value:'all';
+      closeAssetStockSheet();
+      renderDetail();
+    };
+    backdrop.onclick=closeAssetStockSheet;
+    sheet.classList.add('show');
+    backdrop.classList.add('show');
   }
 
   function insuranceFlowChartHtml(rows,year,mode){
@@ -2269,21 +2469,25 @@
     if(assetSection({key})==='stock'){
       const year=Number(detailState.year||new Date().getFullYear());
       const mode=detailState.flow==='sell'?'sell':'buy';
+      const detailMode=detailState.stockMovementView==='detail';
       const anim=(detailState.flowAnim||detailState.yearAnim||detailState.tabAnim)?` ${detailState.flowAnim||detailState.yearAnim||detailState.tabAnim}`:'';
       const movementRows=rows.filter(row=>(mode==='sell'?isSellMovement(row):!isSellMovement(row))&&movementYear(row)===year);
+      const tradeRows=rows.filter(row=>movementYear(row)===year);
       return `<div class="asset53-fixed-panel">
         <div class="asset53-movement-pin">
           ${goldMovementHeaderHtml(year,stockYearProfitHtml(rows,year))}
-          <div class="asset53-movement-stage${anim}">
+          ${detailMode?`${stockMovementToolsHtml(true)}${stockTradeHeaderHtml()}`:`<div class="asset53-movement-stage${anim}">
             ${stockFlowChartHtml(movementRows,year,mode)}
-          </div>
+            ${stockProfitAnalysisHtml(rows,year)}
+            ${stockMovementToolsHtml(false)}
+          </div>`}
         </div>
       </div>
-      <div class="asset53-scroll-list">
-        ${movementRows.length
-          ? `<div class="asset53-detail-card gold-buy-list saving-book-list stock-flow-list">${movementRows.map(row=>detailRow(row,isSellMovement(row)?'#ef4444':'#16a34a',key)).join('')}</div>`
-          : `<div class="asset53-empty">Chưa có giao dịch ${mode==='sell'?'bán':'mua'} chứng khoán trong năm này.</div>`}
-      </div>`;
+      ${detailMode?`<div class="asset53-scroll-list asset53-stock-trade-scroll">
+        ${tradeRows.length
+          ? stockTradeTableHtml(tradeRows)
+          : '<div class="asset53-empty">Chưa có giao dịch chứng khoán trong năm này.</div>'}
+      </div>`:''}`;
     }
     if(assetSection({key})==='insurance'){
       const year=Number(detailState.year||new Date().getFullYear());
@@ -2327,8 +2531,10 @@
     screen?.classList.toggle('asset53-stock-detail-screen',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
     body.classList.toggle('asset53-insurance-contract-detail',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
     body.classList.toggle('asset53-stock-detail',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
+    body.classList.toggle('asset53-stock-trade-mode',assetSection(asset)==='stock'&&detailState.tab==='movement'&&detailState.stockMovementView==='detail');
+    body.classList.toggle('asset53-stock-overview-mode',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!detailState.stockDetail);
     body.classList.toggle('asset53-compact-ledger',['insurance','realestate','stock','saving'].includes(assetSection(asset)));
-    body.classList.toggle('asset53-fixed-detail',cash||detailState.tab==='movement');
+    body.classList.toggle('asset53-fixed-detail',cash||detailState.tab==='movement'||(assetSection(asset)==='stock'&&detailState.tab==='overview'&&!detailState.stockDetail));
     if(cash){
       body.innerHTML=bankDetailHtml();
       return;
@@ -2356,7 +2562,7 @@
   function openDetail(key){
     const screen=ensureDetailScreen();
     if(!screen)return;
-    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',insuranceContractDetail:'',insuranceContractFlow:'buy',stockDetail:'',stockDetailFlow:'buy'};
+    detailState={key,tab:'overview',year:new Date().getFullYear(),flow:'buy',cashTab:'income',stockSearch:'',stockOverviewFilter:'all',stockMovementView:'chart',stockTradeFilter:'all',stockTradeSearch:'',insuranceContractDetail:'',insuranceContractFlow:'buy',stockDetail:'',stockDetailFlow:'buy'};
     renderDetail();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
@@ -2370,6 +2576,7 @@
   function closeDetail(){
     const screen=document.getElementById('screenAssetDetail');
     if(!screen)return;
+    closeAssetStockSheet();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
   }
@@ -3132,6 +3339,23 @@
       renderDetail();
       setTimeout(()=>{if(detailState.flowAnim){detailState.flowAnim='';}},260);
     }
+    const stockViewBtn=e.target.closest('[data-asset-stock-view]');
+    if(stockViewBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      detailState.stockMovementView=stockViewBtn.dataset.assetStockView==='detail'?'detail':'chart';
+      detailState.tabAnim=detailState.stockMovementView==='detail'?'slide-left':'slide-right';
+      renderDetail();
+      setTimeout(()=>{if(detailState.tabAnim){detailState.tabAnim='';}},260);
+      return;
+    }
+    const stockFilterSheet=e.target.closest('[data-asset-stock-trade-filter-sheet], [data-asset-stock-overview-filter-sheet]');
+    if(stockFilterSheet){
+      e.preventDefault();
+      e.stopPropagation();
+      openStockFilterSheet(stockFilterSheet.matches('[data-asset-stock-overview-filter-sheet]')?'overview':'trade');
+      return;
+    }
     const cashTab=e.target.closest('[data-asset-cash-tab]');
     if(cashTab){
       detailState.cashTab=cashTab.dataset.assetCashTab==='expense'?'expense':'income';
@@ -3151,6 +3375,22 @@
     }
     if(e.target.closest('[data-asset-detail-back]'))closeDetail();
   },true);
+  document.addEventListener('input',e=>{
+    const stockSearch=e.target.closest('[data-asset-stock-search]');
+    const tradeSearch=e.target.closest('[data-asset-stock-trade-search]');
+    if(!stockSearch&&!tradeSearch)return;
+    if(stockSearch)detailState.stockSearch=stockSearch.value||'';
+    if(tradeSearch)detailState.stockTradeSearch=tradeSearch.value||'';
+    renderDetail();
+    requestAnimationFrame(()=>{
+      const next=document.querySelector(stockSearch?'[data-asset-stock-search]':'[data-asset-stock-trade-search]');
+      if(next){
+        next.focus();
+        const pos=next.value.length;
+        try{next.setSelectionRange(pos,pos);}catch(_){}
+      }
+    });
+  });
   document.addEventListener('txn16:changed',()=>{
     cleanedOrphanTransactionRows=false;
     cleanupOrphanTransactionAssetRows();
