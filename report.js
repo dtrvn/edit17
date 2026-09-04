@@ -237,7 +237,7 @@
           <div class="report72-detail-month">${periodLabel}</div>
           <div class="report72-detail-month-nav" aria-label="Chọn tháng">
             <button type="button" data-report-detail-month-nav="prev" aria-label="Tháng trước"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button>
-            <button type="button" data-report-detail-month-nav="current" aria-label="Tháng hiện tại"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/></svg></button>
+            <button type="button" data-report-detail-month-nav="current" aria-label="Tháng hiện tại"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 2v4M16 2v4M3.5 9.5h17M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z"/><path d="M11 14h2v2h-2z"/></svg></button>
             <button type="button" data-report-detail-month-nav="next" aria-label="Tháng sau"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
           <div class="report72-detail-total ${data.large==='Thu nhập'?'positive':'negative'}"><b>${fmt(data.total)}</b></div>
@@ -345,7 +345,7 @@
           <div class="report72-detail-month">${periodLabel}</div>
           <div class="report72-detail-month-nav" aria-label="Chọn thời gian">
             <button type="button" data-report-child-year-nav="prev" aria-label="Năm trước"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button>
-            <button type="button" data-report-child-year-nav="current" aria-label="Năm hiện tại"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/></svg></button>
+            <button type="button" data-report-child-year-nav="current" aria-label="Năm hiện tại"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 2v4M16 2v4M3.5 9.5h17M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z"/><path d="M11 14h2v2h-2z"/></svg></button>
             <button type="button" data-report-child-year-nav="next" aria-label="Năm sau"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
           <div class="report72-detail-total ${data.large==='Thu nhập'?'positive':'negative'}"><b>${fmt(data.total)}</b></div>

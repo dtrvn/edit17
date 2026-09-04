@@ -1075,7 +1075,7 @@
 .report72-detail-period-row{
   width:100%;
   display:grid;
-  grid-template-columns:minmax(74px,1fr) 92px minmax(88px,1fr);
+  grid-template-columns:minmax(74px,1fr) 112px minmax(88px,1fr);
   align-items:center;
   gap:8px;
   margin:0 0 5px;
@@ -1102,30 +1102,56 @@
 .report72-detail-month-nav{
   justify-self:center;
   display:grid;
-  grid-template-columns:repeat(3,48px);
+  width:112px;
+  grid-template-columns:repeat(3,1fr);
   align-items:center;
   justify-content:center;
-  gap:4px;
+  gap:3px;
+  padding:3px;
+  border:1px solid #dbe7f3;
+  border-radius:16px;
+  background:rgba(255,255,255,.72);
+  box-shadow:0 10px 22px rgba(15,23,42,.055),inset 0 1px 0 rgba(255,255,255,.9);
+  backdrop-filter:blur(10px);
 }
 .report72-detail-month-nav button{
-  width:48px;
-  height:34px;
-  border:1px solid #dfe8f5;
+  width:100%;
+  height:31px;
+  border:0;
   border-radius:12px;
-  background:#fff;
-  color:#2563eb;
+  background:transparent;
+  color:#5b6f8b;
   display:grid;
   place-items:center;
   padding:0;
   cursor:pointer;
-  box-shadow:0 6px 12px rgba(37,99,235,.08);
+  box-shadow:none;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.report72-detail-month-nav button:nth-child(2){
+  background:linear-gradient(180deg,#3b82f6 0%,#2563eb 100%);
+  color:#fff;
+  box-shadow:0 8px 16px rgba(37,99,235,.22);
+}
+.report72-detail-month-nav button:hover{
+  background:#eef5ff;
+  color:#2563eb;
+}
+.report72-detail-month-nav button:nth-child(2):hover{
+  background:linear-gradient(180deg,#4f8df7 0%,#2563eb 100%);
+  color:#fff;
+}
+.report72-detail-month-nav button:active{
+  transform:translateY(1px) scale(.98);
+  box-shadow:none;
 }
 .report72-detail-month-nav svg{
-  width:14px;
-  height:14px;
-  stroke-width:2.35;
+  width:15px;
+  height:15px;
+  stroke-width:2.45;
   stroke-linecap:round;
   stroke-linejoin:round;
+  overflow:visible;
 }
 .report72-detail-period-row .report72-detail-total{
   justify-self:end;
@@ -1366,7 +1392,7 @@
 .report72-child-period-row{
   width:100%;
   display:grid;
-  grid-template-columns:minmax(74px,1fr) 92px minmax(88px,1fr);
+  grid-template-columns:minmax(74px,1fr) 112px minmax(88px,1fr);
   align-items:center;
   gap:8px;
   margin:2px 0 10px;
@@ -1534,7 +1560,7 @@
 }
 @media(max-width:430px){
   .report72-child-screen{padding-left:17px!important;padding-right:17px!important;}
-  .report72-child-period-row{grid-template-columns:minmax(62px,1fr) 86px minmax(76px,1fr);gap:6px;}
+  .report72-child-period-row{grid-template-columns:minmax(62px,1fr) 106px minmax(76px,1fr);gap:6px;}
   .report72-child-chart{height:142px;width:calc(100% + 96px);margin-left:-48px;margin-right:-48px;padding-left:2px;padding-right:2px;}
   .report72-child-money{font-size:7.1px;}
   .report72-child-month-label{font-size:8.4px;}
@@ -1711,10 +1737,15 @@
 .report72-detail-tabs{width:100%!important;height:34px!important;margin:2px 0 10px!important;}
 .report72-detail-tabs button{font-size:12px!important;font-weight:680!important;}
 .report72-detail-month{font-size:11.3px!important;height:29px!important;line-height:29px!important;}
-.report72-detail-month-nav{grid-template-columns:repeat(3,48px)!important;}
-.report72-detail-month-nav button{width:48px!important;height:34px!important;}
+.report72-detail-month-nav{width:112px!important;grid-template-columns:repeat(3,1fr)!important;}
+.report72-detail-month-nav button{width:100%!important;height:31px!important;}
 .report72-detail-period-row,
-.report72-child-period-row{grid-template-columns:minmax(82px,1fr) 104px minmax(94px,1fr)!important;gap:9px!important;}
+.report72-child-period-row{grid-template-columns:minmax(82px,1fr) 112px minmax(94px,1fr)!important;gap:9px!important;}
+@media(max-width:380px){
+  .report72-detail-period-row,
+  .report72-child-period-row{grid-template-columns:minmax(70px,1fr) 106px minmax(82px,1fr)!important;gap:6px!important;}
+  .report72-detail-month-nav{width:106px!important;}
+}
 .report72-detail-period-row .report72-detail-total b,
 .report72-child-period-row .report72-detail-total b{font-size:13px!important;}
 .report72-detail-donut{width:98px!important;height:98px!important;}
