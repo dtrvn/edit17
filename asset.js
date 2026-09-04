@@ -2526,6 +2526,7 @@
     if(!body)return;
     body.style.setProperty('--asset-detail-color',color);
     body.style.setProperty('--asset-detail-soft',`${color}18`);
+    screen?.classList.toggle('asset53-stock-screen',assetSection(asset)==='stock');
     screen?.classList.toggle('asset53-insurance-movement',assetSection(asset)==='insurance'&&detailState.tab==='movement');
     screen?.classList.toggle('asset53-insurance-contract-detail-screen',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
     screen?.classList.toggle('asset53-stock-detail-screen',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);

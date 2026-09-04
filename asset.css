@@ -2457,3 +2457,55 @@
   font-weight:600!important;
   line-height:1.25!important;
 }
+
+/* Stock detail screen only: mobile scroll/bottom fit and wider stock picker/list. */
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen{
+  padding-bottom:0!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body{
+  height:calc(100% - 64px)!important;
+  min-height:0!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-fixed-detail,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-fixed-detail{
+  overflow:hidden!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-overview-wrap,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-overview-wrap{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-search,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-search{
+  width:calc(100% + 20px)!important;
+  margin-left:-10px!important;
+  margin-right:-10px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-search input[data-asset-stock-search],
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-search input[data-asset-stock-search]{
+  font-size:13px!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-overview-list,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-overview-list{
+  width:calc(100% + 20px)!important;
+  margin-left:-10px!important;
+  margin-right:-10px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))!important;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-swipe.asset53-insurance-swipe,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-swipe.asset53-insurance-swipe{
+  touch-action:pan-x pan-y!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-trade-scroll,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-trade-scroll{
+  padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))!important;
+}
