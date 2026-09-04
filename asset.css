@@ -1338,11 +1338,6 @@
   grid-template-columns:1fr 1fr;
   gap:8px;
 }
-.asset53-stock-donut-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
 .asset53-stock-top-row{
   display:grid;
   grid-template-columns:minmax(0,44px) minmax(0,1fr);
@@ -2521,9 +2516,9 @@
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail > .asset53-stock-detail-view,
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail > .asset53-stock-detail-view{
-  width:calc(100% + 20px)!important;
-  margin-left:-10px!important;
-  margin-right:-10px!important;
+  width:calc(100% + 40px)!important;
+  margin-left:-20px!important;
+  margin-right:-20px!important;
   background:#eef5fb!important;
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-header,
