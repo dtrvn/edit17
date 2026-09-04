@@ -864,7 +864,7 @@
   min-height:0;
   overflow:auto;
   scrollbar-width:none;
-  padding:0 0 30px;
+  padding:0;
 }
 .report72-detail-list::-webkit-scrollbar{display:none;}
 .report72-detail-day{
@@ -1164,7 +1164,7 @@
   display:grid;
   align-content:start;
   gap:9px;
-  padding:5px 1px 30px;
+  padding:5px 1px 0;
 }
 .report72-detail-bars::-webkit-scrollbar{display:none;}
 .report72-detail-bar-row{
@@ -1450,7 +1450,7 @@
   display:grid;
   align-content:start;
   gap:10px;
-  padding:0 1px 30px;
+  padding:0 1px 0;
 }
 .report72-child-list::-webkit-scrollbar{display:none;}
 .report72-child-day-group{
@@ -1728,10 +1728,23 @@
 .report72-child-money{font-size:8.8px!important;}
 .report72-child-month-label{font-size:9.8px!important;}
 
-/* 20260824: lower report detail category lists by 30px */
+/* Report detail screens extend their scrollable content to the bottom edge. */
 #phone .report72-detail-screen.slide-screen,
 #phone .report72-child-screen.slide-screen{
-  padding-bottom:env(safe-area-inset-bottom,0px)!important;
+  padding-bottom:0!important;
+}
+#phone .report72-detail-screen.slide-screen .slide-body,
+#phone .report72-child-screen.slide-screen .slide-body,
+.report72-detail-screen.slide-screen .slide-body,
+.report72-child-screen.slide-screen .slide-body{
+  padding-bottom:0!important;
+}
+.report72-detail-screen.slide-screen .report72-detail-bars,
+#phone .report72-detail-screen.slide-screen .report72-detail-bars,
+.report72-child-screen.slide-screen .report72-child-list,
+#phone .report72-child-screen.slide-screen .report72-child-list{
+  padding-bottom:0!important;
+  margin-bottom:0!important;
 }
 
 /* Expense detail rows can grow for long category names; income rows stay compact. */

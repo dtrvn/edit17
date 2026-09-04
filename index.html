@@ -11,8 +11,8 @@
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
 <link rel="stylesheet" href="overview.css?v=export-excel-20260829a" />
-<link rel="stylesheet" href="transaction.css?v=stock-trade-form-20260902e" />
-<link rel="stylesheet" href="category.css?v=category-top-add-20260829a" />
+<link rel="stylesheet" href="transaction.css?v=screen-bottom-zero-20260904a" />
+<link rel="stylesheet" href="category.css?v=screen-bottom-zero-20260904a" />
 <style>
 /* demo5: PWA slide screens, homepage kept unchanged */
 .slide-screen{
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=bank-manual-balance-20260904b">
+<link rel="stylesheet" href="asset.css?v=stock-detail-bottom-fix-20260904a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=year-delta-20260902a">
+<link rel="stylesheet" href="report.css?v=report-bottom-zero-20260904a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -1220,17 +1220,41 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <style id="screen-list-bottom-extension">
 #screenTransactions.slide-screen,
 #phone #screenTransactions.slide-screen{
-  padding-bottom:env(safe-area-inset-bottom,0px)!important;
+  padding-bottom:0!important;
 }
 #screenCategories.cat90-screen,
-#phone #screenCategories.cat90-screen,
+#phone #screenCategories.cat90-screen{
+  padding-bottom:0!important;
+}
 #phone .report72-detail-screen.slide-screen,
 #phone .report72-child-screen.slide-screen{
-  padding-bottom:env(safe-area-inset-bottom,0px)!important;
+  padding-bottom:0!important;
+}
+#screenTransactions.slide-screen .slide-body,
+#phone #screenTransactions.slide-screen .slide-body,
+#screenCategories.cat90-screen .slide-body,
+#phone #screenCategories.cat90-screen .slide-body{
+  padding-bottom:0!important;
+}
+#screenTransactions.slide-screen .txn16-list,
+#phone #screenTransactions.slide-screen .txn16-list{
+  padding-bottom:0!important;
+  margin-bottom:0!important;
 }
 #screenCategories.cat90-screen .cat90-root>.cat90-tree{
-  margin-bottom:-6px!important;
-  padding-bottom:14px!important;
+  margin-bottom:0!important;
+  padding-bottom:0!important;
+}
+.report72-detail-screen.slide-screen .slide-body,
+#phone .report72-detail-screen.slide-screen .slide-body,
+.report72-child-screen.slide-screen .slide-body,
+#phone .report72-child-screen.slide-screen .slide-body,
+.report72-detail-screen.slide-screen .report72-detail-bars,
+#phone .report72-detail-screen.slide-screen .report72-detail-bars,
+.report72-child-screen.slide-screen .report72-child-list,
+#phone .report72-child-screen.slide-screen .report72-child-list{
+  padding-bottom:0!important;
+  margin-bottom:0!important;
 }
 
 /* Expense detail rows can grow for long category names; income rows stay compact. */
@@ -1374,6 +1398,9 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   width:calc(100% + 40px)!important;
   margin-left:-20px!important;
   margin-right:-20px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  box-sizing:border-box!important;
   background:#eef5fb!important;
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-header,
@@ -1387,6 +1414,10 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   margin-right:0!important;
   padding-left:0!important;
   padding-right:0!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-detail .asset53-detail-card,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-detail .asset53-detail-card{
+  box-sizing:border-box!important;
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-movement-mode .asset53-fixed-panel,
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-movement-mode .asset53-fixed-panel,
@@ -1586,12 +1617,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=bank-manual-balance-20260904b"></script>
+<script src="asset.js?v=stock-detail-bottom-fix-20260904a"></script>
 <script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-bank-manual-balance-b';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-report-bottom-zero-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1605,7 +1636,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=bank-manual-balance-20260904b')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=report-bottom-zero-20260904a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

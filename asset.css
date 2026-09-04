@@ -2579,6 +2579,9 @@
   width:calc(100% + 40px)!important;
   margin-left:-20px!important;
   margin-right:-20px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  box-sizing:border-box!important;
   background:#eef5fb!important;
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-header,
@@ -2592,6 +2595,10 @@
   margin-right:0!important;
   padding-left:0!important;
   padding-right:0!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-detail-card,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-detail-card{
+  box-sizing:border-box!important;
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-trade-mode .asset53-fixed-panel,
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-trade-mode .asset53-fixed-panel,

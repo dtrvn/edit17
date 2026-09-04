@@ -554,8 +554,8 @@
   min-height:0;
   overflow-y:auto;
   overflow-x:hidden;
-  margin-bottom:-6px;
-  padding-bottom:14px;
+  margin-bottom:0;
+  padding-bottom:0;
   scrollbar-width:none;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
