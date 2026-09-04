@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=asset-wide-detail-fit-20260904a">
+<link rel="stylesheet" href="asset.css?v=asset-wide-detail-fit-20260904b">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1391,6 +1391,13 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   margin-left:-10px!important;
   margin-right:-10px!important;
 }
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-movement-chart{
+  gap:0!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-chart-months,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-chart-months{
+  margin-top:-8px!important;
+}
 </style>
 </head>
 <body>
@@ -1509,12 +1516,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=asset-wide-detail-fit-20260904a"></script>
+<script src="asset.js?v=asset-wide-detail-fit-20260904b"></script>
 <script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-wide-detail-fit-a';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-wide-detail-fit-b';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1528,7 +1535,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-wide-detail-fit-20260904a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-wide-detail-fit-20260904b')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

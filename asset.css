@@ -2572,3 +2572,10 @@
   margin-left:-10px!important;
   margin-right:-10px!important;
 }
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-movement-chart{
+  gap:0!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-chart-months,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-chart-months{
+  margin-top:-8px!important;
+}
