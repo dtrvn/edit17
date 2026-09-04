@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=asset-wide-detail-fit-20260904b">
+<link rel="stylesheet" href="asset.css?v=asset-wide-detail-fit-20260904d">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1398,6 +1398,44 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-chart-months{
   margin-top:-8px!important;
 }
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-movement-mode .asset53-movement-chart{
+  gap:0!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-movement-mode .asset53-chart-months,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-movement-mode .asset53-chart-months{
+  margin-top:-8px!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-tabs.cash-tabs,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode .asset53-tabs.cash-tabs{
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+#screenAssetDetail.asset53-detail-screen .asset53-stock-donut-grid,
+#phone #screenAssetDetail.asset53-detail-screen .asset53-stock-donut-grid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+}
+#screenAssetDetail.asset53-detail-screen .asset53-stock-donut-wrap,
+#phone #screenAssetDetail.asset53-detail-screen .asset53-stock-donut-wrap{
+  grid-template-columns:72px minmax(0,1fr)!important;
+  gap:14px!important;
+}
+#screenAssetDetail.asset53-detail-screen .asset53-stock-donut,
+#phone #screenAssetDetail.asset53-detail-screen .asset53-stock-donut{
+  width:72px!important;
+  height:72px!important;
+}
+#screenAssetDetail.asset53-detail-screen .asset53-stock-donut-legend span,
+#phone #screenAssetDetail.asset53-detail-screen .asset53-stock-donut-legend span{
+  font-size:9.6px!important;
+}
+#screenAssetDetail.asset53-detail-screen .asset53-stock-donut-legend b,
+#phone #screenAssetDetail.asset53-detail-screen .asset53-stock-donut-legend b{
+  font-size:9.8px!important;
+}
 </style>
 </head>
 <body>
@@ -1516,12 +1554,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=asset-wide-detail-fit-20260904b"></script>
+<script src="asset.js?v=asset-wide-detail-fit-20260904d"></script>
 <script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-wide-detail-fit-b';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-wide-detail-fit-d';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1535,7 +1573,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-wide-detail-fit-20260904b')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-wide-detail-fit-20260904d')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

@@ -2061,6 +2061,7 @@
   }
 
   function stockYearCloseStats(rows,year){
+    const targetYear=Number(year||0);
     const byStock=new Map();
     (rows||[]).forEach(row=>{
       const name=stockName(row);
@@ -2071,7 +2072,7 @@
     });
     byStock.forEach(item=>{
       applyCostBasis(item.rows,'stock')
-        .filter(row=>isSellMovement(row)&&movementYear(row)===Number(year))
+        .filter(row=>isSellMovement(row)&&(!targetYear||movementYear(row)===targetYear))
         .forEach(row=>{
           item.profit+=Math.round(Number(row.realizedProfit||0));
           item.count+=1;
@@ -2108,14 +2109,12 @@
     </div>`;
   }
 
-  function stockProfitAnalysisHtml(rows,year){
-    const stats=stockYearCloseStats(rows,year);
-    const total=stats.totalGain+stats.totalLoss;
-    const gainPct=total?Math.round(stats.totalGain*100/total):0;
+  function stockProfitDonutHtml(stats,title){
+    const total=Number(stats.totalGain||0)+Number(stats.totalLoss||0);
+    const gainPct=total?Math.round(Number(stats.totalGain||0)*100/total):0;
     const lossPct=total?100-gainPct:0;
-    return `<div class="asset53-stock-analysis ${total?'':'is-empty'}">
-      <div class="asset53-stock-donut-card">
-        <div class="asset53-stock-analysis-title">Tỉ lệ lãi/lỗ đã chốt ${year}</div>
+    return `<div class="asset53-stock-donut-card">
+        <div class="asset53-stock-analysis-title">${title}</div>
         <div class="asset53-stock-donut-wrap">
           <div class="asset53-stock-donut">
             <svg viewBox="0 0 80 80" aria-hidden="true">
@@ -2132,10 +2131,17 @@
             <span><i class="loss"></i>Lỗ ${lossPct}% <b>${fmt(stats.totalLoss)}</b></span>
           </div>
         </div>
-      </div>
-      <div class="asset53-stock-top-grid">
-        ${stockProfitBarsHtml(stats.topLoss,'loss')}
-        ${stockProfitBarsHtml(stats.topGain,'gain')}
+      </div>`;
+  }
+
+  function stockProfitAnalysisHtml(rows,year){
+    const stats=stockYearCloseStats(rows,year);
+    const allStats=stockYearCloseStats(rows,0);
+    const total=stats.totalGain+stats.totalLoss+allStats.totalGain+allStats.totalLoss;
+    return `<div class="asset53-stock-analysis ${total?'':'is-empty'}">
+      <div class="asset53-stock-donut-grid">
+        ${stockProfitDonutHtml(stats,`Tỉ lệ lãi/lỗ đã chốt ${year}`)}
+        ${stockProfitDonutHtml(allStats,'Tỉ lệ lãi/lỗ tổng')}
       </div>
     </div>`;
   }
