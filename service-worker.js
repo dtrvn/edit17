@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260904-stock-mobile-detail-fit-g';
+const CACHE_NAME = 'qlct-pwa-v20260904-asset-wide-detail-fit-a';
 const APP_SHELL = [
   './',
   './index.html',

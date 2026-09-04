@@ -2560,3 +2560,15 @@
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-movement-mode .asset53-stock-trade-row > :nth-child(3){
   transform:translateX(-10px)!important;
 }
+
+/* Wider horizontal fit for non-stock asset detail screens only. */
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-overview,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-overview,
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-fixed-panel,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-fixed-panel,
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-scroll-list,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-wide-asset-mode > .asset53-scroll-list{
+  width:calc(100% + 20px)!important;
+  margin-left:-10px!important;
+  margin-right:-10px!important;
+}
