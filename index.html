@@ -461,7 +461,7 @@
 }
 
 </style>
-<link rel="stylesheet" href="report.css?v=report-nav-polish-20260904a">
+<link rel="stylesheet" href="report.css?v=report-nav-gap-20260904a">
 <style id="report-inline-fallback-css">
 /* report74: Bao cao screen only - compact layout */
 #screenReports.report72-screen{
@@ -1174,7 +1174,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .report72-detail-tabs{width:100%!important;height:34px!important;margin:2px 0 10px!important;}
 .report72-detail-tabs button{font-size:12px!important;font-weight:680!important;}
 .report72-detail-month{font-size:11.3px!important;height:29px!important;line-height:29px!important;}
-.report72-detail-month-nav{width:112px!important;grid-template-columns:repeat(3,1fr)!important;}
+.report72-detail-month-nav{width:122px!important;grid-template-columns:repeat(3,1fr)!important;}
 .report72-detail-month-nav button{width:100%!important;height:31px!important;}
 #screenTxnForm .slide-back,
 #screenTransactions .slide-back,
@@ -1201,11 +1201,11 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 .txn16-edit .slide-back svg,
 .cat90-editor .slide-back svg{width:18px!important;height:18px!important;stroke-width:2.35!important;}
 .report72-detail-period-row,
-.report72-child-period-row{grid-template-columns:minmax(82px,1fr) 112px minmax(94px,1fr)!important;gap:9px!important;}
+.report72-child-period-row{grid-template-columns:minmax(82px,1fr) 122px minmax(94px,1fr)!important;gap:9px!important;}
 @media(max-width:380px){
   .report72-detail-period-row,
-  .report72-child-period-row{grid-template-columns:minmax(70px,1fr) 106px minmax(82px,1fr)!important;gap:6px!important;}
-  .report72-detail-month-nav{width:106px!important;}
+  .report72-child-period-row{grid-template-columns:minmax(70px,1fr) 112px minmax(82px,1fr)!important;gap:6px!important;}
+  .report72-detail-month-nav{width:112px!important;}
 }
 .report72-detail-period-row .report72-detail-total b,
 .report72-child-period-row .report72-detail-total b{font-size:13px!important;}
@@ -1627,7 +1627,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-report-nav-polish-a';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-report-nav-gap-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1641,7 +1641,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=report-nav-polish-20260904a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=report-nav-gap-20260904a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);
