@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260904-asset-wide-detail-fit-f';
+const CACHE_NAME = 'qlct-pwa-v20260904-bank-manual-balance-b';
 const APP_SHELL = [
   './',
   './index.html',

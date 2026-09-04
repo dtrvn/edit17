@@ -1138,6 +1138,8 @@
     if(kind==='insurance'||kind==='shield') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 19 6.5v5.2c0 4.2-2.7 7.5-7 9.3-4.3-1.8-7-5.1-7-9.3V6.5Z"/><path d="m9 12 2 2 4-5"/></svg>';
     if(kind==='realestate'||kind==='home') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10.5V20h11v-9.5"/><path d="M9.5 20v-5h5v5"/><path d="M16.5 7.5V5h2v4"/></svg>';
     if(kind==='stock'||kind==='chart'||kind==='trend') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-3"/><path d="m7 9 4-4 3 3 5-5"/></svg>';
+    if(kind==='balance-update') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a2 2 0 0 1 2 2v2.5"/><path d="M4 8h14.5"/><path d="M4 8v9.5A2.5 2.5 0 0 0 6.5 20H12"/><path d="M15 13.5h5v4h-5a2 2 0 0 1 0-4Z"/><path d="M17 15.5h.01"/><path d="M17.5 19v4"/><path d="M15.5 21h4"/></svg>';
+    if(kind==='refresh') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 0 1-15.5 6.3"/><path d="M3 12A9 9 0 0 1 18.5 5.7"/><path d="M18 2v4h4"/><path d="M6 22v-4H2"/></svg>';
     if(kind==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 12 4 4 8-9"/></svg>';
     if(kind==='list') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>';
     return kind;
@@ -1320,7 +1322,7 @@
     let screen=document.getElementById('screenAssetDetail');
     if(screen)return screen;
     phone.insertAdjacentHTML('beforeend',`<section class="asset53-detail-screen" id="screenAssetDetail" aria-hidden="true">
-      <div class="slide-head"><button class="slide-back" data-asset-detail-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Chi tiết tài sản</div></div>
+      <div class="slide-head"><button class="slide-back" data-asset-detail-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Chi tiết tài sản</div><div class="asset53-head-actions"><button class="asset53-head-btn" type="button" data-asset-bank-refresh hidden title="Cập nhật số dư tài khoản" aria-label="Cập nhật số dư tài khoản">${iconSvg('balance-update')}</button></div></div>
       <div class="slide-body" id="asset53DetailBody"></div>
     </section>`);
     return document.getElementById('screenAssetDetail');
@@ -2528,6 +2530,8 @@
     body.style.setProperty('--asset-detail-color',color);
     body.style.setProperty('--asset-detail-soft',`${color}18`);
     const section=assetSection(asset);
+    const bankRefresh=screen?.querySelector('[data-asset-bank-refresh]');
+    if(bankRefresh)bankRefresh.hidden=section!=='cash';
     screen?.classList.toggle('asset53-stock-screen',section==='stock');
     screen?.classList.toggle('asset53-insurance-movement',section==='insurance'&&detailState.tab==='movement');
     screen?.classList.toggle('asset53-insurance-contract-detail-screen',section==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
@@ -2931,6 +2935,96 @@
     };
   }
 
+  function bankBalancePayload(row,value){
+    const next=Math.round(Number(value||0));
+    return {
+      loai_tai_san:'BANK',
+      ten_tai_san:row?.ten_tai_san||row?.name||'Tài khoản ngân hàng',
+      so_luong:0,
+      don_vi:'đ',
+      gia_hien_tai:next,
+      gia_tri_hien_tai:next,
+      tong_gia_von:next,
+      gia_von_binh_quan:next,
+      so_tien:next,
+      lai_lo_tam_tinh:0,
+      trang_thai:'ACTIVE'
+    };
+  }
+
+  function ensureBankBalanceSheet(){
+    const phone=document.getElementById('phone');
+    if(!phone)return {};
+    if(!document.getElementById('asset53BankBalanceBackdrop')){
+      phone.insertAdjacentHTML('beforeend','<div class="add39-backdrop asset53-bank-balance-backdrop" id="asset53BankBalanceBackdrop"></div><div class="add39-sheet asset53-bank-balance-sheet" id="asset53BankBalanceSheet"></div>');
+    }
+    return {sheet:document.getElementById('asset53BankBalanceSheet'),backdrop:document.getElementById('asset53BankBalanceBackdrop')};
+  }
+
+  function closeBankBalanceSheet(){
+    const sheet=document.getElementById('asset53BankBalanceSheet');
+    const backdrop=document.getElementById('asset53BankBalanceBackdrop');
+    sheet?.classList.remove('show');
+    backdrop?.classList.remove('show');
+  }
+
+  function bankBalanceInputValue(input){
+    return Number(String(input?.value||'').replace(/\D/g,''))||0;
+  }
+
+  function openBankBalanceSheet(){
+    const {sheet,backdrop}=ensureBankBalanceSheet();
+    if(!sheet||!backdrop)return;
+    const bank=bankRow()||{id:BANK_ASSET_DOC_ID,ten_tai_san:'Tài khoản ngân hàng'};
+    const current=bankCurrentValue(bank);
+    sheet.innerHTML=`<div class="add39-handle"></div>
+      <div class="add39-sheet-title">C&#7853;p nh&#7853;t s&#7889; d&#432; t&#224;i kho&#7843;n</div>
+      <div class="add39-field full asset53-bank-balance-field">
+        <div class="add39-label-row"><label class="add39-label">S&#7889; ti&#7873;n</label><span class="add39-money-preview" data-asset-bank-balance-preview>${fmt(current)}</span></div>
+        <input class="add39-input" data-asset-bank-balance-input inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${current||''}">
+      </div>
+      <div class="add39-sheet-actions">
+        <button type="button" class="add39-btn cancel" data-asset-bank-balance-cancel>H&#7911;y</button>
+        <button type="button" class="add39-btn save" data-asset-bank-balance-save>L&#432;u</button>
+      </div>`;
+    backdrop.onclick=closeBankBalanceSheet;
+    sheet.classList.add('show');
+    backdrop.classList.add('show');
+    requestAnimationFrame(()=>{
+      const input=sheet.querySelector('[data-asset-bank-balance-input]');
+      input?.focus();
+      try{input?.setSelectionRange(String(input.value||'').length,String(input.value||'').length);}catch(_){}
+    });
+  }
+
+  function saveBankBalanceFromSheet(){
+    if(!window.FDB||typeof window.FDB.set!=='function'){
+      window.showAppMessage?.('Chưa thể cập nhật','Kết nối dữ liệu chưa sẵn sàng.');
+      return;
+    }
+    const input=document.querySelector('[data-asset-bank-balance-input]');
+    const value=bankBalanceInputValue(input);
+    if(!value){
+      input?.focus();
+      return;
+    }
+    const bank=bankRow()||{id:BANK_ASSET_DOC_ID,ten_tai_san:'Tài khoản ngân hàng'};
+    window.QLCT_setBusy?.(true,'Đang cập nhật số dư tài khoản');
+    window.FDB.set(FIREBASE_COLLECTIONS.taiSan,bank.id||BANK_ASSET_DOC_ID,bankBalancePayload(bank,value),{merge:true})
+      .then(()=>{
+        closeBankBalanceSheet();
+        window.showAppMessage?.('Đã cập nhật số dư',`Số dư tài khoản: ${fmt(value)}`);
+        renderDetail();
+      })
+      .catch(error=>{
+        console.error('Refresh bank balance failed',error);
+        const message=error?.message||'Vui lòng thử lại.';
+        if(window.showAppMessage)window.showAppMessage('Không cập nhật được số dư',message);
+        else window.alert?.(`Không cập nhật được số dư: ${message}`);
+      })
+      .finally(()=>window.QLCT_setBusy?.(false));
+  }
+
   function applyNewTransactionOnly(tx,txnDocId){
     if(!tx||!txnDocId||!window.FDB)return Promise.resolve();
     const rule=assetRuleFor(tx);
@@ -3245,6 +3339,25 @@
     if(nav&&nav.textContent.trim()==='Tài sản')setTimeout(renderAssets,0);
     const asset=e.target.closest('[data-asset-key]');
     if(asset)openDetail(asset.dataset.assetKey);
+    const bankRefresh=e.target.closest('[data-asset-bank-refresh]');
+    if(bankRefresh){
+      e.preventDefault();
+      e.stopPropagation();
+      openBankBalanceSheet();
+      return;
+    }
+    if(e.target.closest('[data-asset-bank-balance-cancel]')){
+      e.preventDefault();
+      e.stopPropagation();
+      closeBankBalanceSheet();
+      return;
+    }
+    if(e.target.closest('[data-asset-bank-balance-save]')){
+      e.preventDefault();
+      e.stopPropagation();
+      saveBankBalanceFromSheet();
+      return;
+    }
     const settleInsurance=e.target.closest('[data-asset-insurance-settle]');
     if(settleInsurance){
       e.preventDefault();
@@ -3381,6 +3494,12 @@
     if(e.target.closest('[data-asset-detail-back]'))closeDetail();
   },true);
   document.addEventListener('input',e=>{
+    const bankBalance=e.target.closest('[data-asset-bank-balance-input]');
+    if(bankBalance){
+      const preview=document.querySelector('[data-asset-bank-balance-preview]');
+      if(preview)preview.textContent=fmt(bankBalanceInputValue(bankBalance));
+      return;
+    }
     const stockSearch=e.target.closest('[data-asset-stock-search]');
     const tradeSearch=e.target.closest('[data-asset-stock-trade-search]');
     if(!stockSearch&&!tradeSearch)return;

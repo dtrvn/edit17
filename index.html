@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=asset-wide-detail-fit-20260904f">
+<link rel="stylesheet" href="asset.css?v=bank-manual-balance-20260904b">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1333,8 +1333,27 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row,
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row{
-  padding-top:0!important;
-  padding-bottom:0!important;
+  padding-top:2px!important;
+  padding-bottom:2px!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row{
+  height:53px!important;
+  min-height:53px!important;
+  grid-template-rows:14px 26px!important;
+  align-content:center!important;
+  align-items:center!important;
+  row-gap:2px!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics{
+  align-self:center!important;
+}
+#screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics{
+  margin-bottom:0!important;
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-overview-list,
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-overview-list{
@@ -1567,12 +1586,12 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=asset-wide-detail-fit-20260904f"></script>
+<script src="asset.js?v=bank-manual-balance-20260904b"></script>
 <script src="report.js?v=year-delta-20260902a"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-wide-detail-fit-f';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-bank-manual-balance-b';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1586,7 +1605,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-wide-detail-fit-20260904f')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=bank-manual-balance-20260904b')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

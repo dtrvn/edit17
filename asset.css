@@ -39,6 +39,47 @@
   color:#020617!important;
   line-height:1!important;
 }
+.asset53-head-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.asset53-head-btn{
+  width:39px!important;
+  height:39px!important;
+  border:0!important;
+  border-radius:15px!important;
+  background:rgba(255,255,255,.94)!important;
+  color:#2563eb!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.07)!important;
+  display:grid!important;
+  place-items:center!important;
+  cursor:pointer;
+}
+.asset53-head-btn[hidden]{
+  display:none!important;
+}
+.asset53-head-btn svg{
+  width:18px!important;
+  height:18px!important;
+  stroke-width:2.35!important;
+}
+.asset53-bank-balance-backdrop{
+  z-index:190!important;
+}
+.asset53-bank-balance-sheet{
+  z-index:200!important;
+}
+.asset53-bank-balance-sheet .asset53-bank-balance-field{
+  display:grid!important;
+  gap:6px!important;
+  margin-top:4px!important;
+}
+.asset53-bank-balance-sheet .add39-input{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
 #screenAssets.asset52-screen .slide-body,
 .asset53-detail-screen .slide-body{
   height:calc(100% - 70px)!important;
@@ -2507,8 +2548,27 @@
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-holding-row,
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-holding-row{
-  padding-top:0!important;
-  padding-bottom:0!important;
+  padding-top:2px!important;
+  padding-bottom:2px!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row{
+  height:53px!important;
+  min-height:53px!important;
+  grid-template-rows:14px 26px!important;
+  align-content:center!important;
+  align-items:center!important;
+  row-gap:2px!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics{
+  align-self:center!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics{
+  margin-bottom:0!important;
 }
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-swipe.asset53-insurance-swipe,
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-swipe.asset53-insurance-swipe{
