@@ -2532,6 +2532,7 @@
     screen?.classList.toggle('asset53-stock-detail-screen',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
     body.classList.toggle('asset53-insurance-contract-detail',assetSection(asset)==='insurance'&&detailState.tab==='overview'&&!!detailState.insuranceContractDetail);
     body.classList.toggle('asset53-stock-detail',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!!detailState.stockDetail);
+    body.classList.toggle('asset53-stock-movement-mode',assetSection(asset)==='stock'&&detailState.tab==='movement');
     body.classList.toggle('asset53-stock-trade-mode',assetSection(asset)==='stock'&&detailState.tab==='movement'&&detailState.stockMovementView==='detail');
     body.classList.toggle('asset53-stock-overview-mode',assetSection(asset)==='stock'&&detailState.tab==='overview'&&!detailState.stockDetail);
     body.classList.toggle('asset53-compact-ledger',['insurance','realestate','stock','saving'].includes(assetSection(asset)));
