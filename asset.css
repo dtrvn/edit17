@@ -2519,6 +2519,25 @@
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .asset53-stock-swipe.asset53-insurance-swipe{
   touch-action:pan-x pan-y!important;
 }
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail > .asset53-stock-detail-view,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail > .asset53-stock-detail-view{
+  width:calc(100% + 20px)!important;
+  margin-left:-10px!important;
+  margin-right:-10px!important;
+  background:#eef5fb!important;
+}
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-header,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-header,
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-toolbar,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-toolbar,
+#screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-list,
+#phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-detail .asset53-insurance-detail-list{
+  width:100%!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-trade-mode .asset53-fixed-panel,
 #phone #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-trade-mode .asset53-fixed-panel,
 #screenAssetDetail.asset53-detail-screen.asset53-stock-screen .slide-body.asset53-stock-trade-mode .asset53-stock-trade-scroll,
