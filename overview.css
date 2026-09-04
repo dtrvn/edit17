@@ -253,7 +253,7 @@ body.custom-bg{align-items:center}
 .expense-row:nth-child(4) .bar-fill{background:linear-gradient(90deg,#f97316,#f59e0b)}
 .expense-percent{text-align:right;color:#1f293b;font-weight:600;font-size:9.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.dock-wrap{position:absolute;left:18px;right:18px;bottom:10px;pointer-events:none;padding:0;z-index:20;transition:z-index .01s linear}
+.dock-wrap{position:absolute;left:18px;right:18px;bottom:0;pointer-events:none;padding:0;z-index:20;transition:z-index .01s linear}
 #phone.dock-over-slide .dock-wrap{z-index:140}
 .slide-screen.no-exit-transition,
 .asset53-detail-screen.no-exit-transition{transition:none!important}
@@ -591,7 +591,7 @@ body.custom-bg{align-items:center}
   .phone.custom-bg{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;box-shadow:none!important}
   .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important}
   .cash-card{top:calc(86px + var(--safe-top));left:calc(14px + var(--safe-left));right:calc(14px + var(--safe-right))}
-  .dock-wrap{left:calc(15px + var(--safe-left));right:calc(15px + var(--safe-right));bottom:calc(-1px + var(--safe-bottom));padding:0}
+  .dock-wrap{left:calc(15px + var(--safe-left));right:calc(15px + var(--safe-right));bottom:calc(-11px + var(--safe-bottom));padding:0}
 }
 
 @supports (height:100lvh){

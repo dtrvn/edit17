@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=asset-summary-nav-fix-20260904a" />
+<link rel="stylesheet" href="overview.css?v=nav-bottom-down-20260904a" />
 <link rel="stylesheet" href="transaction.css?v=screen-bottom-zero-20260904a" />
 <link rel="stylesheet" href="category.css?v=screen-bottom-zero-20260904a" />
 <style>
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=asset-summary-nav-fix-20260904a">
+<link rel="stylesheet" href="asset.css?v=asset-summary-up-20260904a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -861,7 +861,7 @@
 }
 
 </style>
-<style id="iphone-ultimate-optimize"> html, body{ width:100%; height:100%; max-width:100%; overflow:hidden; overscroll-behavior:none; -webkit-text-size-adjust:100%; background-color:var(--safe-bg-color,#eef5fb); } body{ position:fixed; inset:0; min-height:100%; align-items:stretch; } .phone{ width:min(430px,100vw); height:100%; min-height:100%; max-height:100%; overscroll-behavior:none; } @media (max-width:430px){ .phone{ position:fixed!important; inset:0!important; width:auto!important; height:auto!important; min-height:0!important; max-width:none!important; max-height:none!important; border-radius:0!important; border:0!important; box-shadow:none!important; } .app{ padding-top:calc(16px + env(safe-area-inset-top)) !important; padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important; } .dock-wrap{ left:15px; right:15px; bottom:calc(8px + env(safe-area-inset-bottom)) !important; } } @supports (-webkit-touch-callout:none){ #phone input, #phone select, #phone textarea{ font-size:16px !important; } #phone .txn16-input, #phone .txn16-select, #phone .txn16-date, #phone .txn16-money-input, #phone .txn16-note-input, #phone .add39-input, #phone .add39-note, #phone .add39-control, #phone .demo-form input, #phone .demo-form select, #phone .demo-form textarea, #phone .gold77-input, #phone .gold77-select{ font-size:16px !important; } } </style>
+<style id="iphone-ultimate-optimize"> html, body{ width:100%; height:100%; max-width:100%; overflow:hidden; overscroll-behavior:none; -webkit-text-size-adjust:100%; background-color:var(--safe-bg-color,#eef5fb); } body{ position:fixed; inset:0; min-height:100%; align-items:stretch; } .phone{ width:min(430px,100vw); height:100%; min-height:100%; max-height:100%; overscroll-behavior:none; } @media (max-width:430px){ .phone{ position:fixed!important; inset:0!important; width:auto!important; height:auto!important; min-height:0!important; max-width:none!important; max-height:none!important; border-radius:0!important; border:0!important; box-shadow:none!important; } .app{ padding-top:calc(16px + env(safe-area-inset-top)) !important; padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important; } .dock-wrap{ left:15px; right:15px; bottom:calc(-2px + env(safe-area-inset-bottom)) !important; } } @supports (-webkit-touch-callout:none){ #phone input, #phone select, #phone textarea{ font-size:16px !important; } #phone .txn16-input, #phone .txn16-select, #phone .txn16-date, #phone .txn16-money-input, #phone .txn16-note-input, #phone .add39-input, #phone .add39-note, #phone .add39-control, #phone .demo-form input, #phone .demo-form select, #phone .demo-form textarea, #phone .gold77-input, #phone .gold77-select{ font-size:16px !important; } } </style>
 <style id="report-scroll-lock">
 #screenReports.report72-screen .slide-body{
   overflow-y:auto!important;
@@ -925,7 +925,7 @@
 #screenAssets .asset52-sub{font-size:9.4px!important;}
 #screenAssets .asset52-static-spacer{width:13px!important;height:13px!important;display:block!important;}
 #screenAssets.asset52-screen .slide-body{overflow:hidden!important;overscroll-behavior:none!important;touch-action:none!important;padding-bottom:0!important;}
-#screenAssets.asset52-screen .slide-head{margin-bottom:4px!important;}
+#screenAssets.asset52-screen .slide-head{height:36px!important;margin-bottom:0!important;}
 #screenAssets.asset52-screen .asset52-list{gap:5px!important;}
 #screenAssets.asset52-screen .asset52-card{min-height:48px!important;height:48px!important;padding-top:5px!important;padding-bottom:5px!important;}
 #screenAssets.asset52-screen .asset52-summary{margin-top:0!important;margin-bottom:7px!important;padding:10px!important;border-radius:19px!important;background:rgba(255,255,255,.72)!important;border:1px solid rgba(255,255,255,.86)!important;box-shadow:0 18px 34px rgba(15,23,42,.075),inset 0 1px 0 rgba(255,255,255,.95)!important;backdrop-filter:blur(18px) saturate(1.3)!important;-webkit-backdrop-filter:blur(18px) saturate(1.3)!important;}
@@ -1083,7 +1083,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone.phone{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center/cover no-repeat!important;}
   #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
   #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
-  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(-1px + var(--safe-bottom))!important;}
+  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(-11px + var(--safe-bottom))!important;}
   #phone.dock-over-slide .dock-wrap{z-index:140!important;}
   #phone::after{display:none!important;}
   #phone .dock-shell{backdrop-filter:blur(18px) saturate(1.35)!important;-webkit-backdrop-filter:blur(18px) saturate(1.35)!important;filter:drop-shadow(0 18px 30px rgba(30,41,59,.18))!important;border-radius:25px!important;}
@@ -1629,7 +1629,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-summary-nav-fix-a';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-nav-bottom-down-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1643,7 +1643,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-summary-nav-fix-20260904a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=nav-bottom-down-20260904a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);
