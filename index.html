@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=export-excel-20260829a" />
+<link rel="stylesheet" href="overview.css?v=asset-summary-nav-fix-20260904a" />
 <link rel="stylesheet" href="transaction.css?v=screen-bottom-zero-20260904a" />
 <link rel="stylesheet" href="category.css?v=screen-bottom-zero-20260904a" />
 <style>
@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=stock-detail-bottom-fix-20260904a">
+<link rel="stylesheet" href="asset.css?v=asset-summary-nav-fix-20260904a">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -925,11 +925,12 @@
 #screenAssets .asset52-sub{font-size:9.4px!important;}
 #screenAssets .asset52-static-spacer{width:13px!important;height:13px!important;display:block!important;}
 #screenAssets.asset52-screen .slide-body{overflow:hidden!important;overscroll-behavior:none!important;touch-action:none!important;padding-bottom:0!important;}
+#screenAssets.asset52-screen .slide-head{margin-bottom:4px!important;}
 #screenAssets.asset52-screen .asset52-list{gap:5px!important;}
 #screenAssets.asset52-screen .asset52-card{min-height:48px!important;height:48px!important;padding-top:5px!important;padding-bottom:5px!important;}
-#screenAssets.asset52-screen .asset52-summary{margin-bottom:7px!important;padding:8px!important;border-radius:16px!important;}
-#screenAssets.asset52-screen .asset52-summary-main{min-height:52px!important;padding:7px 9px 8px!important;display:grid!important;align-content:center!important;gap:5px!important;}
-#screenAssets.asset52-screen .asset52-summary-main b{font-size:18px!important;line-height:1.08!important;}
+#screenAssets.asset52-screen .asset52-summary{margin-top:0!important;margin-bottom:7px!important;padding:10px!important;border-radius:19px!important;background:rgba(255,255,255,.72)!important;border:1px solid rgba(255,255,255,.86)!important;box-shadow:0 18px 34px rgba(15,23,42,.075),inset 0 1px 0 rgba(255,255,255,.95)!important;backdrop-filter:blur(18px) saturate(1.3)!important;-webkit-backdrop-filter:blur(18px) saturate(1.3)!important;}
+#screenAssets.asset52-screen .asset52-summary-main{min-height:60px!important;padding:10px 13px 11px!important;display:grid!important;align-content:center!important;gap:6px!important;border-radius:16px!important;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(238,247,255,.72))!important;}
+#screenAssets.asset52-screen .asset52-summary-main b{font-size:19.5px!important;line-height:1.08!important;font-weight:760!important;}
 #screenAssets.asset52-screen .asset52-summary-grid{padding-top:4px!important;}
 #screenAssets.asset52-screen .asset52-summary-grid>div{min-height:44px!important;padding:7px 9px!important;gap:4px!important;}
 #screenAssets.asset52-screen .asset52-mini{min-height:44px!important;}
@@ -1083,9 +1084,10 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
   #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
   #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(-1px + var(--safe-bottom))!important;}
+  #phone.dock-over-slide .dock-wrap{z-index:140!important;}
   #phone::after{display:none!important;}
-  #phone .dock-shell{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:drop-shadow(0 14px 24px rgba(38,55,88,.16))!important;}
-  #phone .dock-svg path{fill:rgba(255,255,255,.30)!important;stroke:rgba(255,255,255,.82)!important;stroke-width:1.05!important;filter:drop-shadow(0 1px 2px rgba(15,23,42,.18)) drop-shadow(0 -1px 1px rgba(255,255,255,.42))!important;}
+  #phone .dock-shell{backdrop-filter:blur(18px) saturate(1.35)!important;-webkit-backdrop-filter:blur(18px) saturate(1.35)!important;filter:drop-shadow(0 18px 30px rgba(30,41,59,.18))!important;border-radius:25px!important;}
+  #phone .dock-svg path{fill:rgba(255,255,255,.66)!important;stroke:rgba(255,255,255,.96)!important;stroke-width:1.12!important;filter:drop-shadow(0 1px 2px rgba(15,23,42,.12)) drop-shadow(0 -1px 1px rgba(255,255,255,.62))!important;}
   #phone .tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;}
   #phone .tools-grid{padding-bottom:0!important;}
   #phone .tool{height:62px!important;min-height:62px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
@@ -1617,17 +1619,17 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
-<script src="overview.js?v=insurance-touch-scroll-chevron-20260901o"></script>
+<script src="overview.js?v=asset-summary-nav-fix-20260904a"></script>
 <script src="transaction.js?v=stock-trade-form-20260902e"></script>
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=stock-detail-bottom-fix-20260904a"></script>
-<script src="report.js?v=report-nav-polish-20260904a"></script>
+<script src="asset.js?v=overview-persistent-nav-20260904b"></script>
+<script src="report.js?v=overview-persistent-nav-20260904b"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-report-nav-gap-a';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-asset-summary-nav-fix-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1641,7 +1643,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=report-nav-gap-20260904a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-summary-nav-fix-20260904a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

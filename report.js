@@ -264,6 +264,7 @@
     const screen=document.getElementById('screenReportDetail');
     screen?.classList.add('active');
     screen?.setAttribute('aria-hidden','false');
+    window.syncDockNavigation?.();
   }
   function openYearDetail(){
     detailState.tab='Thu nhập';
@@ -274,6 +275,7 @@
     const screen=document.getElementById('screenReportDetail');
     screen?.classList.add('active');
     screen?.setAttribute('aria-hidden','false');
+    window.syncDockNavigation?.();
   }
   function childDetailData(){
     const mode=childDetailState.mode==='month'?'month':'year';
@@ -367,6 +369,7 @@
     const screen=document.getElementById('screenReportChildDetail');
     screen?.classList.add('active');
     screen?.setAttribute('aria-hidden','false');
+    window.syncDockNavigation?.();
   }
   function yearlyChart(months,animate){
     months=months||monthsOfYear();
@@ -452,6 +455,7 @@
       const screen=document.getElementById('screenReportDetail');
       screen?.classList.remove('active');
       screen?.setAttribute('aria-hidden','true');
+      window.syncDockNavigation?.();
       return;
     }
     if(e.target.closest('[data-report-child-back]')){
@@ -459,6 +463,7 @@
       screen?.classList.remove('active');
       screen?.setAttribute('aria-hidden','true');
       renderDetailScreen();
+      window.syncDockNavigation?.();
       return;
     }
     const detailTab=e.target.closest('[data-report-detail-tab]');

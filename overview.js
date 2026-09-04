@@ -252,14 +252,19 @@ function closeTransientLayers(){
   }
 }
 
-function closeAllScreens(){
+function closeAllScreens(options={}){
   document.querySelectorAll('.slide-screen.active').forEach(el=>{
+    if(options.instant)el.classList.add('no-exit-transition');
     el.classList.remove('active');
     el.setAttribute('aria-hidden','true');
+    if(options.instant)requestAnimationFrame(()=>el.classList.remove('no-exit-transition'));
   });
   const assetDetail=document.getElementById('screenAssetDetail');
+  if(options.instant)assetDetail?.classList.add('no-exit-transition');
   assetDetail?.classList.remove('active');
   assetDetail?.setAttribute('aria-hidden','true');
+  if(options.instant)requestAnimationFrame(()=>assetDetail?.classList.remove('no-exit-transition'));
+  if(!options.skipDock)syncDockNavigation();
 }
 
 function bgIcon(){
@@ -905,9 +910,36 @@ function ensureHomeButtons(root=document){
   });
 }
 
+const dockNavScreens={screenTransactions:1,screenAssets:2,screenReports:3};
+
+function syncDockNavigation(activeScreenId){
+  const content=document.querySelector('.dock-content');
+  const items=Array.from(document.querySelectorAll('.dock-content .nav-item'));
+  const activeId=activeScreenId&&Object.prototype.hasOwnProperty.call(dockNavScreens,activeScreenId)
+    ? activeScreenId
+    : document.querySelector('#screenTransactions.active,#screenAssets.active,#screenReports.active')?.id;
+  const activeIndex=activeId?dockNavScreens[activeId]:0;
+  items.forEach((item,index)=>item.classList.toggle('active',index===activeIndex));
+  if(phone){
+    const detailActive=!!document.querySelector('#screenTxnForm.active,#screenReportDetail.active,#screenReportChildDetail.active,#screenAssetDetail.active,#screenCategories.active,#screenDataTools.active,#screenGold.active');
+    phone.classList.toggle('dock-over-slide',activeIndex>0&&!detailActive);
+    phone.dataset.navIndex=String(activeIndex);
+  }
+  const activeItem=items[activeIndex];
+  if(!content||!activeItem)return;
+  requestAnimationFrame(()=>{
+    const contentRect=content.getBoundingClientRect();
+    const itemRect=activeItem.getBoundingClientRect();
+    const width=Math.min(62,Math.max(52,itemRect.width-8));
+    const left=itemRect.left-contentRect.left+(itemRect.width-width)/2;
+    content.style.setProperty('--dock-active-left',`${left}px`);
+    content.style.setProperty('--dock-active-width',`${width}px`);
+  });
+}
+
 function openScreen(id){
   closeTransientLayers();
-  closeAllScreens();
+  closeAllScreens({instant:true,skipDock:true});
   ensureHomeButtons();
   const el=document.getElementById(id);
   if(el){
@@ -915,6 +947,7 @@ function openScreen(id){
     el.classList.add('active');
     el.setAttribute('aria-hidden','false');
   }
+  syncDockNavigation(id);
 }
 
 function closeScreen(id){
@@ -924,6 +957,7 @@ function closeScreen(id){
     el.setAttribute('aria-hidden','true');
   }
   closeTransientLayers();
+  syncDockNavigation();
   playOverviewAnimations();
 }
 
@@ -1658,9 +1692,12 @@ setTimeout(()=>updateAppLoader(),0);
 document.querySelector('.add-btn')?.addEventListener('click',()=>openScreen('screenTxnForm'));
 
 const navs=document.querySelectorAll('.dock-content .nav-item');
+navs[0]?.addEventListener('click',()=>{closeTransientLayers();closeAllScreens();playOverviewAnimations();});
 navs[1]?.addEventListener('click',()=>{openScreen('screenTransactions');setTimeout(resetTransactionFilters,60);});
 navs[2]?.addEventListener('click',()=>openScreen('screenAssets'));
 navs[3]?.addEventListener('click',()=>openScreen('screenReports'));
+window.addEventListener('resize',()=>syncDockNavigation());
+syncDockNavigation();
 
 const toolsEls=document.querySelectorAll('.tool');
 toolsEls[0]?.addEventListener('click',()=>openScreen('screenGold'));
@@ -1671,6 +1708,7 @@ toolsEls[3]?.addEventListener('click',exportDataPrompt);
 window.openScreen=openScreen;
 window.closeScreen=closeScreen;
 window.ensureHomeButtons=ensureHomeButtons;
+window.syncDockNavigation=syncDockNavigation;
 
 function fmt(n){
   return Number(n||0).toLocaleString('vi-VN')+' ₫';

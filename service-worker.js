@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260904-report-nav-gap-a';
+const CACHE_NAME = 'qlct-pwa-v20260904-asset-summary-nav-fix-a';
 const APP_SHELL = [
   './',
   './index.html',

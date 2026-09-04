@@ -2579,6 +2579,7 @@
     requestAnimationFrame(()=>{
       screen.classList.add('active');
       screen.setAttribute('aria-hidden','false');
+      window.syncDockNavigation?.();
     });
   }
 
@@ -2588,6 +2589,7 @@
     closeAssetStockSheet();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
+    window.syncDockNavigation?.();
   }
 
   function parseGoldQtyToChi(qtyText){
