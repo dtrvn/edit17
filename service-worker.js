@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260905-stock-share-total-s';
+const CACHE_NAME = 'qlct-pwa-v20260905-asset-summary-single-card-d';
 const APP_SHELL = [
   './',
   './index.html',
