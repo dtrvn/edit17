@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260905-glass-ui-real-b';
+const CACHE_NAME = 'qlct-pwa-v20260905-faceid-glass-a';
 const APP_SHELL = [
   './',
   './index.html',
