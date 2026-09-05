@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260904-nav-bottom-down-a';
+const CACHE_NAME = 'qlct-pwa-v20260905-stock-share-total-s';
 const APP_SHELL = [
   './',
   './index.html',

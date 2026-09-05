@@ -51,6 +51,14 @@
   const isStockSellState=()=>txType(state.type)==='DIVEST'&&classifiedAssetType(state.type,state.group,state.child)==='STOCK'&&normalizeDong(plainText(state.child)).includes('ban co phieu');
   const percentValue=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.]/g,''))||0;
   const percentAmount=(amount,pct)=>Math.round(Number(amount||0)*percentValue(pct)/100);
+  const isStockShareTradeState=()=>isStockBuyState()||isStockSellState();
+  const stockShareQty=()=>Number(String(state.assetQty||'').replace(',','.'))||1;
+  const effectiveAmount=()=>isStockShareTradeState()?Math.round(Number(state.amount||0)*stockShareQty()):Number(state.amount||0);
+  const stockTradeFeeAmount=()=>percentAmount(effectiveAmount(),state.feePct);
+  const stockTradeTaxAmount=()=>isStockSellState()?percentAmount(effectiveAmount(),state.taxPct):0;
+  const stockTradeTotalAmount=()=>isStockSellState()
+    ? Math.max(0,effectiveAmount()-stockTradeFeeAmount()-stockTradeTaxAmount())
+    : effectiveAmount()+stockTradeFeeAmount();
   function classifiedAssetType(type,group,child){
     const g=normalizeDong(plainText(group)),c=normalizeDong(plainText(child));
     if(g.includes('vang'))return 'GOLD';
@@ -90,8 +98,11 @@
   function updateStockFeePreview(){
     const fee=document.getElementById('add39FeePreview');
     const tax=document.getElementById('add39TaxPreview');
-    if(fee)fee.textContent=money(percentAmount(state.amount,state.feePct));
-    if(tax)tax.textContent=money(percentAmount(state.amount,state.taxPct));
+    const total=document.getElementById('add39StockTotalPreview');
+    const amount=effectiveAmount();
+    if(fee)fee.textContent=money(percentAmount(amount,state.feePct));
+    if(tax)tax.textContent=money(percentAmount(amount,state.taxPct));
+    if(total)total.textContent=money(stockTradeTotalAmount());
   }
 
   function savingBookOptions(){
@@ -596,7 +607,7 @@
     const books=savingBookOptions();
     const selectedBook=selectedSavingBook();
     if(divestSaving&&selectedBook&&state.savingBookId!==selectedBook.value)state.savingBookId=selectedBook.value;
-    const amountLabel=divestSaving?'Số tiền tất toán sổ':'Số tiền';
+    const amountLabel=isStockShareTradeState()?'Số tiền / Cổ phiếu':(divestSaving?'Số tiền tất toán sổ':'Số tiền');
     const savingFields=`<div class="add39-asset-block saving-mode"><div class="add39-field full"><label class="add39-label">Kỳ hạn</label><button class="add39-control" data-add39-saving-term type="button"><span>${state.savingTerm||'1 tháng'}</span>${chev}</button></div><div class="add39-field full"><label class="add39-label">Lãi suất / năm</label><input class="add39-input" id="add39AssetInterest" inputmode="decimal" value="${state.assetInterest||''}" placeholder="VD: 5.5"></div><div class="add39-field full"><div class="add39-saving-preview"><span>Lãi dự kiến: <b id="add39SavingMaturity">${money(maturityInterest)}</b></span></div></div></div>`;
     const savingWithdrawFields=`<div class="add39-asset-block saving-mode"><div class="add39-field full"><label class="add39-label">Sổ tiết kiệm</label><button class="add39-control" data-add39-saving-book type="button"><span>${selectedBook?.label||'Chưa có sổ tiết kiệm'}</span>${chev}</button></div></div>`;
     const assetNameControl=divestGold
@@ -611,10 +622,11 @@
     const unitBlock=hideInsuranceQtyUnit?'':`<div class="add39-field"><label class="add39-label">Đơn vị</label>${unitField}</div>`;
     const stockBuyLayout=false;
     const feeFields=stockBuyLayout
-      ? `<div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Phí GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thuế</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(state.amount,state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div>`
+      ? `<div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Phí GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(effectiveAmount(),state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thuế</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(effectiveAmount(),state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div>`
       : `<div class="add39-field full"><label class="add39-label">Phí / tiền công</label><input class="add39-input" id="add39Fee" inputmode="numeric" pattern="[0-9]*" value="${state.fee||''}" placeholder="0"></div>`;
-    const stockBuyFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div></div>`;
-    const stockSellFields=`<div class="add39-asset-block"><div class="add39-field"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(state.amount,state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thu&#7871;</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(state.amount,state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div></div>`;
+    const stockTotalField=`<div class="add39-field full"><div class="add39-saving-preview"><span>Tổng số tiền: <b id="add39StockTotalPreview">${money(stockTradeTotalAmount())}</b></span></div></div>`;
+    const stockBuyFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(effectiveAmount(),state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div>${stockTotalField}</div>`;
+    const stockSellFields=`<div class="add39-asset-block"><div class="add39-field"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div><div class="add39-field"><label class="add39-label">S&#7889; l&#432;&#7907;ng</label><input class="add39-input" id="add39AssetQty" inputmode="decimal" value="${state.assetQty||''}" placeholder="100"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Ph&iacute; GD</label><span class="add39-money-preview" id="add39FeePreview">${money(percentAmount(effectiveAmount(),state.feePct))}</span></div><input class="add39-input" id="add39FeePct" inputmode="decimal" value="${state.feePct}" placeholder="0.15"></div><div class="add39-field add39-percent-field"><div class="add39-label-row"><label class="add39-label">Thu&#7871;</label><span class="add39-money-preview" id="add39TaxPreview">${money(percentAmount(effectiveAmount(),state.taxPct))}</span></div><input class="add39-input" id="add39TaxPct" inputmode="decimal" value="${state.taxPct}" placeholder="0.1"></div>${stockTotalField}</div>`;
     const defaultAssetFields=`<div class="add39-asset-block"><div class="add39-field full"><label class="add39-label">${assetLabelForType(currentAssetType)}</label>${assetNameControl}</div>${qtyField}${unitBlock}${feeFields}</div>`;
     const assetFields=isAssetState()?(isSavingState()?(divestSaving?savingWithdrawFields:savingFields):(stockBuy?stockBuyFields:(stockSell?stockSellFields:defaultAssetFields))):'';
     form.innerHTML=`<div class="add39-field"><label class="add39-label">Ngày giao dịch</label><button class="add39-control" data-add39-date><span>${dmy(state.date)}</span>${calIcon}</button></div><div class="add39-field"><label class="add39-label">Loại giao dịch</label><button class="add39-control" data-add39-type><span>${state.type||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Nhóm danh mục</label><button class="add39-control" data-add39-group><span>${state.group||emptyText}</span>${chev}</button></div><div class="add39-field cat-row"><label class="add39-label">Hạng mục con</label><button class="add39-control" data-add39-child><span>${state.child||emptyText}</span>${chev}</button></div><div class="add39-field full"><div class="add39-label-row"><label class="add39-label">${amountLabel}</label><span class="add39-money-preview" id="add39MoneyPreview">${money(state.amount)}</span></div><input class="add39-input" id="add39Amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${state.amount||''}"></div>${assetFields}<div class="add39-field full"><label class="add39-label">Ghi chú</label><textarea class="add39-note" id="add39Note" placeholder="Nhập ghi chú">${state.note||''}</textarea></div><div class="add39-actions"><button type="button" class="add39-cancel" data-close="screenTxnForm">Hủy</button><button type="button" class="add39-save" id="add39Save">Lưu giao dịch</button></div>`;
@@ -635,7 +647,7 @@
   function createTransaction(){
     if(saving)return;
     normalize();
-    const amount=Number(state.amount||0);
+    const enteredAmount=Number(state.amount||0);
     if(!state.type||!state.group||!state.child)return;
     const currentAssetType=classifiedAssetType(state.type,state.group,state.child);
     const premiumInsurance=isInsurancePremiumState();
@@ -653,7 +665,7 @@
       document.querySelector('[data-add39-asset-holding]')?.focus();
       return;
     }
-    if(!amount){
+    if(!enteredAmount){
       document.getElementById('add39Amount')?.focus();
       return;
     }
@@ -671,11 +683,13 @@
     const stockBuy=isStockBuyState();
     const stockSell=isStockSellState();
     const stockTrade=stockBuy||stockSell;
-    const fee=stockTrade?percentAmount(amount,state.feePct):(Number(String(state.fee||0).replace(/\D/g,''))||0);
-    const tax=stockSell?percentAmount(amount,state.taxPct):0;
-    const transactionCost=fee+tax;
     if(divestManagedAsset&&managedHolding)applyManagedAssetPick(managedHolding,currentAssetType,{fillQty:!state.assetQty});
     const qty=(saveAsset||currentAssetType==='INSURANCE')?1:(Number(String(state.assetQty||'').replace(',','.'))||1);
+    const grossAmount=stockTrade?Math.round(enteredAmount*qty):enteredAmount;
+    const fee=stockTrade?percentAmount(grossAmount,state.feePct):(Number(String(state.fee||0).replace(/\D/g,''))||0);
+    const tax=stockSell?percentAmount(grossAmount,state.taxPct):0;
+    const transactionCost=fee+tax;
+    const amount=stockSell?Math.max(0,grossAmount-transactionCost):(stockBuy?grossAmount+transactionCost:grossAmount);
     const unitForTx=saveAsset?'Sổ':(currentAssetType==='STOCK'?defaultAssetUnitForType('STOCK'):(state.assetUnit||defaultAssetUnitForType(currentAssetType)||(currentAssetType==='GOLD'?'Chỉ':'Đơn vị')));
     const priceQty=currentAssetType==='GOLD'?goldQtyToChi(qty,unitForTx):qty;
     if(isDivestGoldState()){
@@ -691,7 +705,7 @@
       }
       state.assetName=holding.name;
     }
-    const price=Math.round(amount/Math.max(priceQty,1));
+    const price=stockTrade?enteredAmount:Math.round(amount/Math.max(priceQty,1));
     const savingTerm=book?.term||state.savingTerm||'1 tháng';
     const savingRate=book?.rate||state.assetInterest||'';
     const savingBookId=saveAsset?(divestSaving?book?.value:generatedSavingBookId(businessId)):'';
@@ -741,8 +755,9 @@
         ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,businessId,txData)
         : window.FDB.set(FIREBASE_COLLECTIONS.giaoDich,businessId,txData));
     window.QLCT_setBusy?.(true,'Đang lưu giao dịch');
-    Promise.resolve(request).then(()=>{
-      window.TXN_upsertTransaction?.({...txData,_docId:businessId});
+    Promise.resolve(request).then(committedData=>{
+      const localData=committedData&&typeof committedData==='object'?{...txData,...committedData}:txData;
+      window.TXN_upsertTransaction?.({...localData,_docId:businessId,id:businessId});
       closeScreen('screenTxnForm');
       openScreen('screenTransactions');
       window.TXN_showDate?.(savedDate);
@@ -833,7 +848,7 @@
     }
     if(e.target?.id==='add39Note')state.note=e.target.value;
     if(e.target?.id==='add39AssetName')state.assetName=e.target.value;
-    if(e.target?.id==='add39AssetQty')state.assetQty=e.target.value;
+    if(e.target?.id==='add39AssetQty'){state.assetQty=e.target.value;updateStockFeePreview();}
     if(e.target?.id==='add39AssetUnit')state.assetUnit=e.target.value;
     if(e.target?.id==='add39AssetInterest'){state.assetInterest=e.target.value;updateSavingPreview();}
     if(e.target?.id==='add39Fee')state.fee=Number(String(e.target.value||'').replace(/\D/g,''))||0;

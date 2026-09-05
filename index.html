@@ -158,7 +158,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=asset-summary-up-20260904a">
+<link rel="stylesheet" href="asset.css?v=stock-share-total-20260905s">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1300,7 +1300,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   row-gap:4px!important;
   overflow:hidden!important;
   padding-top:5px!important;
-  padding-bottom:5px!important;
+  padding-bottom:6px!important;
 }
 .report72-detail-screen.report72-expense-tab .report72-detail-bar-top{
   grid-column:1 / 3!important;
@@ -1369,15 +1369,19 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row,
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row{
-  height:53px!important;
-  min-height:53px!important;
-  grid-template-rows:14px 26px!important;
+  padding-top:2px!important;
+  padding-bottom:5px!important;
+  height:58px!important;
+  min-height:58px!important;
+  grid-template-rows:max-content max-content!important;
   align-content:center!important;
   align-items:center!important;
-  row-gap:2px!important;
+  row-gap:1px!important;
 }
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
-#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name,
+#phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-name{
+  align-self:center!important;
+}
 #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics,
 #phone #screenAssetDetail.asset53-detail-screen .slide-body.asset53-stock-overview-mode .asset53-stock-holding-row .asset53-stock-metrics{
   align-self:center!important;
@@ -1620,16 +1624,16 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
 <script src="overview.js?v=asset-summary-nav-fix-20260904a"></script>
-<script src="transaction.js?v=stock-trade-form-20260902e"></script>
+<script src="transaction.js?v=stock-share-total-20260905n"></script>
 <script src="category.js?v=category-top-add-20260829a"></script>
 
-<script src="add-transaction.js?v=stock-trade-form-20260902c"></script>
-<script src="asset.js?v=overview-persistent-nav-20260904b"></script>
+<script src="add-transaction.js?v=stock-share-total-20260905n"></script>
+<script src="asset.js?v=stock-share-total-20260905n"></script>
 <script src="report.js?v=overview-persistent-nav-20260904b"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260904-nav-bottom-down-a';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260905-stock-share-total-s';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1643,7 +1647,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=nav-bottom-down-20260904a')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=stock-share-total-20260905s')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

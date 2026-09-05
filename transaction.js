@@ -128,6 +128,23 @@
   }
   const percentValue=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.]/g,''))||0;
   const percentAmount=(amount,pct)=>Math.round(Number(amount||0)*percentValue(pct)/100);
+  const isStockShareTradeTx=t=>isStockBuyTx(t)||isStockSellTx(t);
+  const stockShareQtyForTx=t=>Number(String(t?.assetQty||'').replace(',','.'))||1;
+  function stockUnitPriceForTx(t){
+    if(!isStockShareTradeTx(t))return Number(t?.amount||0);
+    const storedPrice=Number(t?.assetPrice||0);
+    if(storedPrice)return storedPrice;
+    return Math.round(Number(t?.amount||0)/Math.max(stockShareQtyForTx(t),1));
+  }
+  function stockGrossAmountForTx(t){
+    return isStockShareTradeTx(t)?Math.round(Number(t?.amount||0)*stockShareQtyForTx(t)):Number(t?.amount||0);
+  }
+  function stockTotalAmountForTx(t){
+    const gross=stockGrossAmountForTx(t);
+    const fee=isStockShareTradeTx(t)?percentAmount(gross,t?.feePct):0;
+    const tax=isStockSellTx(t)?percentAmount(gross,t?.taxPct):0;
+    return isStockSellTx(t)?Math.max(0,gross-fee-tax):gross+fee;
+  }
   function assetUnitOptionsForType(type){
     if(type==='LAND')return ['m2','Lô'];
     if(type==='STOCK')return ['Cổ'];
@@ -236,6 +253,7 @@
   function assetUnitPriceForTx(t){
     if(!isAssetTx(t))return 0;
     const type=assetTypeOf(t);
+    if(isStockShareTradeTx(t))return Number(t.amount||0);
     const qty=type==='INSURANCE'?1:(Number(t.assetQty||0)||1);
     const unit=t.assetUnit||defaultAssetUnitForType(type)||(type==='GOLD'?'Chỉ':'Đơn vị');
     const priceQty=type==='GOLD'?goldQtyToChi(qty,unit):qty;
@@ -287,16 +305,18 @@
     const stockBuy=isStockBuyTx(t);
     const stockSell=isStockSellTx(t);
     const stockTrade=stockBuy||stockSell;
-    const tradingFee=stockTrade?percentAmount(t.amount,t.feePct):(Number(t.fee||0)||0);
-    const tax=stockSell?percentAmount(t.amount,t.taxPct):0;
+    const grossAmount=stockGrossAmountForTx(t);
+    const tradingFee=stockTrade?percentAmount(grossAmount,t.feePct):(Number(t.fee||0)||0);
+    const tax=stockSell?percentAmount(grossAmount,t.taxPct):0;
     const transactionFee=stockTrade?tradingFee+tax:Number(t.fee||0);
+    const displayAmount=stockSell?Math.max(0,grossAmount-transactionFee):(stockBuy?grossAmount+transactionFee:grossAmount);
     const data={
       ngay:t.date,
       loai_giao_dich:t.type||typeFromLarge(t.large),
       loai_lon:t.large,
       nhom_danh_muc:t.group,
       hang_muc_con:t.child,
-      so_tien:Number(t.amount||0),
+      so_tien:displayAmount,
       ghi_chu:t.note||'',
       loai_tai_san:isAssetTx(t)?(t.assetType||assetType):'',
       ten_tai_san:isAssetTx(t)?(saving?'Gửi tiết kiệm':(t.assetName||(assetType==='GOLD'?'Vàng 98%':t.child||t.group||'Tài sản'))):'',
@@ -456,7 +476,7 @@
     setTimeout(()=>document.getElementById('txn16InsuranceContractName')?.focus(),40);
   }
   function openCalendar(current,onPick){ensureSheet();let [y,m]=String(current||new Date().toISOString().slice(0,10)).split('-').map(Number);const sheet=document.getElementById('txn16Sheet'),back=document.getElementById('txn16Backdrop');const monthNames=['Tháng 01','Tháng 02','Tháng 03','Tháng 04','Tháng 05','Tháng 06','Tháng 07','Tháng 08','Tháng 09','Tháng 10','Tháng 11','Tháng 12'];function drawDay(){const first=new Date(y,m-1,1);const offset=(first.getDay()+6)%7;const days=new Date(y,m,0).getDate();let cells=[];const pm=m===1?12:m-1,py=m===1?y-1:y,pdays=new Date(py,pm,0).getDate();for(let i=offset-1;i>=0;i--)cells.push({d:pdays-i,m:pm,y:py,muted:true});for(let d=1;d<=days;d++)cells.push({d,m,y});const nm=m===12?1:m+1,ny=m===12?y+1:y;while(cells.length<42)cells.push({d:cells.length-(offset+days)+1,m:nm,y:ny,muted:true});sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-prev>‹</button><button class="txn16-cal-title" data-title>Tháng ${pad(m)}/${y}</button><button data-next>›</button></div><div class="txn16-week"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div><div class="txn16-cal-grid">${cells.map(c=>{const v=`${c.y}-${pad(c.m)}-${pad(c.d)}`;return `<button class="txn16-day ${c.muted?'muted':''} ${v===current?'selected':''}" data-date="${v}">${c.d}</button>`}).join('')}</div>`}function drawMonth(){sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-year-prev>‹</button><button class="txn16-cal-title" data-year-title>${y}</button><button data-year-next>›</button></div><div class="txn16-month-grid">${monthNames.map((name,i)=>`<button class="txn16-month-pick ${i+1===m?'selected':''}" data-month="${i+1}">${name}</button>`).join('')}</div>`}function drawYear(){const start=Math.floor((y-6)/12)*12;sheet.innerHTML=`<div class="txn16-handle"></div><div class="txn16-cal-head"><button data-years-prev>‹</button><button class="txn16-cal-title">${start} - ${start+11}</button><button data-years-next>›</button></div><div class="txn16-year-grid">${Array.from({length:12},(_,i)=>start+i).map(year=>`<button class="txn16-year-pick ${year===y?'selected':''}" data-year="${year}">${year}</button>`).join('')}</div>`}function close(){sheet.classList.remove('show');back.classList.remove('show')}drawDay();sheet.onclick=e=>{if(e.target.closest('[data-title]')){drawMonth();return}if(e.target.closest('[data-year-title]')){drawYear();return}if(e.target.closest('[data-prev]')){m--;if(m<1){m=12;y--}drawDay();return}if(e.target.closest('[data-next]')){m++;if(m>12){m=1;y++}drawDay();return}if(e.target.closest('[data-year-prev]')){y--;drawMonth();return}if(e.target.closest('[data-year-next]')){y++;drawMonth();return}if(e.target.closest('[data-years-prev]')){y-=12;drawYear();return}if(e.target.closest('[data-years-next]')){y+=12;drawYear();return}const month=e.target.closest('[data-month]');if(month){m=Number(month.dataset.month);drawDay();return}const year=e.target.closest('[data-year]');if(year){y=Number(year.dataset.year);drawMonth();return}const d=e.target.closest('[data-date]');if(d){onPick(d.dataset.date);close()}};back.onclick=close;sheet.classList.add('show');back.classList.add('show')}
-  function openEdit(id){const found=transactions.find(x=>x.id===id);if(!found)return;state.editing=JSON.parse(JSON.stringify(found));state.editOriginal=JSON.parse(JSON.stringify(found));document.getElementById('txn16Edit')?.remove();document.getElementById('phone').insertAdjacentHTML('beforeend',editHtml());const el=document.getElementById('txn16Edit');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el);requestAnimationFrame(()=>el.classList.add('active'))}
+  function openEdit(id){const found=transactions.find(x=>x.id===id);if(!found)return;state.editing=JSON.parse(JSON.stringify(found));state.editOriginal=JSON.parse(JSON.stringify(found));if(isStockShareTradeTx(state.editing))state.editing.amount=stockUnitPriceForTx(state.editing);document.getElementById('txn16Edit')?.remove();document.getElementById('phone').insertAdjacentHTML('beforeend',editHtml());const el=document.getElementById('txn16Edit');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el);requestAnimationFrame(()=>el.classList.add('active'))}
   function typeFromLarge(x){return x==='Thu nhập'?'INCOME':x==='Đầu tư'?'INVEST':(x==='Thu hồi tài sản'||x==='Thu hồi')?'DIVEST':'EXPENSE'}
   function assetEditHtml(t){
     if(!isAssetTx(t))return '';
@@ -483,7 +503,7 @@
       t.assetUnit=defaultAssetUnitForType('STOCK');
       if(!t.assetQty)t.assetQty=100;
       if(t.feePct==='')t.feePct='0.15';
-      return `<div class="txn16-asset-block txn16-stock-buy"><div class="txn16-field full"><label class="txn16-label">Mã cổ phiếu</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(t.amount,t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div></div>`;
+      return `<div class="txn16-asset-block txn16-stock-buy"><div class="txn16-field full"><label class="txn16-label">Mã cổ phiếu</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(stockGrossAmountForTx(t),t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div><div class="txn16-field full"><div class="txn16-saving-preview"><span>Tổng số tiền: <b id="txn16StockTotalPreview">${fmt(stockTotalAmountForTx(t))}</b></span></div></div></div>`;
     }
     if(isStockSellTx(t)){
       t.assetType='STOCK';
@@ -495,11 +515,11 @@
       const current=rows.find(row=>plainText(row.name)===plainText(t.assetName))||rows[0]||null;
       if(current&&!t.assetName)t.assetName=current.name;
       const label=current?.label||assetName||'Chưa có cổ phiếu để bán';
-      return `<div class="txn16-asset-block txn16-stock-sell"><div class="txn16-field"><label class="txn16-label">Mã cổ phiếu</label><button class="txn16-control" data-edit-stock-holding type="button"><span>${label}</span>${chev()}</button></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(t.amount,t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Thuế</label><span class="txn16-preview" id="txn16TaxPreview">${fmt(percentAmount(t.amount,t.taxPct))}</span></div><input class="txn16-money-input" id="txn16TaxPct" inputmode="decimal" value="${t.taxPct}" placeholder="0.1"></div></div>`;
+      return `<div class="txn16-asset-block txn16-stock-sell"><div class="txn16-field"><label class="txn16-label">Mã cổ phiếu</label><button class="txn16-control" data-edit-stock-holding type="button"><span>${label}</span>${chev()}</button></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Phí GD</label><span class="txn16-preview" id="txn16FeePreview">${fmt(percentAmount(stockGrossAmountForTx(t),t.feePct))}</span></div><input class="txn16-money-input" id="txn16FeePct" inputmode="decimal" value="${t.feePct}" placeholder="0.15"></div><div class="txn16-field txn16-percent-field"><div class="txn16-label-row"><label class="txn16-label">Thuế</label><span class="txn16-preview" id="txn16TaxPreview">${fmt(percentAmount(stockGrossAmountForTx(t),t.taxPct))}</span></div><input class="txn16-money-input" id="txn16TaxPct" inputmode="decimal" value="${t.taxPct}" placeholder="0.1"></div><div class="txn16-field full"><div class="txn16-saving-preview"><span>Tổng số tiền: <b id="txn16StockTotalPreview">${fmt(stockTotalAmountForTx(t))}</b></span></div></div></div>`;
     }
     return `<div class="txn16-asset-block"><div class="txn16-field full"><label class="txn16-label">Tên tài sản</label><input class="txn16-money-input" id="txn16AssetName" value="${assetName}"></div><div class="txn16-field"><label class="txn16-label">Số lượng</label><input class="txn16-money-input" id="txn16AssetQty" inputmode="decimal" value="${t.assetQty||''}"></div><div class="txn16-field"><label class="txn16-label">Đơn vị</label>${unitField}</div><div class="txn16-field full"><label class="txn16-label">Phí / tiền công</label><input class="txn16-money-input" id="txn16Fee" inputmode="numeric" pattern="[0-9]*" value="${t.fee||''}"></div></div>`;
   }
-  function editHtml(){const t=state.editing;return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại giao dịch</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">Số tiền</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
+  function editHtml(){const t=state.editing;const amountLabel=isStockShareTradeTx(t)?'Số tiền / Cổ phiếu':'Số tiền';return `<section class="txn16-edit" id="txn16Edit"><div class="slide-head"><button class="slide-back" data-edit-back><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18 9 12l6-6"/></svg></button><div class="slide-title">Sửa giao dịch</div></div><div class="txn16-edit-body"><div class="txn16-edit-card"><div class="txn16-edit-grid"><div class="txn16-field"><label class="txn16-label">Ngày</label><button class="txn16-control" data-edit-date>${toDMY(t.date)}${cal()}</button></div><div class="txn16-field"><label class="txn16-label">Loại giao dịch</label><button class="txn16-control" data-edit-large>${t.large}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Nhóm danh mục</label><button class="txn16-control" data-edit-group>${t.group}${chev()}</button></div><div class="txn16-field full edit-row"><label class="txn16-label">Hạng mục con</label><button class="txn16-control" data-edit-child>${t.child}${chev()}</button></div><div class="txn16-field full"><div class="txn16-label-row"><label class="txn16-label">${amountLabel}</label><span class="txn16-preview">${fmt(t.amount)}</span></div><input class="txn16-money-input" id="txn16Amount" inputmode="numeric" pattern="[0-9]*" value="${t.amount}"></div>${assetEditHtml(t)}<div class="txn16-field full"><label class="txn16-label">Ghi chú</label><textarea class="txn16-note-input" id="txn16Note">${t.note||''}</textarea></div></div><div class="txn16-actions"><button class="txn16-delete" id="txn16Delete">Xóa</button><button class="txn16-save" id="txn16Save">Lưu thay đổi</button></div></div></div></section>`}
   function rerenderEdit(){const old=document.getElementById('txn16Edit');if(old){old.outerHTML=editHtml();const el=document.getElementById('txn16Edit');el.classList.add('active');window.ensureHomeButtons?.(el);bindEdit(el);bindEditActionButtons(el)}}
   function closeEditScreen(){
     const el=document.getElementById('txn16Edit');
@@ -553,13 +573,18 @@
     }
     state.saving=true;
     window.QLCT_setBusy?.(true,'Đang lưu thay đổi');
+    const savePayload=isStockShareTradeTx(state.editing)
+      ? {...state.editing,amount:stockTotalAmountForTx(state.editing),assetPrice:assetUnitPriceForTx(state.editing)}
+      : state.editing;
+    const saveData=txToFirestore(state.editing);
     const request=window.ASSET52_saveTransactionAtomic
-      ? window.ASSET52_saveTransactionAtomic(state.editing,state.editing.id,txToFirestore(state.editing),{mode:'edit'})
+      ? window.ASSET52_saveTransactionAtomic(savePayload,state.editing.id,saveData,{mode:'edit'})
       : (window.FDB?.setNoRefresh
-        ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing))
-        : window.FDB?.set(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,txToFirestore(state.editing)));
-    return Promise.resolve(request).then(()=>{
-      window.TXN_upsertTransaction?.({...txToFirestore(state.editing),_docId:state.editing.id,id:state.editing.id});
+        ? window.FDB.setNoRefresh(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,saveData)
+        : window.FDB?.set(FIREBASE_COLLECTIONS.giaoDich,state.editing.id,saveData));
+    return Promise.resolve(request).then(committedData=>{
+      const localData=committedData&&typeof committedData==='object'?{...saveData,...committedData}:saveData;
+      window.TXN_upsertTransaction?.({...localData,_docId:state.editing.id,id:state.editing.id});
       closeEditScreen();
     }).catch(error=>{
       console.error('Save transaction failed',error);
@@ -612,8 +637,10 @@
     if(!t)return;
     const fee=document.getElementById('txn16FeePreview');
     const tax=document.getElementById('txn16TaxPreview');
-    if(fee)fee.textContent=fmt(percentAmount(t.amount,t.feePct));
-    if(tax)tax.textContent=fmt(percentAmount(t.amount,t.taxPct));
+    const total=document.getElementById('txn16StockTotalPreview');
+    if(fee)fee.textContent=fmt(percentAmount(stockGrossAmountForTx(t),t.feePct));
+    if(tax)tax.textContent=fmt(percentAmount(stockGrossAmountForTx(t),t.taxPct));
+    if(total)total.textContent=fmt(stockTotalAmountForTx(t));
   }
   document.addEventListener('click',e=>{
     if(!state.editing||!document.getElementById('txn16Edit')?.classList.contains('active'))return;
@@ -647,6 +674,7 @@
     if(!state.editing||!document.getElementById('txn16Edit')?.classList.contains('active'))return;
     if(e.target?.id==='txn16AssetInterest'){state.editing.assetInterest=e.target.value;state.editing.assetRate=e.target.value;updateEditSavingPreview();}
     if(e.target?.id==='txn16Amount'){setTimeout(updateEditSavingPreview,0);setTimeout(updateEditStockFeePreview,0);}
+    if(e.target?.id==='txn16AssetQty')setTimeout(updateEditStockFeePreview,0);
     if(e.target?.id==='txn16FeePct'){state.editing.feePct=e.target.value;updateEditStockFeePreview();}
     if(e.target?.id==='txn16TaxPct'){state.editing.taxPct=e.target.value;updateEditStockFeePreview();}
   },true);

@@ -14,6 +14,7 @@
   const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#475569',other:'#06b6d4'};
   const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const fmtProfit=n=>Number(n||0)===0?'0 đ':(Number(n)>0?'+':'')+fmt(n);
+  const fmtPercent=n=>(Number(n||0)>0?'+':'')+Number(n||0).toLocaleString('vi-VN',{maximumFractionDigits:2})+'%';
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
   function slug(v){
@@ -275,9 +276,54 @@
       const p=amount||storedPrice||Math.round(amount||0);
       return {qty:1,unit:'tài sản',unitPrice:p,fee,interestRate,settlementCost,displayQty:qty,displayUnit:unit,displayUnitPrice:Math.round((amount||storedPrice||0)/Math.max(qty,1))};
     }
+    if(rule.assetType==='STOCK'){
+      const storedPrice=parseNumber(firstValue(tx,['assetPrice','don_gia','donGia','price']));
+      const p=storedPrice||Math.round(amount/Math.max(qty,1));
+      return {qty,unit:unit||rule.unit||'Đơn vị',unitPrice:p,fee,interestRate,settlementCost};
+    }
     const rawPrice=amount?Math.round(amount/Math.max(qty,1)):parseNumber(firstValue(tx,['assetPrice','don_gia','donGia','price']));
     const p=rawPrice||Math.round(amount/Math.max(qty,1));
     return {qty,unit:unit||rule.unit||'Đơn vị',unitPrice:p,fee,interestRate,settlementCost};
+  }
+
+  function assetBalanceDelta(rule,amount,input){
+    if(rule?.assetType==='STOCK')return rule.txType==='INVEST'?-amount:amount;
+    return rule.txType==='INVEST'?-(amount+input.fee):(amount-input.fee);
+  }
+
+  function costSoldFromAverage(totalCost,totalQty,sellQty,avgCost,selectedCost){
+    if(Number(selectedCost||0))return Math.round(Number(selectedCost||0));
+    const held=Number(totalQty||0);
+    const sold=Number(sellQty||0);
+    const remainingCost=Math.round(Number(totalCost||0));
+    if(!(held>0))return Math.round(sold*Number(avgCost||0));
+    if(sold>=held-0.000001)return remainingCost;
+    return Math.min(remainingCost,Math.round(remainingCost*sold/held));
+  }
+
+  function isStockSource(source,detail){
+    return assetTypeCode(firstValue(source,['assetType','loai_tai_san','loaiTaiSan']))==='STOCK'
+      || String(detail?.tai_san_id||'').startsWith('TS_STOCK_');
+  }
+
+  function stockGrossAmountFromDetail(source,detail){
+    const qty=Number(detail?.so_luong_quy_doi||firstValue(source,['assetQty','so_luong','soLuong','quantity','qty'])||0);
+    const price=Number(detail?.don_gia_quy_doi||firstValue(source,['assetPrice','don_gia','donGia','price'])||0);
+    return qty&&price?Math.round(qty*price):amountOf(source);
+  }
+
+  function sourceFeeAmount(source){
+    return parseNumber(source?.phi??source?.fee);
+  }
+
+  function buyCostForSource(source,detail){
+    const fee=sourceFeeAmount(source);
+    return isStockSource(source,detail)?stockGrossAmountFromDetail(source,detail)+fee:amountOf(source)+fee;
+  }
+
+  function sellProceedsForSource(source,detail){
+    const fee=sourceFeeAmount(source);
+    return isStockSource(source,detail)?stockGrossAmountFromDetail(source,detail)-fee:amountOf(source)-fee;
   }
 
   function assetTypeCode(type){
@@ -438,15 +484,24 @@
         : Math.min(input.qty,state.qty);
       const avgBefore=state.avgCost;
       const selectedCost=rule.assetType==='SAVING'&&Number(input.settlementCost||0)?Number(input.settlementCost||0):0;
-      const costSold=insuranceSell?Math.min(insuranceRemaining,insuranceProceeds):Math.round(selectedCost||sellQty*avgBefore);
       const gross=input.qty*input.unitPrice;
-      const proceeds=insuranceProceeds||Math.round(gross-input.fee);
-      const realized=proceeds-costSold;
+      const proceeds=rule.assetType==='STOCK'?Math.round(gross-input.fee):(insuranceProceeds||Math.round(gross-input.fee));
+      const beforeCost=Number(state.totalCost||0);
+      const beforeRecovered=Number(state.recoveredTotal||0);
+      const beforeRealized=Number(state.realizedProfit||0);
+      const stockClosing=rule.assetType==='STOCK'&&sellQty>=Number(state.qty||0)-0.000001;
+      const costSold=rule.assetType==='STOCK'
+        ? (stockClosing?Math.round(beforeCost):Math.min(Math.round(beforeCost),proceeds))
+        : (insuranceSell?Math.min(insuranceRemaining,insuranceProceeds):costSoldFromAverage(state.totalCost,state.qty,sellQty,avgBefore,selectedCost));
+      const recoveredAfter=beforeRecovered+proceeds;
+      const realized=rule.assetType==='STOCK'
+        ? (stockClosing?closedStockProfit(recoveredAfter,Number(state.purchasedTotal||0))-beforeRealized:0)
+        : proceeds-costSold;
       state.qty=Math.max(0,state.qty-sellQty);
       state.totalCost=Math.max(0,state.totalCost-costSold);
-      state.recoveredTotal+=proceeds;
-      state.realizedProfit+=realized;
-      state.avgCost=state.qty?avgBefore:0;
+      state.recoveredTotal=recoveredAfter;
+      state.realizedProfit=beforeRealized+realized;
+      state.avgCost=state.qty?(rule.assetType==='STOCK'?Math.round(state.totalCost/state.qty):avgBefore):0;
       if(rule.assetType==='SAVING')state.currentPrice=state.avgCost;
       state.transactions.push({tx,detail:{
         tai_san_id:id,
@@ -737,6 +792,11 @@
     const current=storedCurrent||(isGoldKey(key)&&unitPrice&&qtyChi?Math.round(unitPrice*qtyChi):cost);
     const action=String(row.giao_dich_action||row.action||'').trim();
     const proceeds=Math.abs(Number(row.so_tien??row.soTien??row.gia_tri_hien_tai??row.current??row.value??0));
+    const tradingFee=parseNumber(row.phi_giao_dich??row.tradingFee??row.phiGiaoDich);
+    const tax=parseNumber(row.thue??row.tax);
+    const fee=parseNumber(row.phi??row.fee);
+    const feePct=parseNumber(row.phi_phan_tram??row.feePct);
+    const taxPct=parseNumber(row.thue_phan_tram??row.taxPct);
     const purchasedTotal=Number(row.so_tien_da_mua??row.purchasedTotal??row.totalPurchased??0);
     const recoveredTotal=Number(row.so_tien_da_thu_hoi??row.recoveredTotal??row.totalRecovered??0);
     const totalProfit=Number(row.tong_lai_lo??row.totalProfit??row.lai_lo_tong??row.profit??row.lai_lo_tam_tinh??row.laiLo??(current+recoveredTotal-purchasedTotal));
@@ -756,6 +816,12 @@
       avgCost,
       current,
       proceeds,
+      tradingFee,
+      tax,
+      fee,
+      feePct,
+      taxPct,
+      proceedsIsNet:!!(row.proceedsIsNet||row.net_proceeds),
       realizedProfit:Number(row.realizedProfit??row.lai_lo_da_thuc_hien??row.laiLoDaThucHien??0),
       profit:totalProfit,
       purchasedTotal,
@@ -831,18 +897,61 @@
     return isGoldKey(key)?Number(row.qtyChi||0):Number(row.qtyRaw||0);
   }
 
+  function stockFeeAmount(row,gross){
+    const amount=Math.abs(Number(gross||row.proceeds||row.current||0));
+    const pctFee=amount&&Number(row.feePct||0)?Math.round(amount*Number(row.feePct||0)/100):0;
+    const pctTax=amount&&Number(row.taxPct||0)?Math.round(amount*Number(row.taxPct||0)/100):0;
+    const fee=Number(row.tradingFee||0)||pctFee||Number(row.fee||0);
+    const tax=Number(row.tax||0)||pctTax;
+    return fee+tax;
+  }
+
+  function stockNetProceeds(row){
+    const gross=Math.abs(Number(row.proceeds||row.current||0));
+    if(row.proceedsIsNet)return gross;
+    return Math.max(0,gross-stockFeeAmount(row,gross));
+  }
+
+  function closedStockProfit(recovered,purchased){
+    return Math.round(Number(recovered||0)-Number(purchased||0));
+  }
+
+  function stockNetAtPrice(price,qty,feePct,taxPct){
+    const gross=Math.round(Number(price||0)*Number(qty||0));
+    const fee=Math.round(gross*Number(feePct||0)/100);
+    const tax=Math.round(gross*Number(taxPct||0)/100);
+    return gross-fee-tax;
+  }
+
+  function stockBreakEvenSellPrice(cost,qty,feePct,taxPct){
+    const remainingQty=Number(qty||0);
+    const remainingCost=Math.round(Number(cost||0));
+    if(!(remainingQty>0)||remainingCost<=0)return 0;
+    const netRate=Math.max(0.000001,1-(Number(feePct||0)+Number(taxPct||0))/100);
+    let price=Math.ceil(remainingCost/(remainingQty*netRate));
+    while(stockNetAtPrice(price,remainingQty,feePct,taxPct)<remainingCost)price+=1;
+    return price;
+  }
+
   function applyCostBasis(rows,key){
     if(isCashKey(key))return rows;
+    const stock=assetSection({key})==='stock';
     let qtyBalance=0;
     let costBalance=0;
+    let stockPurchased=0;
+    let stockRecovered=0;
     return rows.slice().sort((a,b)=>String(a.sortDate||a.date||'').localeCompare(String(b.sortDate||b.date||''))).map(row=>{
       const qty=costQty(row,key);
       const action=String(row.action||'').toUpperCase();
       if(action==='SELL'||qty<0){
         const soldQty=Math.abs(qty)||1;
         const avg=qtyBalance?Math.round(costBalance/Math.max(qtyBalance,1)):Math.abs(Number(row.avgCost||0));
-        const costBasis=Math.round(avg*soldQty);
-        const proceeds=Math.abs(Number(row.proceeds||row.current||0));
+        const proceeds=stock?stockNetProceeds(row):Math.abs(Number(row.proceeds||row.current||0));
+        if(stock)stockRecovered+=proceeds;
+        const closingStock=stock&&soldQty>=qtyBalance-0.000001;
+        const costBasis=stock
+          ? (closingStock?Math.round(costBalance):Math.min(Math.round(costBalance),proceeds))
+          : costSoldFromAverage(costBalance,qtyBalance,soldQty,avg,0);
         const realized=proceeds-costBasis;
         qtyBalance-=soldQty;
         costBalance-=costBasis;
@@ -854,8 +963,8 @@
           cost:-costBasis,
           totalCost:-costBasis,
           avgCost:avg,
-          realizedProfit:realized,
-          profit:realized
+          realizedProfit:stock?(closingStock?closedStockProfit(stockRecovered,stockPurchased):0):realized,
+          profit:stock?(closingStock?closedStockProfit(stockRecovered,stockPurchased):0):realized
         };
       }
       const buyQty=Math.abs(qty)||1;
@@ -863,6 +972,7 @@
       const avg=Math.round(buyCost/Math.max(buyQty,1));
       qtyBalance+=buyQty;
       costBalance+=buyCost;
+      if(stock)stockPurchased+=buyCost;
       return {
         ...row,
         current:buyCost,
@@ -936,6 +1046,49 @@
     const states=rebuildAssetState(window.TXN_getTransactions());
     const rebuiltInsuranceKeys=new Set();
     const rebuiltStockKeys=new Set();
+    const resetGroupTotals=group=>{
+      group.aggregateRows=0;
+      group.aggregateValue=0;
+      group.aggregateCost=0;
+      group.aggregateProfit=0;
+      group.aggregateRealized=0;
+      group.aggregatePurchased=0;
+      group.aggregateRecovered=0;
+      group.aggregateQty=0;
+      group.value=0;
+    };
+    const stockStateNamesByKey=new Map();
+    states.forEach(state=>{
+      if(state.type!=='STOCK')return;
+      const key=assetKey({id:state.id,loai_tai_san:state.type,ten_tai_san:state.name});
+      const names=stockStateNamesByKey.get(key)||new Set();
+      names.add(plainText(state.name));
+      stockStateNamesByKey.set(key,names);
+    });
+    const addPreservedStockRowsToGroup=(group,key,rows)=>{
+      if(!rows.length)return;
+      group.aggregateRows=Number(group.aggregateRows||0)+rows.length;
+      rows.forEach(row=>{
+        const qty=Number(row.qtyRaw||0);
+        const cost=Number(row.totalCost||row.cost||0);
+        const current=Number(row.current||0);
+        const realized=Number(row.realizedProfit||0);
+        const purchased=Number(row.purchasedTotal||0);
+        const recovered=Number(row.recoveredTotal||0);
+        const profit=Number(row.totalProfit||row.profit||(current-cost+realized));
+        group.aggregateValue=Number(group.aggregateValue||0)+current;
+        group.aggregateCost=Number(group.aggregateCost||0)+cost;
+        group.aggregateProfit=Number(group.aggregateProfit||0)+profit;
+        group.aggregateRealized=Number(group.aggregateRealized||0)+realized;
+        group.aggregatePurchased=Number(group.aggregatePurchased||0)+purchased;
+        group.aggregateRecovered=Number(group.aggregateRecovered||0)+recovered;
+        if(Number(row.price||0))group.aggregateCurrentPrice=Number(row.price||0);
+        group.aggregateQty=Number(group.aggregateQty||0)+qty;
+      });
+      const unit=String(rows.find(row=>row.unit)?.unit||'').trim();
+      group.aggregateQtyText=formatAssetQty([{qtyRaw:group.aggregateQty,unit}],key);
+      group.value=Number(group.value||0)+Number(group.aggregateValue||0);
+    };
     states.forEach(state=>{
       const row={id:state.id,loai_tai_san:state.type,ten_tai_san:state.name};
       const key=assetKey(row);
@@ -961,28 +1114,15 @@
       if(state.type==='INSURANCE'&&!rebuiltInsuranceKeys.has(key)){
         rebuiltInsuranceKeys.add(key);
         detailData[key]=[];
-        groups[key].aggregateRows=0;
-        groups[key].aggregateValue=0;
-        groups[key].aggregateCost=0;
-        groups[key].aggregateProfit=0;
-        groups[key].aggregateRealized=0;
-        groups[key].aggregatePurchased=0;
-        groups[key].aggregateRecovered=0;
-        groups[key].aggregateQty=0;
-        groups[key].value=0;
+        resetGroupTotals(groups[key]);
       }
       if(state.type==='STOCK'&&!rebuiltStockKeys.has(key)){
         rebuiltStockKeys.add(key);
-        detailData[key]=[];
-        groups[key].aggregateRows=0;
-        groups[key].aggregateValue=0;
-        groups[key].aggregateCost=0;
-        groups[key].aggregateProfit=0;
-        groups[key].aggregateRealized=0;
-        groups[key].aggregatePurchased=0;
-        groups[key].aggregateRecovered=0;
-        groups[key].aggregateQty=0;
-        groups[key].value=0;
+        const rebuiltNames=stockStateNamesByKey.get(key)||new Set();
+        const preserved=(detailData[key]||[]).filter(item=>!rebuiltNames.has(plainText(stockName(item))));
+        detailData[key]=preserved;
+        resetGroupTotals(groups[key]);
+        addPreservedStockRowsToGroup(groups[key],key,preserved);
       }
       if(isGoldKey(key)){
         const price=Number(existing?.aggregateCurrentPrice||groups[key].aggregateCurrentPrice||state.currentPrice||0);
@@ -1038,9 +1178,13 @@
         const detail=item.detail;
         const tx=item.tx;
         const sign=detail.giao_dich_action==='SELL'?-1:1;
-        const fee=parseNumber(firstValue(tx,['fee','phi','phí']));
-        const totalCost=detail.giao_dich_action==='SELL'?-Number(detail.gia_von_da_ban||0):amountOf(tx)+fee;
-        const proceeds=detail.giao_dich_action==='SELL'?amountOf(tx)-fee:amountOf(tx);
+        const fee=parseNumber(firstValue(tx,['tradingFee','phi_giao_dich','fee','phi','phí']));
+        const tax=parseNumber(firstValue(tx,['tax','thue']));
+        const totalFee=fee+tax;
+        const grossTrade=Math.round(Number(detail.so_luong_quy_doi||0)*Number(detail.don_gia_quy_doi||0));
+        const grossAmount=state.type==='STOCK'&&grossTrade?grossTrade:amountOf(tx);
+        const totalCost=detail.giao_dich_action==='SELL'?-Number(detail.gia_von_da_ban||0):grossAmount+totalFee;
+        const proceeds=detail.giao_dich_action==='SELL'?grossAmount-totalFee:grossAmount;
         return normalizeDetail({
           id:tx.id,
           ngay:firstValue(tx,['date','ngay']),
@@ -1057,6 +1201,12 @@
           tong_gia_von:totalCost,
           gia_tri_hien_tai:totalCost,
           so_tien:proceeds,
+          net_proceeds:detail.giao_dich_action==='SELL',
+          phi_giao_dich:fee,
+          thue:tax,
+          phi:totalFee,
+          phi_phan_tram:firstValue(tx,['feePct','phi_phan_tram']),
+          thue_phan_tram:firstValue(tx,['taxPct','thue_phan_tram']),
           lai_suat:detail.lai_suat||firstValue(tx,['assetInterest','assetRate','lai_suat','laiSuat','interestRate','interest_rate','rate']),
           ky_han:detail.ky_han||firstValue(tx,['savingTerm','ky_han','kyHan']),
           so_tiet_kiem_id:detail.so_tiet_kiem_id||firstValue(tx,['savingBookId','so_tiet_kiem_id']),
@@ -1527,18 +1677,27 @@
       const sells=sorted.filter(row=>isSellMovement(row));
       const qty=Math.max(0,sorted.reduce((sum,row)=>sum+Number(row.qtyRaw||0),0));
       const cost=Math.max(0,sorted.reduce((sum,row)=>sum+Number(row.totalCost||0),0));
-      const purchased=buys.reduce((sum,row)=>sum+Math.abs(Number(row.totalCost||row.cost||row.current||0)),0);
-      const recovered=sells.reduce((sum,row)=>sum+Math.abs(Number(row.proceeds||0)),0);
+      const buyQty=buys.reduce((sum,row)=>sum+Math.abs(Number(row.qtyRaw||0)),0);
+      const grossPurchased=buys.reduce((sum,row)=>sum+Math.abs(Number(row.proceeds||0)||Number(row.current||0)),0);
+      const purchased=buys.reduce((sum,row)=>{
+        const gross=Math.abs(Number(row.proceeds||0)||Number(row.current||0));
+        return sum+(gross?gross+stockFeeAmount(row,gross):Math.abs(Number(row.totalCost||row.cost||0)));
+      },0);
+      const recovered=sells.reduce((sum,row)=>sum+stockNetProceeds(row),0);
       const realized=sells.reduce((sum,row)=>sum+Number(row.realizedProfit||0),0);
       const avgCost=qty?Math.round(cost/Math.max(qty,1)):0;
-      const priceRows=sorted.filter(row=>Number(row.price||0));
-      const currentPrice=Number(priceRows[priceRows.length-1]?.price||0)||avgCost;
-      const currentValue=Math.round(qty*currentPrice);
-      const totalProfit=Math.round(currentValue+recovered-purchased);
+      const currentPrice=buyQty?Math.round(grossPurchased/Math.max(buyQty,1)):avgCost;
+      const currentValue=cost;
+      const totalProfit=qty>0?0:closedStockProfit(recovered,purchased);
+      const latestSell=sells.slice().reverse().find(row=>Number(row.feePct||0)||Number(row.taxPct||0));
+      const recoveryFeePct=Number(latestSell?.feePct||0)||0.15;
+      const recoveryTaxPct=Number(latestSell?.taxPct||0)||0.1;
+      const breakEvenSellPrice=stockBreakEvenSellPrice(cost,qty,recoveryFeePct,recoveryTaxPct);
+      const profitRatio=purchased?Number((totalProfit*100/purchased).toFixed(2)):0;
       const firstBuy=buys[0]?.sortDate||buys[0]?.date||'';
       const latest=sorted[sorted.length-1]?.sortDate||sorted[sorted.length-1]?.date||'';
       const unit=String(sorted.find(row=>row.unit)?.unit||'đơn vị').trim()||'đơn vị';
-      return {...group,rows:costed,qty,cost,purchased,recovered,realized,avgCost,currentPrice,currentValue,totalProfit,startDate:firstBuy,latest,unit,closed:qty<=0};
+      return {...group,rows:costed,qty,cost,purchased,recovered,realized,avgCost,currentPrice,currentValue,totalProfit,breakEvenSellPrice,profitRatio,startDate:firstBuy,latest,unit,closed:qty<=0};
     }).sort((a,b)=>{
       if(a.closed!==b.closed)return a.closed?1:-1;
       return String(b.latest||'').localeCompare(String(a.latest||''));
@@ -1549,8 +1708,11 @@
     const header=options.header===true;
     const finalClass=item.totalProfit<0?'loss':(item.totalProfit>0?'profit':'');
     const closedIcon=item.closed?`<i class="asset53-stock-sold-tick" title="Đã bán hết" aria-label="Đã bán hết">${iconSvg('check')}</i>`:'';
+    const headline=item.closed
+      ? `Tỷ lệ lãi/lỗ: ${fmtPercent(item.profitRatio)}`
+      : `Giá bán thu hồi vốn: ${fmt(item.breakEvenSellPrice)}`;
     return `<div class="asset53-detail-row asset53-stock-holding-row ${item.closed?'settled':''} ${header?'asset53-insurance-header-card':''}">
-      <div class="asset53-stock-name"><span>${item.name}</span>${closedIcon}</div>
+      <div class="asset53-stock-name"><span class="asset53-stock-symbol">${item.name}</span><span class="asset53-stock-card-insight ${item.closed?(item.totalProfit<0?'loss':(item.totalProfit>0?'profit':'')):''}">${headline}</span>${closedIcon}</div>
       <div class="asset53-stock-metrics">
         <small>Số lượng còn lại</small>
         <b>${Number(item.qty||0).toLocaleString('vi-VN')}</b>
@@ -2704,7 +2866,7 @@
     if(rule){
       const input=convertedAssetInput(tx,rule);
       const amount=amountOf(tx);
-      return rule.txType==='INVEST'?-(amount+input.fee):(amount-input.fee);
+      return assetBalanceDelta(rule,amount,input);
     }
     return accountingPayload(tx).bien_dong_so_du;
   }
@@ -2823,20 +2985,29 @@
     const avgBefore=Number(next.avgCost||0);
     const selectedCost=rule.assetType==='SAVING'&&Number(input.settlementCost||0)?Number(input.settlementCost||0):0;
     const gross=Math.round(input.qty*input.unitPrice);
-    const proceeds=Math.round((amount||gross)-input.fee);
+    const proceeds=rule.assetType==='STOCK'?Math.round(gross-input.fee):Math.round((amount||gross)-input.fee);
     const insuranceRemaining=Number(next.totalCost||0);
     const sellQty=rule.assetType==='SAVING'
       ? Math.min(input.qty,Math.max(Number(next.qty||0),input.qty))
       : (rule.assetType==='INSURANCE'
         ? (insuranceRemaining&&proceeds>=insuranceRemaining?Number(next.qty||0):Math.min(input.qty,Number(next.qty||0)))
         : input.qty);
-    const costSold=rule.assetType==='INSURANCE'?Math.min(insuranceRemaining,proceeds):Math.round(selectedCost||sellQty*avgBefore);
-    const realized=proceeds-costSold;
+    const beforeCost=Number(next.totalCost||0);
+    const beforeRecovered=Number(next.recoveredTotal||0);
+    const beforeRealized=Number(next.realizedProfit||0);
+    const stockClosing=rule.assetType==='STOCK'&&sellQty>=Number(next.qty||0)-0.000001;
+    const costSold=rule.assetType==='STOCK'
+      ? (stockClosing?Math.round(beforeCost):Math.min(Math.round(beforeCost),proceeds))
+      : (rule.assetType==='INSURANCE'?Math.min(insuranceRemaining,proceeds):costSoldFromAverage(next.totalCost,next.qty,sellQty,avgBefore,selectedCost));
+    const recoveredAfter=beforeRecovered+proceeds;
+    const realized=rule.assetType==='STOCK'
+      ? (stockClosing?closedStockProfit(recoveredAfter,Number(next.purchasedTotal||0))-beforeRealized:0)
+      : proceeds-costSold;
     next.qty=Math.max(0,Number(next.qty||0)-sellQty);
     next.totalCost=Math.max(0,Number(next.totalCost||0)-costSold);
-    next.recoveredTotal=Number(next.recoveredTotal||0)+proceeds;
-    next.realizedProfit=Number(next.realizedProfit||0)+realized;
-    next.avgCost=next.qty?avgBefore:0;
+    next.recoveredTotal=recoveredAfter;
+    next.realizedProfit=beforeRealized+realized;
+    next.avgCost=next.qty?(rule.assetType==='STOCK'?Math.round(next.totalCost/next.qty):avgBefore):0;
     if(rule.assetType!=='GOLD')next.currentPrice=input.unitPrice;
     if(rule.assetType==='SAVING')next.currentPrice=next.avgCost;
     next.currentValue=rule.assetType==='SAVING'?Math.round(next.totalCost):(next.qty?Math.round(next.qty*(rule.assetType==='GOLD'?Number(next.currentPrice||0):(next.currentPrice||next.avgCost||0))):0);
@@ -3041,7 +3212,7 @@
       if(storedTx&&storedPosted&&!missingAssetDetail)return;
       const sourceAmount=amountOf(sourceTx);
       const balanceDelta=rule
-        ? (rule.txType==='INVEST'?-(sourceAmount+input.fee):(sourceAmount-input.fee))
+        ? assetBalanceDelta(rule,sourceAmount,input)
         : accountingPayload(tx).bien_dong_so_du;
       if(missingAssetDetail){
         const assetId=assetDocIdFor(sourceTx,rule);
@@ -3096,12 +3267,12 @@
           const state=assetPayloadFromRow(asset);
           const qty=Number(d.so_luong_quy_doi||0);
           if(d.giao_dich_action==='BUY'){
-            const buyCost=amountOf(source)+parseNumber(source.phi||source.fee);
+            const buyCost=buyCostForSource(source,d);
             state.qty=Math.max(0,state.qty-qty);
             state.purchasedTotal=Math.max(0,Number(state.purchasedTotal||0)-buyCost);
             state.totalCost=Math.max(0,state.totalCost-buyCost);
           }else if(d.giao_dich_action==='SELL'){
-            const proceeds=amountOf(source)-parseNumber(source.phi||source.fee);
+            const proceeds=sellProceedsForSource(source,d);
             state.qty+=qty;
             state.totalCost+=Number(d.gia_von_da_ban||0);
             state.recoveredTotal=Math.max(0,Number(state.recoveredTotal||0)-proceeds);
@@ -3131,12 +3302,12 @@
     const state=assetPayloadFromRow(asset);
     const qty=Number(d.so_luong_quy_doi||0);
     if(d.giao_dich_action==='BUY'){
-      const buyCost=amountOf(source)+parseNumber(source.phi||source.fee);
+      const buyCost=buyCostForSource(source,d);
       state.qty=Math.max(0,Number(state.qty||0)-qty);
       state.purchasedTotal=Math.max(0,Number(state.purchasedTotal||0)-buyCost);
       state.totalCost=Math.max(0,Number(state.totalCost||0)-buyCost);
     }else if(d.giao_dich_action==='SELL'){
-      const proceeds=amountOf(source)-parseNumber(source.phi||source.fee);
+      const proceeds=sellProceedsForSource(source,d);
       state.qty=Number(state.qty||0)+qty;
       state.totalCost=Number(state.totalCost||0)+Number(d.gia_von_da_ban||0);
       state.recoveredTotal=Math.max(0,Number(state.recoveredTotal||0)-proceeds);
@@ -3153,29 +3324,33 @@
     if(!rule){
       const delta=accountingPayload(tx).bien_dong_so_du;
       const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
+      const update={...(baseData||{}),tai_khoan_id:bankId,bien_dong_so_du:delta,trang_thai_hach_toan:'POSTED'};
       writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},delta),{merge:true});
-      writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),tai_khoan_id:bankId,bien_dong_so_du:delta,trang_thai_hach_toan:'POSTED'},{merge:true});
-      return;
+      writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,update,{merge:true});
+      return update;
     }
     const input=convertedAssetInput(tx,rule);
     const amount=amountOf(tx);
-    const balanceDelta=rule.txType==='INVEST'?-(amount+input.fee):(amount-input.fee);
+    const balanceDelta=assetBalanceDelta(rule,amount,input);
     const assetId=assetDocIdFor(tx,rule);
     const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
     const currentAsset=await writer.get(FIREBASE_COLLECTIONS.taiSan,assetId);
     const currentState=currentAsset?assetPayloadFromRow(currentAsset):defaultAssetState(assetId,tx,rule,input);
     currentState.id=assetId;
     const applied=applyAssetDelta(currentState,tx,rule,input);
+    const update={...(baseData||{}),...transactionUpdatePayload(tx,rule,applied.detail,balanceDelta,bankId)};
     writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},balanceDelta),{merge:true});
     writer.set(FIREBASE_COLLECTIONS.taiSan,assetId,assetStatePayload(applied.state),{merge:true});
-    writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(tx,rule,applied.detail,balanceDelta,bankId)},{merge:true});
+    writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,update,{merge:true});
+    return update;
   }
 
   function saveTransactionAtomic(tx,txnDocId,baseData,options){
     if(!tx||!txnDocId||!window.FDB||typeof window.FDB.runTransaction!=='function')return Promise.resolve();
+    let committedData=null;
     const run=async writer=>{
       const stored=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
-      if(options?.mode==='create'&&hasPostedAccounting(stored,tx))return;
+      if(options?.mode==='create'&&hasPostedAccounting(stored,tx)){committedData=stored;return;}
       const source={...tx,...(baseData||{})};
       const oldSource=stored||{};
       const oldDetail=oldSource.chi_tiet_tai_san;
@@ -3200,12 +3375,12 @@
         const state=assetPayloadFromRow(assetRows[oldAssetId]);
         const qty=Number(oldDetail.so_luong_quy_doi||0);
         if(oldDetail.giao_dich_action==='BUY'){
-          const buyCost=amountOf(oldSource)+parseNumber(oldSource.phi||oldSource.fee);
+          const buyCost=buyCostForSource(oldSource,oldDetail);
           state.qty=Math.max(0,Number(state.qty||0)-qty);
           state.purchasedTotal=Math.max(0,Number(state.purchasedTotal||0)-buyCost);
           state.totalCost=Math.max(0,Number(state.totalCost||0)-buyCost);
         }else if(oldDetail.giao_dich_action==='SELL'){
-          const proceeds=amountOf(oldSource)-parseNumber(oldSource.phi||oldSource.fee);
+          const proceeds=sellProceedsForSource(oldSource,oldDetail);
           state.qty=Number(state.qty||0)+qty;
           state.totalCost=Number(state.totalCost||0)+Number(oldDetail.gia_von_da_ban||0);
           state.recoveredTotal=Math.max(0,Number(state.recoveredTotal||0)-proceeds);
@@ -3222,22 +3397,24 @@
       if(!newRule){
         const delta=accountingPayload(source).bien_dong_so_du;
         bankRows[newBankId]=bankPayloadAfter(bankRows[newBankId]||{},delta);
-        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),tai_khoan_id:newBankId,bien_dong_so_du:delta,trang_thai_hach_toan:'POSTED'},{merge:true});
+        committedData={...(baseData||{}),tai_khoan_id:newBankId,bien_dong_so_du:delta,trang_thai_hach_toan:'POSTED'};
+        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,committedData,{merge:true});
       }else{
         const amount=amountOf(source);
-        const balanceDelta=newRule.txType==='INVEST'?-(amount+newInput.fee):(amount-newInput.fee);
+        const balanceDelta=assetBalanceDelta(newRule,amount,newInput);
         const currentState=assetRows[newAssetId]?assetPayloadFromRow(assetRows[newAssetId]):defaultAssetState(newAssetId,source,newRule,newInput);
         currentState.id=newAssetId;
         const applied=applyAssetDelta(currentState,source,newRule,newInput);
         bankRows[newBankId]=bankPayloadAfter(bankRows[newBankId]||{},balanceDelta);
         assetRows[newAssetId]=assetStatePayload(applied.state);
-        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(source,newRule,applied.detail,balanceDelta,newBankId)},{merge:true});
+        committedData={...(baseData||{}),...transactionUpdatePayload(source,newRule,applied.detail,balanceDelta,newBankId)};
+        writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,committedData,{merge:true});
       }
       bankIds.forEach(id=>writer.set(FIREBASE_COLLECTIONS.taiSan,id,bankRows[id],{merge:true}));
       removedAssetIds.forEach(id=>writer.remove(FIREBASE_COLLECTIONS.taiSan,id));
       assetIds.forEach(id=>{if(assetRows[id])writer.set(FIREBASE_COLLECTIONS.taiSan,id,assetRows[id],{merge:true});});
     };
-    return window.FDB.runTransaction(run);
+    return window.FDB.runTransaction(run).then(()=>committedData);
   }
 
   function deleteTransactionAtomic(tx,txnDocId){
