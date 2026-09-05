@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=nav-bottom-down-20260904a" />
+<link rel="stylesheet" href="overview.css?v=nav-glass-clear-20260905a" />
 <link rel="stylesheet" href="transaction.css?v=screen-bottom-zero-20260904a" />
 <link rel="stylesheet" href="category.css?v=screen-bottom-zero-20260904a" />
 <style>
@@ -1088,7 +1088,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone.dock-over-slide .dock-wrap{z-index:140!important;}
   #phone::after{display:none!important;}
   #phone .dock-shell{backdrop-filter:blur(18px) saturate(1.35)!important;-webkit-backdrop-filter:blur(18px) saturate(1.35)!important;filter:drop-shadow(0 18px 30px rgba(30,41,59,.18))!important;border-radius:25px!important;}
-  #phone .dock-svg path{fill:rgba(255,255,255,.66)!important;stroke:rgba(255,255,255,.96)!important;stroke-width:1.12!important;filter:drop-shadow(0 1px 2px rgba(15,23,42,.12)) drop-shadow(0 -1px 1px rgba(255,255,255,.62))!important;}
+  #phone .dock-svg path{fill:rgba(255,255,255,.34)!important;stroke:rgba(255,255,255,.46)!important;stroke-width:1.12!important;filter:drop-shadow(0 1px 2px rgba(15,23,42,.12)) drop-shadow(0 -1px 1px rgba(255,255,255,.34))!important;}
   #phone .tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;}
   #phone .tools-grid{padding-bottom:0!important;}
   #phone .tool{height:62px!important;min-height:62px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
@@ -1624,17 +1624,17 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=quanlychitieu-20260825a"></script>
-<script src="overview.js?v=asset-summary-nav-fix-20260904a"></script>
+<script src="overview.js?v=asset-detail-nav-restore-20260905a"></script>
 <script src="transaction.js?v=stock-share-total-20260905n"></script>
 <script src="category.js?v=category-top-add-20260829a"></script>
 
 <script src="add-transaction.js?v=stock-share-total-20260905n"></script>
-<script src="asset.js?v=stock-share-total-20260905n"></script>
+<script src="asset.js?v=asset-detail-nav-restore-20260905a"></script>
 <script src="report.js?v=overview-persistent-nav-20260904b"></script>
 <script src="gold.js?v=gold-field-status-20260826a"></script>
 
 <script>
-const QLCT_BUILD_ID='firebase-quanlychitieu-20260905-asset-summary-single-card-d';
+const QLCT_BUILD_ID='firebase-quanlychitieu-20260905-nav-glass-clear-a';
 const QLCT_BUILD_KEY='qlct-build-id';
 async function clearOldFirebaseBuild(){
   if(localStorage.getItem(QLCT_BUILD_KEY)===QLCT_BUILD_ID)return false;
@@ -1648,7 +1648,7 @@ async function clearOldFirebaseBuild(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     clearOldFirebaseBuild()
-      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=asset-summary-single-card-20260905d')
+      .then(cleared=>navigator.serviceWorker.register('service-worker.js?v=nav-glass-clear-20260905a')
         .then(registration=>registration.update().then(()=>registration))
         .then(()=>{if(cleared)window.location.reload();}))
       .catch(console.error);

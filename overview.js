@@ -1957,8 +1957,12 @@ function activeSlideScreen(){
 function goBackBySwipe(){
   const active=activeSlideScreen();
   if(active?.id==='screenAssetDetail'){
-    active.classList.remove('active');
-    active.setAttribute('aria-hidden','true');
+    if(typeof window.ASSET52_closeDetail==='function')window.ASSET52_closeDetail();
+    else {
+      active.classList.remove('active');
+      active.setAttribute('aria-hidden','true');
+      syncDockNavigation();
+    }
     return;
   }
   if(active)closeScreen(active.id);

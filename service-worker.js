@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260905-asset-summary-single-card-d';
+const CACHE_NAME = 'qlct-pwa-v20260905-nav-glass-clear-a';
 const APP_SHELL = [
   './',
   './index.html',

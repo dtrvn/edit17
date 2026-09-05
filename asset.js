@@ -2749,6 +2749,7 @@
     const screen=document.getElementById('screenAssetDetail');
     if(!screen)return;
     closeAssetStockSheet();
+    closeBankBalanceSheet();
     screen.classList.remove('active');
     screen.setAttribute('aria-hidden','true');
     window.syncDockNavigation?.();
@@ -3488,6 +3489,7 @@
   };
   window.ASSET52_reverseTransactionAsset=reversePostedTransaction;
   window.ASSET52_isTransactionAsset=isTransactionAsset;
+  window.ASSET52_closeDetail=closeDetail;
   window.ASSET52_colorForTransaction=function(tx){
     const rule=assetRuleFor(tx);
     const type=rule?.assetType||firstValue(tx,['assetType','loai_tai_san','loaiTaiSan']);
